@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px;
+            background: #111111; color: #ffffff; font-family: inherit; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+    .pill.ghost { background: #ffffff; color: #111111; }
+    .seg { display: inline-flex; border: 1px solid #111111; border-radius: 999px; overflow: hidden; }
+    .seg button { font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+                  text-transform: uppercase; padding: 7px 12px; border: 0; background: transparent;
+                  color: #111111; cursor: pointer; }
+    .seg button.on { background: #111111; color: #ffffff; }
+    .field { display: flex; flex-direction: column; gap: 12px; padding: 20px 0;
+             border-bottom: 1px solid #e6e1d8; }
+    .field:last-child { border-bottom: 0; }
+    .chain { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: #666666; }
+    .redact { background: #111111; color: #111111; border-radius: 3px; }
+    .marked { background: #f4f1ea; border-bottom: 2px solid #c4a574; }
+  </style>
+</helmet>
+
+<div style="min-height: 100%; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 40px; border-bottom: 1px solid #e6e1d8">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">Privacy Gate</span>
+      <span class="mono" style="color: #666666">/ Payslip August.pdf</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span class="mono" style="color: #666666">gemma4:e2b · warm · offline</span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #111111"></span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 40px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lbl">Step three of three · 14 fields found on device</span>
+        <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; text-transform: none">Decide what a stranger gets to know</h1>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: stretch">
+
+        <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">The document</h2>
+            <div class="seg">
+              <button class="on">Original</button>
+              <button>What gets sent</button>
+            </div>
+          </div>
+
+          <div style="background: #f4f1ea; border-radius: 16px; padding: 32px; font-size: 14px; line-height: 2">
+            <div style="font-weight: 600; margin-bottom: 16px">NORTHWIND LOGISTICS LTD · PAY STATEMENT</div>
+            <div>Employee: <span class="marked">Sam Whitfield</span></div>
+            <div>Address: <span class="marked">14 Ashgrove Terrace, Bristol BS6 5QT</span></div>
+            <div>NI number: <span class="marked">QQ 12 34 56 C</span></div>
+            <div>Paid into: <span class="marked">Acct 8842 1176 · Sort 20-14-53</span></div>
+            <div style="margin-top: 16px">Gross this period: <b>£3,412.00</b></div>
+            <div>Tax: <b>£612.40</b> &nbsp; National Insurance: <b>£241.18</b></div>
+            <div>Net pay: <b>£2,558.42</b></div>
+            <div style="margin-top: 16px; color: #666666">Period 05 · 31 August 2026 · Employee ref 44120</div>
+          </div>
+
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+            <span style="display: inline-flex; align-items: center; gap: 8px" class="mono">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: #f4f1ea; border-bottom: 2px solid #c4a574"></span> found on device
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 8px" class="mono">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: #111111"></span> hidden in the copy
+            </span>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">Your decisions</h2>
+            <span class="mono" style="color: #666666">4 of 14 shown</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column">
+
+            <div class="field">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+                <span style="font-weight: 500">Sort code and account</span>
+                <div class="seg">
+                  <button>Keep</button>
+                  <button class="on">Hide</button>
+                  <button>Lock</button>
+                </div>
+              </div>
+              <div class="chain">
+                <span style="color: #8c6a3c">→</span>
+                <span>set up a direct debit in your name</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+                <span style="font-weight: 500">Name and date of birth</span>
+                <div class="seg">
+                  <button>Keep</button>
+                  <button class="on">Hide</button>
+                  <button>Lock</button>
+                </div>
+              </div>
+              <div class="chain">
+                <span style="color: #8c6a3c">→</span>
+                <span>pass a phone-banking identity check</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+                <span style="font-weight: 500">Employer and salary</span>
+                <div class="seg">
+                  <button class="on">Keep</button>
+                  <button>Hide</button>
+                  <button>Lock</button>
+                </div>
+              </div>
+              <div class="chain">
+                <span style="color: #8c6a3c">→</span>
+                <span>a convincing payroll-change phishing email</span>
+              </div>
+              <span class="mono" style="color: #8a2a22">you chose to share this</span>
+            </div>
+
+            <div class="field">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+                <span style="font-weight: 500">Home address</span>
+                <div class="seg">
+                  <button>Keep</button>
+                  <button>Hide</button>
+                  <button class="on">Lock</button>
+                </div>
+              </div>
+              <div class="chain">
+                <span style="color: #8c6a3c">→</span>
+                <span>turn up where you live</span>
+              </div>
+              <input placeholder="Passphrase for the locked vault" style="width: 100%; min-height: 44px; padding: 10px 16px; border: 1px solid #e6e1d8; border-radius: 16px; background: #ffffff; font-family: inherit; font-size: 14px">
+            </div>
+
+          </div>
+
+          <div style="height: 1px; background: #e6e1d8"></div>
+
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+            <button class="pill">Approve and continue</button>
+            <button class="pill ghost">Hide everything</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

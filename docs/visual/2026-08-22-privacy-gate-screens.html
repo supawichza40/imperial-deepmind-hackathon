@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Gate — screen flow</title>
+<link rel="stylesheet" href="../../app/static/theme/tokens.css">
+<link rel="stylesheet" href="../../app/static/theme/components.css">
+<style>
+/* Page chrome. Product tokens come from tokens.css — do not redefine colours here. */
+*{box-sizing:border-box}
+body{margin:0;background:var(--theme-mist);color:var(--theme-ink);
+     font-family:var(--theme-sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 20px 100px}
+
+.kicker{font-size:11px;font-weight:500;text-transform:uppercase;
+  letter-spacing:var(--theme-track-kicker);color:var(--theme-mute);margin:0 0 10px}
+h1{font-size:clamp(30px,5vw,52px);font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:0 0 10px}
+.lede{font-size:clamp(15px,2.2vw,19px);color:var(--theme-mute);max-width:60ch;margin:0 0 6px;line-height:1.6}
+h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:var(--theme-track-heading);
+  margin:64px 0 16px;color:var(--theme-ink)}
+
+/* ---------- rail ---------- */
+.rail{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 18px}
+.step{appearance:none;border:1px solid var(--theme-line);background:var(--theme-paper);
+  border-radius:var(--theme-radius-pill);padding:8px 15px;font:inherit;font-size:12.5px;
+  font-weight:500;color:var(--theme-mute);cursor:pointer;transition:all var(--theme-fast);
+  white-space:nowrap}
+.step:hover{border-color:var(--theme-ink);color:var(--theme-ink)}
+.step[aria-current="true"]{background:var(--theme-ink);color:var(--theme-paper);
+  border-color:var(--theme-ink)}
+.step.err{border-style:dashed}
+.step.err[aria-current="true"]{background:var(--theme-danger);border-color:var(--theme-danger)}
+.step b{font-family:var(--theme-mono);font-size:11px;opacity:.75;margin-right:6px}
+
+/* ---------- stage ---------- */
+.stage{display:grid;gap:26px;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);align-items:start}
+@media(max-width:860px){.stage{grid-template-columns:1fr}}
+
+.frame{background:var(--theme-paper);border:1px solid var(--theme-line);
+  border-radius:var(--theme-radius-card);box-shadow:var(--theme-shadow);overflow:hidden}
+.chrome{display:flex;align-items:center;gap:8px;padding:14px 18px;
+  border-bottom:1px solid var(--theme-line);background:var(--theme-paper)}
+.tl{display:flex;gap:5px}
+.tl i{width:9px;height:9px;border-radius:50%;background:var(--theme-line)}
+.addr{flex:1;height:26px;border-radius:var(--theme-radius-pill);background:var(--theme-mist);
+  display:flex;align-items:center;padding:0 12px;font-size:11px;color:var(--theme-mute);
+  font-family:var(--theme-mono)}
+.netbadge{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  padding:5px 11px;border-radius:var(--theme-radius-pill);border:1px solid var(--theme-line);
+  color:var(--theme-mute);white-space:nowrap;transition:all 300ms ease}
+.netbadge.local{border-color:var(--theme-wood-deep);color:var(--theme-wood-deep);
+  background:var(--theme-sand)}
+.netbadge.off{border-color:var(--theme-ink);color:var(--theme-ink);background:var(--theme-sand)}
+.netbadge.cloud{border-color:var(--theme-ink);color:var(--theme-paper);background:var(--theme-ink)}
+.netbadge.fail{border-color:var(--theme-danger);color:var(--theme-danger);background:#f3e8e4}
+
+.view{padding:26px;min-height:392px;position:relative}
+.view>section{display:none}
+.view>section.on{display:block;animation:in 420ms cubic-bezier(.22,.9,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-size:10.5px;font-weight:500;text-transform:uppercase;
+  letter-spacing:var(--theme-track-kicker);color:var(--theme-mute);margin:0 0 12px}
+.big{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0 0 8px;line-height:1.2}
+.say{font-size:14px;color:var(--theme-mute);line-height:1.6;margin:0 0 16px}
+
+/* dropzone */
+.drop{border:2px dashed var(--theme-line);border-radius:var(--theme-radius-input);
+  padding:44px 20px;text-align:center;transition:all var(--theme-fast);background:var(--theme-mist)}
+.drop:hover{border-color:var(--theme-wood);background:var(--theme-sand)}
+.drop .ic{font-size:30px;line-height:1;margin-bottom:12px;opacity:.35}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* document */
+.docwrap{background:var(--theme-mist);border:1px solid var(--theme-line);
+  border-radius:var(--theme-radius-input);padding:18px 20px;font-family:var(--theme-mono);
+  font-size:13px;line-height:2.4}
+.f{color:var(--theme-mute)}
+.v{position:relative;display:inline-block;padding:2px 7px;border-radius:6px;
+  background:var(--theme-sand);transition:all 380ms cubic-bezier(.22,.9,.3,1)}
+.v.found{background:#f3e8e4;box-shadow:inset 0 0 0 1px var(--theme-danger);color:var(--theme-danger)}
+.v.keep{background:var(--theme-sand);box-shadow:inset 0 0 0 1px var(--theme-wood);
+  color:var(--theme-wood-deep)}
+.v.wiped{color:transparent;background:var(--theme-ink);box-shadow:none;position:relative}
+.v.wiped::after{content:"REDACTED";position:absolute;inset:0;display:grid;place-items:center;
+  color:var(--theme-paper);font-size:9px;letter-spacing:.1em;font-weight:600}
+.v.pending{opacity:.25}
+
+/* consent list */
+.gate{background:var(--theme-mist);border:1px solid var(--theme-line);
+  border-radius:var(--theme-radius-input);padding:16px 18px}
+.gate h4{margin:0 0 10px;font-size:10.5px;font-weight:600;text-transform:uppercase;
+  letter-spacing:var(--theme-track-kicker);color:var(--theme-mute)}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;
+  border-bottom:1px solid var(--theme-line);font-size:13.5px}
+.tog:last-child{border-bottom:0}
+.tog .n{display:flex;align-items:center;gap:9px}
+.cnt{font-family:var(--theme-mono);font-size:11px;color:var(--theme-mute)}
+.why{display:block;font-size:12px;color:var(--theme-mute);line-height:1.45;margin-top:2px;max-width:34ch}
+.tog{align-items:flex-start}
+.tog .sw{margin-top:3px}
+.sw{width:38px;height:22px;border-radius:var(--theme-radius-pill);background:var(--theme-line);
+  position:relative;flex:none;cursor:pointer;transition:background 240ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:var(--theme-paper);transition:left 240ms cubic-bezier(.4,1.4,.5,1);
+  box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on{background:var(--theme-ink)}
+.sw.on::after{left:19px}
+
+/* progress */
+.prog{height:3px;border-radius:2px;background:var(--theme-line);overflow:hidden;margin:14px 0}
+.prog i{display:block;height:100%;background:var(--theme-ink);border-radius:2px;
+  animation:sweep 1.5s ease-in-out infinite}
+.prog.wood i{background:var(--theme-wood)}
+@keyframes sweep{0%{width:6%;margin-left:0}50%{width:52%}100%{width:6%;margin-left:94%}}
+
+.scanline{position:relative;overflow:hidden}
+.scanline::after{content:"";position:absolute;left:0;right:0;height:36px;
+  background:linear-gradient(180deg,transparent,rgba(196,165,116,.22),transparent);
+  animation:scan 1.9s ease-in-out infinite}
+@keyframes scan{0%{top:-36px}100%{top:100%}}
+
+/* callouts */
+.found{display:flex;align-items:flex-start;gap:11px;background:var(--theme-sand);
+  border-left:3px solid var(--theme-wood-deep);border-radius:0 12px 12px 0;padding:14px 16px;
+  font-size:14px;line-height:1.55;margin-bottom:14px}
+.fail{background:#f3e8e4;border-left:3px solid var(--theme-danger);border-radius:0 12px 12px 0;
+  padding:14px 16px;font-size:14px;color:var(--theme-danger);line-height:1.55}
+.fail code{background:rgba(0,0,0,.05);padding:1px 6px;border-radius:4px;font-size:12.5px;
+  color:var(--theme-ink)}
+.ln{height:9px;border-radius:5px;background:var(--theme-line);margin:9px 0}
+.ln.s{width:48%}.ln.m{width:72%}.ln.l{width:90%}
+
+/* audit */
+.log{list-style:none;margin:0;padding:0;font-size:13.5px}
+.log li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--theme-line);
+  align-items:baseline;opacity:0;animation:fadein 500ms ease forwards}
+.log li:last-child{border-bottom:0}
+@keyframes fadein{to{opacity:1}}
+.tagl{font-family:var(--theme-mono);font-size:10px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 9px;border-radius:var(--theme-radius-pill);flex:none;
+  border:1px solid var(--theme-line);color:var(--theme-mute)}
+.tagl.d{border-color:var(--theme-wood-deep);color:var(--theme-wood-deep);background:var(--theme-sand)}
+.tagl.c{background:var(--theme-ink);color:var(--theme-paper);border-color:var(--theme-ink)}
+.tagl.u{border-color:var(--theme-ink);color:var(--theme-ink)}
+
+/* buttons */
+.b{appearance:none;font:inherit;font-size:14px;font-weight:500;padding:11px 22px;
+  border-radius:var(--theme-radius-pill);border:1px solid var(--theme-ink);
+  background:var(--theme-ink);color:var(--theme-paper);cursor:pointer;
+  transition:transform var(--theme-fast),opacity var(--theme-fast)}
+.b:hover{transform:translateY(-1px);opacity:.9}
+.b.gh{background:transparent;color:var(--theme-ink)}
+.b.sm{font-size:12.5px;padding:8px 16px}
+
+/* side notes */
+.notes{position:sticky;top:22px}
+.card{background:var(--theme-paper);border:1px solid var(--theme-line);
+  border-radius:var(--theme-radius-card);padding:24px}
+.card h3{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.card .id{font-family:var(--theme-mono);font-size:11.5px;color:var(--theme-mute);
+  letter-spacing:.06em}
+.card p{font-size:14px;line-height:1.65;color:var(--theme-mute);margin:12px 0 0}
+.card p b{color:var(--theme-ink);font-weight:600}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.mchip{font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;
+  padding:5px 11px;border-radius:var(--theme-radius-pill);background:var(--theme-sand);
+  color:var(--theme-mute)}
+.mchip.key{background:var(--theme-ink);color:var(--theme-paper)}
+
+.controls{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--theme-mute);margin-left:auto;font-family:var(--theme-mono)}
+
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+th,td{text-align:left;padding:13px 12px;border-bottom:1px solid var(--theme-line);vertical-align:top}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:var(--theme-track-kicker);
+  color:var(--theme-mute);font-weight:600}
+td:first-child{font-family:var(--theme-mono);font-size:12.5px;white-space:nowrap}
+.callout{background:var(--theme-paper);border:1px solid var(--theme-line);
+  border-radius:var(--theme-radius-card);padding:26px 28px;margin-top:20px;font-size:15px;
+  line-height:1.7;box-shadow:var(--theme-shadow)}
+.callout b{font-weight:600}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
+  font-family:var(--theme-mono);font-size:11.5px;color:var(--theme-mute);line-height:1.8}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::after{animation:none!important;transition:none!important}
+}
+@media(max-width:520px){.wrap{padding:26px 14px 70px}.view{padding:18px;min-height:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kicker">Privacy Gate · web app · 22 August 2026</p>
+<h1>The whole journey,<br>screen by screen</h1>
+<p class="lede">Eight screens and three failure states. Click through them, or press play.
+  Every screen has an ID — use the IDs when you talk about the build so nobody is guessing
+  which screen you mean.</p>
+
+<div class="rail" role="tablist" id="rail"></div>
+
+<div class="stage">
+
+  <!-- ============== PROTOTYPE FRAME ============== -->
+  <div class="frame">
+    <div class="chrome">
+      <div class="tl"><i></i><i></i><i></i></div>
+      <div class="addr">privacygate.local</div>
+      <div class="netbadge local" id="net">local ready</div>
+    </div>
+    <div class="view" id="view">
+
+      <!-- S1 -->
+      <section data-s="S1">
+        <p class="eyebrow">start</p>
+        <p class="big">What do you need help with?</p>
+        <p class="say">Nothing is uploaded. The file is read on this machine.</p>
+        <div class="drop">
+          <div class="ic">◫</div>
+          <div style="font-weight:600;font-size:15px">Drop a payslip, statement or letter</div>
+          <div style="font-size:13px;color:var(--theme-mute);margin-top:5px">or browse your files</div>
+        </div>
+        <div class="row">
+          <button class="b gh sm">Sample payslip</button>
+          <button class="b gh sm">Sample statement</button>
+          <button class="b gh sm">Sample medical letter</button>
+        </div>
+      </section>
+
+      <!-- S2 -->
+      <section data-s="S2">
+        <p class="eyebrow">reading</p>
+        <p class="big">Opening payslip.pdf</p>
+        <p class="say">Still on your machine. Nothing has been sent anywhere.</p>
+        <div class="prog"><i></i></div>
+        <div class="docwrap"><div class="ln l"></div><div class="ln m"></div>
+          <div class="ln l"></div><div class="ln s"></div></div>
+      </section>
+
+      <!-- S3 -->
+      <section data-s="S3">
+        <p class="eyebrow">on device · gemma 4</p>
+        <p class="big">Looking for anything private</p>
+        <p class="say">This runs locally. Turn the wifi off — it keeps working.</p>
+        <div class="prog wood"><i></i></div>
+        <div class="docwrap scanline" id="scan">
+          <div><span class="f">Employee</span> <span class="v found">A. Okafor</span></div>
+          <div><span class="f">NI number</span> <span class="v found">QQ123456C</span></div>
+          <div><span class="f">Address</span> <span class="v pending">14 Pelham St</span></div>
+          <div><span class="f">Gross pay</span> <span class="v pending">£2,840.00</span></div>
+        </div>
+      </section>
+
+      <!-- S4 -->
+      <section data-s="S4">
+        <p class="eyebrow">your decision</p>
+        <p class="big">Choose what may be shared</p>
+        <p class="say">Seven things found. We tell you what each one would let someone do — then you decide. Not "account number redacted", but what it costs you.</p>
+        <div class="docwrap" style="line-height:2.2;font-size:12.5px;margin-bottom:14px">
+          <div><span class="f">Employee</span> <span class="v found">A. Okafor</span>
+               &nbsp;<span class="f">NI</span> <span class="v found">QQ123456C</span></div>
+          <div><span class="f">Address</span> <span class="v found">14 Pelham St, SW7</span></div>
+          <div><span class="f">Gross</span> <span class="v keep">£2,840.00</span>
+               &nbsp;<span class="f">Tax</span> <span class="v keep">£412.60</span></div>
+        </div>
+        <div class="gate">
+          <h4>Keep on this machine</h4>
+          <div class="tog"><span class="n"><span><b>Your name</b> <span class="cnt">×2</span>
+            <span class="why">identifies you by name in anything that follows</span></span></span><span class="sw"></span></div>
+          <div class="tog"><span class="n"><span><b>Home address</b> <span class="cnt">×1</span>
+            <span class="why">places you at a specific door</span></span></span><span class="sw"></span></div>
+          <div class="tog"><span class="n"><span><b>Sort code + account</b> <span class="cnt">×1</span>
+            <span class="why">enough to set up a direct debit in your name</span></span></span><span class="sw"></span></div>
+          <div class="tog"><span class="n"><span><b>NI number</b> <span class="cnt">×1</span>
+            <span class="why">links straight to your tax record</span></span></span><span class="sw"></span></div>
+          <h4 style="margin-top:16px">Okay to share</h4>
+          <div class="tog"><span class="n"><span><b>Income figures</b> <span class="cnt">×3</span>
+            <span class="why">a number on its own — cannot be traced back to you</span></span></span><span class="sw on"></span></div>
+          <div class="tog"><span class="n"><span><b>Dates</b> <span class="cnt">×2</span>
+            <span class="why">needed to compare the two documents</span></span></span><span class="sw on"></span></div>
+        </div>
+        <div class="row"><button class="b">Review what will be sent</button></div>
+      </section>
+
+      <!-- S5 -->
+      <section data-s="S5">
+        <p class="eyebrow">the gate</p>
+        <p class="big">This, and nothing else, leaves</p>
+        <p class="say">Watch the private fields go. The originals stay on this machine.</p>
+        <div class="docwrap" id="wipe">
+          <div><span class="f">Employee</span> <span class="v found w">A. Okafor</span></div>
+          <div><span class="f">NI number</span> <span class="v found w">QQ123456C</span></div>
+          <div><span class="f">Address</span> <span class="v found w">14 Pelham St</span></div>
+          <div><span class="f">Gross pay</span> <span class="v keep">£2,840.00</span></div>
+          <div><span class="f">Tax paid</span> <span class="v keep">£412.60</span></div>
+        </div>
+        <div class="row">
+          <button class="b gh">Back</button>
+          <button class="b">Send 4 fields to Gemini</button>
+        </div>
+      </section>
+
+      <!-- S6 -->
+      <section data-s="S6">
+        <p class="eyebrow">cloud · gemini 3.7 flash</p>
+        <p class="big">Comparing your documents</p>
+        <p class="say">Only the approved fields went up. Here they are, still on screen.</p>
+        <div class="prog"><i></i></div>
+        <div class="docwrap" style="font-size:12.5px">
+          <div><span class="f">Gross pay</span> <span class="v keep">£2,840.00</span></div>
+          <div><span class="f">Tax paid</span> <span class="v keep">£412.60</span></div>
+        </div>
+      </section>
+
+      <!-- S7 -->
+      <section data-s="S7">
+        <p class="eyebrow">result</p>
+        <p class="big">One thing does not add up</p>
+        <div class="found"><span style="font-size:17px;line-height:1.2">⚠</span>
+          <span>The income on your application form is <b>£2,400</b>, but your payslip says
+          <b>£2,840</b>. Applications are usually refused for this.</span></div>
+        <p class="eyebrow" style="margin-top:16px">drafted explanation</p>
+        <div class="docwrap" style="font-size:12.5px"><div class="ln l"></div>
+          <div class="ln m"></div><div class="ln s"></div></div>
+        <div class="row"><button class="b gh sm">Copy</button>
+          <button class="b sm">See what was shared</button></div>
+      </section>
+
+      <!-- S8 -->
+      <section data-s="S8">
+        <p class="eyebrow">receipt</p>
+        <p class="big">Everything that happened</p>
+        <ul class="log" id="log">
+          <li><span class="tagl d">device</span><span>Found 7 sensitive fields</span></li>
+          <li><span class="tagl d">device</span><span>Removed name, address, NI number, account</span></li>
+          <li><span class="tagl u">you</span><span>Approved income figures and dates</span></li>
+          <li><span class="tagl c">cloud</span><span>Sent 4 fields · 0 identifiers</span></li>
+          <li><span class="tagl c">cloud</span><span>Compared 2 documents</span></li>
+          <li><span class="tagl d">device</span><span><b>The originals never left this machine</b></span></li>
+        </ul>
+        <div class="row"><button class="b gh sm">Export receipt</button>
+          <button class="b sm">Start over</button></div>
+      </section>
+
+      <!-- E1 -->
+      <section data-s="E1">
+        <p class="eyebrow">problem</p>
+        <p class="big">The local model is not running</p>
+        <div class="fail">Gemma could not be reached.<br><br>
+          Start it with <code>ollama serve</code> then <code>ollama pull gemma4:e2b</code></div>
+        <p class="say" style="margin-top:14px">You can still continue. Pattern matching alone finds
+          account numbers, postcodes, NI numbers and emails — it just will not catch names in
+          free text.</p>
+        <div class="row"><button class="b gh">Try again</button>
+          <button class="b">Continue without the model</button></div>
+      </section>
+
+      <!-- E2 -->
+      <section data-s="E2">
+        <p class="eyebrow">nothing found</p>
+        <p class="big">This looks clean</p>
+        <p class="say">No names, addresses or account numbers were detected. That might be right —
+          or the detector missed something. You decide.</p>
+        <div class="docwrap" style="color:var(--theme-mute);font-size:13px">
+          Select any text yourself to mark it private.</div>
+        <div class="row"><button class="b gh">Mark something by hand</button>
+          <button class="b">Send as it is</button></div>
+      </section>
+
+      <!-- E3 -->
+      <section data-s="E3">
+        <p class="eyebrow">problem</p>
+        <p class="big">Gemini did not answer</p>
+        <div class="fail">Rate limited (429).<br><br>
+          <span style="color:var(--theme-ink)">Your document is safe. Nothing was lost, and nothing
+          extra was sent.</span></div>
+        <div class="row"><button class="b gh">Try again</button>
+          <button class="b">Show a saved example</button></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============== NOTES ============== -->
+  <div class="notes">
+    <div class="card">
+      <div class="id" id="nid">S1</div>
+      <h3 id="ntitle">Drop a document</h3>
+      <p id="nbody">The sample buttons are your demo insurance. Never drag a file on stage.</p>
+      <div class="meta" id="nmeta"></div>
+    </div>
+    <div class="controls">
+      <button class="b gh sm" id="prev">← Back</button>
+      <button class="b sm" id="play">▶ Play</button>
+      <button class="b gh sm" id="next">Next →</button>
+      <span class="hint">← → keys</span>
+    </div>
+  </div>
+</div>
+
+<h2>Build in this order</h2>
+<table>
+<thead><tr><th>Order</th><th>Screens</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>1st</td><td>S1 → S4 → S5</td>
+  <td>Drop, approve, confirm. This alone is a demo, even with the detection faked.</td></tr>
+<tr><td>2nd</td><td>S3 · E1</td>
+  <td>Swap fake spans for real Gemma plus the pattern-matching fallback.</td></tr>
+<tr><td>3rd</td><td>S6 → S7</td>
+  <td>Wire the cloud half. Easiest part — <code>starter/</code> has working examples.</td></tr>
+<tr><td>4th</td><td>S8 · E3</td>
+  <td>Receipt and the cached fallback. Both cheap, both protect the demo.</td></tr>
+<tr><td>if time</td><td>S2 · E2</td>
+  <td>Polish. The loading state and the empty case can be skipped.</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <b>Build S5 before it works.</b> Hard-code the redacted output if you have to. It is the screen
+  the whole pitch rests on, and once it exists everything else has an obvious target. A demo with
+  S1, S4 and S5 real and the rest faked will score better than a complete pipeline with no
+  confirmation screen.
+  <br><br>
+  <b>What that costs:</b> you will throw away the hard-coded version around 15:30. That is fine.
+  Twenty minutes of rework buys you a demo that exists at all.
+</div>
+
+<footer>
+  Snapshot · docs/visual/2026-08-22-privacy-gate-screens.html · 22 August 2026<br>
+  Styling from app/static/theme/tokens.css and components.css — the shared product theme.<br>
+  Form factor decided: web app. Screens are proposed; nothing here is built yet.<br>
+  Every value on this page is invented. No real personal data.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var SCREENS=[
+    ['S1','Drop a document','The sample buttons are your demo insurance. Never drag a file on stage — click a sample.',['empty state'],'local'],
+    ['S2','Reading it','That "nothing sent anywhere" line sets the frame before the user has to trust you.',['loading','under 1s'],'local'],
+    ['S3','Finding private fields','Turn the wifi off here. The badge flips and it keeps working. Rehearse this beat.',['gemma 4','2–5s'],'off'],
+    ['S4','Review and approve','Show the consequence, not the field name. "Sort code + account → set up a direct debit in your name" makes this a judgement about risk, not a labelling exercise. This is the screen that is hard to copy.',['main screen','the differentiator'],'off'],
+    ['S5','Exactly what leaves','Do not rush this in the demo. Let it sit for three seconds. Lead the pitch here and at S8 — per-field consent plus a receipt — never with "we redact locally", which is a published pattern a judge will recognise.',['the wow moment'],'off'],
+    ['S6','Thinking','Keep the sent payload on screen while it waits. It reminds people how little went up.',['cloud','2–6s'],'cloud'],
+    ['S7','What it found','One concrete finding beats three vague ones. Seed the samples so the mismatch always appears.',['the payoff'],'cloud'],
+    ['S8','The receipt','Cheap to build, disproportionately memorable. End the demo here. Consent plus receipt is the pair nothing else ships — it is what makes this more than redact-then-ask.',['closing screen','differentiator'],'cloud'],
+    ['E1','Local model not running','The pattern-matching fallback saves the demo. Wire it early.',['failure'],'fail'],
+    ['E2','Nothing found','Manual selection is also your honest answer to "what if it misses something?"',['empty result'],'off'],
+    ['E3','Cloud call failed','"Show a saved example" is your stage insurance. Wire it before 16:00.',['failure','429'],'fail']
+  ];
+  var KEY={S5:1};
+  var i=0,timer=null;
+  var view=document.getElementById('view'),rail=document.getElementById('rail'),
+      net=document.getElementById('net'),nid=document.getElementById('nid'),
+      nt=document.getElementById('ntitle'),nb=document.getElementById('nbody'),
+      nm=document.getElementById('nmeta');
+  var NETTXT={local:'local ready',off:'wifi off',cloud:'cloud',fail:'failed'};
+
+  SCREENS.forEach(function(s,n){
+    var b=document.createElement('button');
+    b.className='step'+(s[0][0]==='E'?' err':'');
+    b.innerHTML='<b>'+s[0]+'</b>'+s[1];
+    b.setAttribute('role','tab');
+    b.addEventListener('click',function(){stop();go(n)});
+    rail.appendChild(b);
+  });
+  var steps=[].slice.call(rail.children);
+
+  function go(n){
+    i=(n+SCREENS.length)%SCREENS.length;
+    var s=SCREENS[i];
+    [].forEach.call(view.children,function(el){
+      el.classList.toggle('on',el.dataset.s===s[0]);
+    });
+    steps.forEach(function(b,k){b.setAttribute('aria-current',k===i?'true':'false')});
+    net.className='netbadge '+s[4]; net.textContent=NETTXT[s[4]];
+    nid.textContent=s[0]; nt.textContent=s[1]; nb.textContent=s[2];
+    nm.innerHTML=s[3].map(function(t){
+      return '<span class="mchip'+(KEY[s[0]]?' key':'')+'">'+t+'</span>'}).join('');
+    if(s[0]==='S5') wipe();
+    if(s[0]==='S3') reveal();
+    if(s[0]==='S8') stagger();
+  }
+  function wipe(){
+    var els=view.querySelectorAll('#wipe .w');
+    [].forEach.call(els,function(el,k){
+      el.classList.remove('wiped');
+      setTimeout(function(){el.classList.add('wiped')},420+k*300);
+    });
+  }
+  function reveal(){
+    var els=view.querySelectorAll('#scan .v');
+    [].forEach.call(els,function(el,k){
+      el.className='v pending';
+      setTimeout(function(){el.className='v '+(k<2?'found':(k===2?'found':'keep'))},500+k*380);
+    });
+  }
+  function stagger(){
+    var els=view.querySelectorAll('#log li');
+    [].forEach.call(els,function(el,k){
+      el.style.animation='none'; el.offsetHeight;
+      el.style.animation='fadein 500ms ease '+(k*140)+'ms forwards';
+    });
+  }
+  function stop(){ if(timer){clearInterval(timer);timer=null;
+    document.getElementById('play').textContent='▶ Play';} }
+  document.getElementById('next').addEventListener('click',function(){stop();go(i+1)});
+  document.getElementById('prev').addEventListener('click',function(){stop();go(i-1)});
+  document.getElementById('play').addEventListener('click',function(){
+    if(timer){stop();return}
+    this.textContent='❚❚ Pause';
+    timer=setInterval(function(){ if(i>=7){stop();return} go(i+1) },2600);
+    if(i>=7) go(0);
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'){stop();go(i+1)}
+    if(e.key==='ArrowLeft'){stop();go(i-1)}
+  });
+  // toggles are live so the page feels real
+  view.addEventListener('click',function(e){
+    var sw=e.target.closest('.sw'); if(sw) sw.classList.toggle('on');
+  });
+  go(0);
+})();
+</script>
+</body>
+</html>

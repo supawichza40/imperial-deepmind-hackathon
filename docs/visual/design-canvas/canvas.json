@@ -1,0 +1,58 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "The product" },
+    { "id": "page-2", "name": "Design system" }
+  ],
+  "artboards": [
+    { "file": "Import.dc.html", "x": 0, "y": 0, "w": 1280, "h": 960, "title": "1 · Bring documents in", "page": "page-1" },
+    { "file": "Batch.dc.html", "x": 1400, "y": 0, "w": 1280, "h": 1180, "title": "2 · Scan a Drive folder", "page": "page-1" },
+    { "file": "Main.dc.html", "x": 2800, "y": 0, "w": 1280, "h": 1120, "title": "3 · Review and approve", "page": "page-1" },
+    { "file": "Share.dc.html", "x": 4200, "y": 0, "w": 1280, "h": 1240, "title": "4 · What leaves the machine", "page": "page-1" },
+    { "file": "Gemini.dc.html", "x": 5600, "y": 0, "w": 1280, "h": 1400, "title": "5 · Use it, or take it away", "page": "page-1" },
+    { "file": "Components.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1180, "title": "Controls", "page": "page-2" },
+    { "file": "Palette.dc.html", "x": 1200, "y": 0, "w": 980, "h": 1420, "title": "Colour and type", "page": "page-2" }
+  ],
+  "annotations": [
+    {
+      "id": "flow-note",
+      "x": 0,
+      "y": -180,
+      "w": 520,
+      "text": "The whole product, left to right, in the order a person meets it.\nEvery colour, radius, control size and type value is read from app/static/theme/tokens.css and components.css. Nothing here is invented styling.",
+      "page": "page-1"
+    },
+    {
+      "id": "money-screen",
+      "x": 2800,
+      "y": -180,
+      "w": 460,
+      "text": "Screen 3 is the product.\nIt does not say \"account number redacted\". It says what someone could DO with that field. That inference chain is the part nothing else ships.",
+      "page": "page-1"
+    },
+    {
+      "id": "safety-note",
+      "x": 4200,
+      "y": -180,
+      "w": 440,
+      "text": "Public sharing stays OFF by default and needs a second, deliberate switch.\nBatch scanning finds documents. It never publishes them.",
+      "page": "page-1"
+    },
+    {
+      "id": "exit-note",
+      "x": 5600,
+      "y": -180,
+      "w": 480,
+      "text": "Screen 5 is optional, and that is the point.\nThe hiding finishes at screen 4. Gemini is something you may then choose to do. Either way the files download as ordinary PDF, text and JSON that open without this app.",
+      "page": "page-1"
+    },
+    {
+      "id": "system-note",
+      "x": 0,
+      "y": -140,
+      "w": 440,
+      "text": "The parts the screens are built from, as they exist in the theme files at commit 8c696e7.",
+      "page": "page-2"
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

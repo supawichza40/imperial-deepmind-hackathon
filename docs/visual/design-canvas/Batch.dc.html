@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px;
+            background: #111111; color: #ffffff; font-family: inherit; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+    .pill.ghost { background: #ffffff; color: #111111; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+            border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; }
+    .doc { display: grid; grid-template-columns: 24px 1fr 150px 132px 108px; gap: 24px;
+           align-items: center; padding: 20px 0; border-bottom: 1px solid #e6e1d8; }
+    .doc:last-child { border-bottom: 0; }
+  </style>
+</helmet>
+
+<div style="min-height: 100%; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 40px; border-bottom: 1px solid #e6e1d8">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">Privacy Gate</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span class="mono" style="color: #666666">gemma4:e2b · warm · offline</span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #111111"></span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 48px 40px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="lbl">Step two of three · scanned on this machine</span>
+          <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; text-transform: none">18 documents, 4 need your attention</h1>
+          <span class="mono" style="color: #666666">~/Google Drive/My Drive/Documents · 41 seconds · nothing sent anywhere</span>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center">
+          <button class="pill ghost">Rescan</button>
+          <button class="pill">Review 4 flagged</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <div style="background: #ffffff; border-radius: 28px; padding: 24px 32px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1">18</span>
+          <span class="lbl">Scanned</span>
+        </div>
+        <div style="background: #ffffff; border-radius: 28px; padding: 24px 32px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; color: #8c6a3c">4</span>
+          <span class="lbl">Need review</span>
+        </div>
+        <div style="background: #ffffff; border-radius: 28px; padding: 24px 32px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1">11</span>
+          <span class="lbl">Clean</span>
+        </div>
+        <div style="background: #f4f1ea; border-radius: 28px; padding: 24px 32px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1">0</span>
+          <span class="lbl">Shared so far</span>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08)">
+
+        <div style="display: grid; grid-template-columns: 24px 1fr 150px 132px 108px; gap: 24px; padding-bottom: 16px; border-bottom: 1px solid #e6e1d8">
+          <span></span>
+          <span class="lbl">Document</span>
+          <span class="lbl">Found</span>
+          <span class="lbl">Risk</span>
+          <span class="lbl">State</span>
+        </div>
+
+        <div class="doc">
+          <span style="width: 18px; height: 18px; border: 1px solid #111111; border-radius: 6px; background: #111111"></span>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">Payslip August.pdf</span>
+            <span class="mono" style="color: #666666">modified 3 days ago</span>
+          </div>
+          <span style="color: #666666; font-size: 14px">name, account, NI</span>
+          <span class="chip" style="background: #f3e8e4; color: #8a2a22">High</span>
+          <span class="chip" style="background: #f4f1ea; color: #8c6a3c">Review</span>
+        </div>
+
+        <div class="doc">
+          <span style="width: 18px; height: 18px; border: 1px solid #111111; border-radius: 6px; background: #111111"></span>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">Tenancy agreement.pdf</span>
+            <span class="mono" style="color: #666666">modified 2 weeks ago</span>
+          </div>
+          <span style="color: #666666; font-size: 14px">name, address, signature</span>
+          <span class="chip" style="background: #f3e8e4; color: #8a2a22">High</span>
+          <span class="chip" style="background: #f4f1ea; color: #8c6a3c">Review</span>
+        </div>
+
+        <div class="doc">
+          <span style="width: 18px; height: 18px; border: 1px solid #111111; border-radius: 6px; background: #111111"></span>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">Bank statement Jul.pdf</span>
+            <span class="mono" style="color: #666666">modified 1 month ago</span>
+          </div>
+          <span style="color: #666666; font-size: 14px">account, address</span>
+          <span class="chip" style="background: #f4f1ea; color: #8c6a3c">Medium</span>
+          <span class="chip" style="background: #f4f1ea; color: #8c6a3c">Review</span>
+        </div>
+
+        <div class="doc">
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 6px; background: #ffffff"></span>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">Passport scan.jpg</span>
+            <span class="mono" style="color: #666666">modified 4 months ago</span>
+          </div>
+          <span style="color: #666666; font-size: 14px">photo, DOB, name</span>
+          <span class="chip" style="background: #f3e8e4; color: #8a2a22">High</span>
+          <span class="chip" style="background: #f4f1ea; color: #8c6a3c">Review</span>
+        </div>
+
+        <div class="doc">
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 6px; background: #ffffff"></span>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500; color: #666666">Recipe notes.txt</span>
+            <span class="mono" style="color: #666666">modified yesterday</span>
+          </div>
+          <span style="color: #666666; font-size: 14px">nothing</span>
+          <span class="chip" style="background: #f4f1ea; color: #666666">None</span>
+          <span class="chip" style="background: #f4f1ea; color: #666666">Clean</span>
+        </div>
+
+      </div>
+
+      <div style="background: #f4f1ea; border-radius: 28px; padding: 32px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+        <div style="display: flex; gap: 24px; align-items: flex-start">
+          <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; flex: none; margin-top: 3px; stroke: #8c6a3c; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+          <p style="margin: 0; color: #666666; font-size: 14px; max-width: 560px">Three selected. Nothing becomes shareable until you approve each one field by field. Batch scanning finds them, it never publishes them.</p>
+        </div>
+        <button class="pill">Review selected</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

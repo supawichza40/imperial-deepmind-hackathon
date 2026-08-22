@@ -225,45 +225,6 @@ If a fallback was triggered, an additional entry appears:
 
 ---
 
-### 2.6 POST /api/chat  (STRETCH)
-
-Free-form conversation over the sanitised payload. Same privacy boundary as `/api/reason`: this endpoint never receives original text.
-
-**Request:**
-```json
-{
-  "sanitised_payload": "--- DOCUMENT: PAYSLIP ---\n...",
-  "history": [
-    {"role": "user", "content": "Does my income cover the rent?"},
-    {"role": "model", "content": "Comfortably, on the figures you shared..."}
-  ],
-  "message": "What account is the salary paid into?"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "reply": "I cannot see that. The account number was hidden before this document reached me, so there is nothing here for me to read.",
-  "cited_fields": [],
-  "refused_field_types": ["account_number"]
-}
-```
-
-- `reply` is plain text for display.
-- `cited_fields` names the visible fields the answer used, for the citation chips in the UI.
-- `refused_field_types` is non-empty when the question needed redacted material. The UI renders those differently (wood left border, per ui.md).
-
-**Error cases:**
-- `400` when `sanitised_payload` or `message` is empty.
-- `200` with a fallback body when Gemini fails after retries: `reply` explains the cloud call failed, `cited_fields` and `refused_field_types` empty. Same reasoning as §2.4: never crash the demo on a Gemini outage.
-
-**System prompt addition:** instruct the model that `[REDACTED]` and `[BLACKLABELED ...]` markers are fields the user deliberately withheld, that it must say plainly it cannot see them, and that it must never infer or guess their contents.
-
-**Spec traceability:** FR-40 through FR-43. Calls `reasoner.chat(payload, history, message)`.
-
----
-
 ## 3. Frontend interaction flow
 
 The frontend calls these endpoints in sequence, matching the demo flow (spec §5):

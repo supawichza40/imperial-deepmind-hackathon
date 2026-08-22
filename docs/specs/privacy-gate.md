@@ -73,11 +73,17 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 ### 3.1 Span (detector output element)
 ```python
 class Span(TypedDict):
-    type: str       # field type label, see §4
-    start: int      # zero-based char offset into source text (inclusive)
-    end: int        # zero-based char offset (exclusive)
-    text: str       # the matched substring, for verification
+    id: str           # stable identifier, e.g. "name-1"
+    type: str         # field type label, see §4
+    start: int        # zero-based char offset into source text (inclusive)
+    end: int          # zero-based char offset (exclusive)
+    value: str        # the matched substring (renamed from "text" — see ADR-011)
+    kind: str         # "text" (default), "signature", or "personal_image"
+    image_id: str     # for image spans: links to Image.id; empty for text spans
+    bbox: list[float] # for image spans: [x, y, w, h] as 0-1 fractions; None for text
 ```
+
+Image/signature spans use `start: 0, end: 0` (no text offset) and point at an image via `image_id`.
 
 ### 3.2 Span map (full detector output)
 ```json
@@ -93,14 +99,29 @@ class Span(TypedDict):
 ### 3.3 Consent decision
 ```json
 {
-  "shared_types":  ["income", "date"],
-  "blocked_types": ["name", "address", "ni_number", "account_number"]
+  "toggles": {
+    "name": "blacklabel",
+    "address": "blacklabel",
+    "ni_number": "blacklabel",
+    "account_number": "blacklabel",
+    "email": "blacklabel",
+    "phone": "blacklabel",
+    "date_of_birth": "blacklabel",
+    "signature": "blacklabel",
+    "personal_image": "blacklabel"
+  },
+  "passphrase": null
 }
 ```
-Every detected type appears in exactly one list.
+
+3-state toggle per type (ADR-012): `keep` (visible/shared), `blacklabel` (blocked, `█` bars), `encrypt` (blocked, `[ENCRYPTED ...]` with AES-GCM). `passphrase` required when any toggle is `encrypt`. Never logged.
+
+For audit compatibility: `keep` → `shared`, `blacklabel`/`encrypt` → `kept_local`.
 
 ### 3.4 Sanitised payload
-Source document string with every span whose type is in `blocked_types` replaced by `[REDACTED]`. Shared-type spans left intact. Replacements applied in reverse offset order. This is the only text that crosses the gate.
+Source document string with every span whose toggle is `blacklabel` replaced by `█` bars (same length) and every `encrypt` span replaced by `[ENCRYPTED ...]`. `keep` spans are left intact. Replacements applied in reverse offset order. This is the only text that crosses the gate.
+
+Do NOT emit `[REDACTED]` — the built UI and export code use `█` and `[ENCRYPTED ...]` (ADR-012).
 
 ### 3.5 Multi-document payload (if FR-3 is built)
 If two documents are used, concatenate their sanitised texts with a delimiter:
@@ -144,17 +165,17 @@ One entry per field type. `decision` is `kept_local`, `shared`, or `fallback` (f
 # Detector — local, pure function. Returns DetectionResult with spans + fallback metadata.
 def detect(text: str) -> DetectionResult: ...
 
-# Sanitiser — deterministic, pure function
-def sanitise(text: str, spans: list[Span], blocked_types: list[str]) -> str: ...
+# Sanitiser — deterministic, pure function (optional — browser does redaction client-side)
+def sanitise(text: str, spans: list[Span], toggles: dict[str, str], passphrase: str | None = None) -> str: ...
 
-# Consent — UI produces this
-def get_consent(spans: list[Span]) -> ConsentDecision: ...
+# Consent — UI produces this (PrivacyExport.mount in the browser)
+# toggles: {type: "keep"|"blacklabel"|"encrypt"}, passphrase: str | None
 
 # Cloud reasoner — calls Gemini
 def reason(payload: str) -> GeminiResult: ...
 
 # Audit — produces the log. Takes per-doc spans + per-doc detection results.
-def build_audit(all_spans: dict[str, list[Span]], decision: ConsentDecision,
+def build_audit(all_spans: dict[str, list[Span]], toggles: dict[str, str],
                 detection_results: dict[str, DetectionResult] | None = None) -> list[AuditEntry]: ...
 ```
 
@@ -164,17 +185,21 @@ def build_audit(all_spans: dict[str, list[Span]], decision: ConsentDecision,
 
 ## 4. Field types
 
-Consolidated to 5 types for the 2-hour build. Each has a checkbox in the consent UI.
+9 identity field types, all default `blacklabel`. Pay figures (gross, net, tax) are NOT a field type — they stay visible because they are untyped payload data, which is how the Gemini inconsistency check works without any toggle.
 
-| Type | Detected by | Example | Default consent |
+| Type | Detected by | Example | Default |
 |---|---|---|---|
-| `name` | Gemma | "A. Okafor" | blocked |
-| `address` | Gemma + regex (postcode) | "14 Pelham St, SW7 2AZ" | blocked |
-| `ni_number` | regex | "QQ123456C" | blocked |
-| `account_number` | regex | "12345678" | blocked |
-| `income` | Gemma | "£2,840.00" | shared |
+| `name` | Gemma | "A. Okafor" | blacklabel |
+| `address` | Gemma + regex (postcode) | "14 Pelham St, SW7" | blacklabel |
+| `ni_number` | regex | "QQ123456C" | blacklabel |
+| `account_number` | regex | "4417" | blacklabel |
+| `email` | regex | "a.okafor@example.com" | blacklabel |
+| `phone` | regex | "07700 900123" | blacklabel |
+| `date_of_birth` | Gemma | "14 Mar 1998" | blacklabel |
+| `signature` | Gemma | "A. Okafor" | blacklabel |
+| `personal_image` | Gemma / images | staff photo | blacklabel |
 
-`date` and `email` are detected by regex but grouped under existing types or left unredacted by default. Keep it simple — 5 checkboxes, not 9.
+See ADR-011 (supersedes ADR-004's 5-type reduction). Canonical list in `app/export/fields.py`.
 
 ---
 
@@ -211,21 +236,24 @@ This is a requirement — 20% of the rubric.
 
 These are the exact strings the app loads. No real personal data. The payslip and bank statement contain a **planted inconsistency**: gross pay £2,840.00 on the payslip vs deposit £2,480.00 on the bank statement.
 
-### 7.1 Payslip
+### 7.1 Payslip (canonical — matches `app/export/sample.py`)
 ```
-PAYSLIP — July 2026
+ACME LTD  —  PAYSLIP
+Period: July 2026
+
 Employee: A. Okafor
-NI Number: QQ123456C
-Address: 14 Pelham St, London SW7 2AZ
-Bank Account: 12345678
-Sort Code: 12-34-56
+NI number: QQ123456C
+Address: 14 Pelham St, SW7
+Email: a.okafor@example.com
+Phone: 07700 900123
+Account: 4417
+Date of birth: 14 Mar 1998
 
-Gross Pay: £2,840.00
-Tax Deducted: £412.60
-Net Pay: £2,427.40
+Gross pay: £2,840.00
+Tax paid: £412.60
+Net pay: £2,427.40
 
-Employer: Pelham Consulting Ltd
-Pay Date: 25 July 2026
+Signature: A. Okafor
 ```
 
 ### 7.2 Bank statement
@@ -303,12 +331,19 @@ Documents:
 
 - Guaranteed anonymisation / formal privacy guarantees.
 - Real personal data.
-- File upload / PDF parsing / OCR.
+- PDF parsing / OCR (file upload is not supported; documents are synthetic text).
 - Live screen capture as input.
 - Mobile or non-macOS local runtime.
 - Model fine-tuning.
 - Gemini tool use / function calling (cut — too much failure surface for zero demo value).
 - Per-span consent overrides (per-type only).
+- Server-side vault persistence (vault runs in localStorage for the demo; REST endpoints are specified in [ui.md](ui.md) §7.4 but not built).
+
+**In scope (built by teammate, documented in [ui.md](ui.md)):**
+- Vault with ACL, roles, folder lock (PBKDF2), two-step delete (TOTP).
+- QR share with `#t=` instant transfer (gzip JSON) and optional AES-GCM encryption with creator key.
+- Export zip (Python `build_zip_bytes`) with sanitised text, HTML, audit, and encrypted vault meta.
+- Client-side redaction via `PrivacyExport` panel (browser does the redaction, not the server).
 
 ---
 

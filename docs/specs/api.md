@@ -60,13 +60,15 @@ Run sensitive-field detection on one or more documents. Returns spans per docume
 {
   "results": {
     "payslip": {
+      "text": "ACME LTD  —  PAYSLIP\n...",
       "spans": [
-        {"type": "name", "start": 25, "end": 34, "text": "A. Okafor"},
-        {"type": "ni_number", "start": 47, "end": 59, "text": "QQ123456C"},
-        {"type": "address", "start": 69, "end": 94, "text": "14 Pelham St, London SW7 2AZ"},
-        {"type": "account_number", "start": 110, "end": 118, "text": "12345678"},
-        {"type": "income", "start": 140, "end": 151, "text": "£2,840.00"}
+        {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text", "image_id": "", "bbox": null},
+        {"id": "ni-1", "type": "ni_number", "start": 72, "end": 84, "value": "QQ123456C", "kind": "text", "image_id": "", "bbox": null}
       ],
+      "images": [
+        {"id": "staff-photo", "alt": "Staff photo", "data_url": "data:image/svg+xml;utf8,..."}
+      ],
+      "documentName": "payslip",
       "fallback_triggered": false,
       "warning": ""
     }
@@ -74,7 +76,14 @@ Run sensitive-field detection on one or more documents. Returns spans per docume
 }
 ```
 
-`results` is a dict keyed by document id. Each value is a `DetectionResult` (see [types](privacy-gate.md) §3.1 / design §3.1).
+`results` is a dict keyed by document id. Each value includes:
+- `text`: the original document text (required — the frontend needs it to highlight spans against the same string the offsets were measured on).
+- `spans`: list of Span objects with `id`, `type`, `start`, `end`, `value`, `kind`, `image_id`, `bbox` (see [ui.md §6.1](ui.md)).
+- `images`: list of image objects for image/signature spans.
+- `documentName`: download stem.
+- `fallback_triggered` + `warning`: DetectionResult metadata.
+
+**Privacy note:** `text` is the original document. This is sent from browser to localhost FastAPI only (same-origin). It never leaves the machine. The backend uses it for detection only.
 
 **Error cases:**
 - `400` — `documents` array is empty or missing.
@@ -84,32 +93,35 @@ Run sensitive-field detection on one or more documents. Returns spans per docume
 
 ---
 
-### 2.3 POST /api/sanitise
+### 2.3 POST /api/sanitise (optional — headless/CLI utility)
 
-Produce the sanitised payload from document text, detected spans, and the user's consent decision.
+**Note:** The primary redaction path is **client-side** in the browser via `PrivacyExport.mount()` (see [ui.md §5.1](ui.md)). This endpoint is kept for headless testing, CLI use, and non-browser clients. The browser does not call it in the normal demo flow.
+
+Produce the sanitised payload from document text, detected spans, and the user's toggle decisions.
 
 **Request:**
 ```json
 {
   "documents": [
-    {"id": "payslip", "text": "PAYSLIP — July 2026\n..."}
+    {"id": "payslip", "text": "ACME LTD  —  PAYSLIP\n..."}
   ],
   "spans": {
     "payslip": [
-      {"type": "name", "start": 25, "end": 34, "text": "A. Okafor"},
-      {"type": "income", "start": 140, "end": 151, "text": "£2,840.00"}
+      {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"}
     ]
   },
-  "consent": {
-    "shared_types": ["income"],
-    "blocked_types": ["name", "ni_number", "address", "account_number"]
-  }
+  "toggles": {
+    "name": "blacklabel",
+    "address": "blacklabel",
+    "ni_number": "blacklabel",
+    "account_number": "blacklabel"
+  },
+  "passphrase": null
 }
 ```
 
-- `documents`: array of `{id, text}` — the original document texts.
-- `spans`: dict of `{doc_id: list[Span]}` — the detection results from `POST /api/detect`.
-- `consent`: `ConsentDecision` — which types the user approved to share vs block.
+- `toggles`: dict of `{type: "keep"|"blacklabel"|"encrypt"}` (ADR-012).
+- `passphrase`: required if any toggle is `encrypt`. Never logged.
 
 **Response:** `200 OK`
 ```json
@@ -232,14 +244,19 @@ Steps 4-6 can be combined into a single "Send to Gemini" button click in the UI:
 
 ## 4. Static file serving
 
+Multi-page routes (ADR-013). The app has three entry points, not a single SPA.
+
 | Route | Serves |
 |---|---|
-| `GET /` | `static/index.html` |
-| `GET /static/{path}` | Files in `static/` directory |
-| `GET /manifest.json` | `static/manifest.json` (for PWA registration) |
+| `GET /` | Redirect to `/vault/` |
+| `GET /vault/` | `app/static/vault/index.html` |
+| `GET /privacy-export/` | `app/static/privacy-export/index.html` |
+| `GET /theme/` | `app/static/theme/index.html` |
+| `GET /static/{path}` | Files in `app/static/` directory |
+| `GET /manifest.json` | `app/static/manifest.json` (for PWA registration) |
 | `GET /service-worker.js` | Service worker (served at root for `/` scope) |
 
-FastAPI's `StaticFiles` mount handles `/static/{path}`. The root `/` is handled by a `@app.get("/")` endpoint that returns `FileResponse("static/index.html")`. The service worker is served at root via `@app.get("/service-worker.js")` returning `FileResponse("static/service-worker.js")` — required for `/` scope (a service worker at `/static/` can only intercept `/static/*`).
+FastAPI's `StaticFiles` mount handles `/static/{path}`. The three route directories (`/vault/`, `/privacy-export/`, `/theme/`) are served via `StaticFiles` mounts at their respective paths. Root `/` redirects to `/vault/`. The service worker is served at root for `/` scope.
 
 ---
 
@@ -272,31 +289,44 @@ class DetectRequest(BaseModel):
     documents: list[DocumentInput]
 
 class SpanModel(BaseModel):
+    id: str = ""
     type: str
     start: int
     end: int
-    text: str
+    value: str = ""
+    kind: str = "text"
+    image_id: str = ""
+    bbox: list[float] | None = None
+
+class ImageModel(BaseModel):
+    id: str
+    alt: str = ""
+    data_url: str = ""
 
 class DetectionResultModel(BaseModel):
-    spans: list[SpanModel]
-    fallback_triggered: bool
-    warning: str
+    text: str = ""
+    spans: list[SpanModel] = []
+    images: list[ImageModel] = []
+    documentName: str = ""
+    fallback_triggered: bool = False
+    warning: str = ""
 
 class ConsentRequest(BaseModel):
-    shared_types: list[str]
-    blocked_types: list[str]
+    toggles: dict[str, str]       # {type: "keep"|"blacklabel"|"encrypt"}
+    passphrase: str | None = None
 
 class SanitiseRequest(BaseModel):
     documents: list[DocumentInput]
     spans: dict[str, list[SpanModel]]
-    consent: ConsentRequest
+    toggles: dict[str, str]
+    passphrase: str | None = None
 
 class ReasonRequest(BaseModel):
     sanitised_payload: str
 
 class AuditRequest(BaseModel):
     spans: dict[str, list[SpanModel]]
-    consent: ConsentRequest
+    toggles: dict[str, str]
     detection_results: dict[str, DetectionResultModel] = {}
 
 class GeminiResultModel(BaseModel):
@@ -311,7 +341,12 @@ class AuditEntryModel(BaseModel):
     details: str
 ```
 
-These are defined in `api/main.py` (or a separate `api/models.py` if it gets long). They do NOT replace `types.py` — the core modules still use TypedDicts. The API layer converts between Pydantic models and TypedDicts at the boundary.
+These are defined in `api/main.py` (or `api/contracts.py`). They do NOT replace `types.py` — the core modules still use TypedDicts. The API layer converts between Pydantic models and TypedDicts at the boundary.
+
+**Key changes from original spec (ADR-011, ADR-012):**
+- `SpanModel` now has `id`, `value` (was `text`), `kind`, `image_id`, `bbox`.
+- `ConsentRequest` uses `toggles` + `passphrase` (was `shared_types`/`blocked_types`).
+- `DetectionResultModel` now includes `text`, `images`, `documentName`.
 
 ---
 

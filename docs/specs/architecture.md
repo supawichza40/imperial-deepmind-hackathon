@@ -82,34 +82,57 @@ User's machine:
 
 ```
 app/
-├── types.py              # Shared TypedDicts (unchanged from design doc)
-├── fixtures.py           # Synthetic documents (unchanged)
-├── detector.py           # Regex + Gemma detection (unchanged)
-├── sanitiser.py          # Reverse-offset redaction (unchanged)
-├── reasoner.py           # Gemini cloud call (unchanged)
-├── audit.py              # Audit log builder (unchanged)
+├── types.py              # Shared TypedDicts
+├── fixtures.py           # Synthetic documents
+├── detector.py           # Regex + Gemma detection
+├── sanitiser.py          # Reverse-offset redaction (optional — browser does client-side)
+├── reasoner.py           # Gemini cloud call
+├── audit.py              # Audit log builder
 ├── main.py               # CLI entry point (kept for headless testing)
+├── export/               # Export zip + redaction (built by teammate)
+│   ├── redact.py          # apply_export — █ blacklabel + [ENCRYPTED] 
+│   ├── fields.py          # 9 field types, default_toggles
+│   ├── pack.py            # build_zip_bytes
+│   ├── crypto.py          # AES-GCM, PBKDF2
+│   └── sample.py          # Canonical payslip fixture
+├── access/               # Vault, ACL, QR share (built by teammate)
+│   ├── acl.py             # Role ladder, inheritance
+│   ├── share.py           # Signed pointer (#s=)
+│   ├── transfer.py        # Instant transfer (#t=) gzip JSON
+│   ├── totp.py            # TOTP for two-step delete
+│   └── store.py           # Vault state
 ├── api/
 │   ├── __init__.py
-│   └── main.py           # FastAPI app: static files + REST endpoints
-├── static/
-│   ├── index.html         # Single-page app
-│   ├── app.js             # UI logic: fetch API, render, consent, audit
-│   ├── styles.css         # Layout + redaction highlighting
+│   ├── contracts.py       # Pydantic models (shared with frontend mock builder)
+│   └── main.py            # FastAPI app: static files + REST endpoints
+├── static/                # Multi-page frontend (ADR-013)
+│   ├── vault/             # /vault/ — folder management, ACL, QR share
+│   │   ├── index.html
+│   │   ├── vault.js        # PrivacyVault.mount
+│   │   ├── qr.js           # PrivacyQr.svg
+│   │   └── qrcodegen.js    # Nayuki QR encoder
+│   ├── privacy-export/    # /privacy-export/ — consent panel, redaction preview
+│   │   ├── index.html
+│   │   ├── privacy-export.js  # PrivacyExport.mount
+│   │   └── demo-payload.js    # window.PRIVACY_EXPORT_DEMO
+│   ├── theme/             # /theme/ — design tokens (not a product screen)
+│   │   ├── tokens.js
+│   │   ├── tokens.css
+│   │   └── components.css
 │   ├── manifest.json      # PWA install metadata
-│   ├── service-worker.js  # Offline shell cache
+│   ├── service-worker.js  # Offline shell cache (scope: /)
 │   └── icons/
-│       ├── icon-192.png   # PWA icon 192x192
-│       └── icon-512.png   # PWA icon 512x512
+│       ├── icon-192.png
+│       └── icon-512.png
 └── tests/
     ├── __init__.py
-    ├── conftest.py         # Pytest fixtures: client, mock Ollama, mock Gemini
-    ├── test_detector.py    # TDD tests for detector.py
-    ├── test_sanitiser.py   # TDD tests for sanitiser.py
-    ├── test_reasoner.py    # TDD tests for reasoner.py
-    ├── test_audit.py       # TDD tests for audit.py
-    ├── test_api.py         # TDD tests for API endpoints
-    └── test_e2e.py         # End-to-end flow test
+    ├── conftest.py
+    ├── test_detector.py
+    ├── test_sanitiser.py
+    ├── test_reasoner.py
+    ├── test_audit.py
+    ├── test_api.py
+    └── test_e2e.py
 ```
 
 **Key points:**

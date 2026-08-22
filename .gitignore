@@ -1,0 +1,10 @@
+.env
+.env.local
+*.key
+venv/
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+notes/playground/

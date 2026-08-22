@@ -1,8 +1,12 @@
 # Privacy Gate — Design Document
 
-**What this is:** the technical design that implements the [requirements spec](../specs/privacy-gate.md). How the system is structured, what code goes where, and how the components connect.
-**Status:** detector / sanitiser-merge / reasoner algorithms still apply. §3.1 `FieldType` (`income` + five types), binary consent, Streamlit §3.7, and `[REDACTED]` tokens are **stale**. Use [ui.md](ui.md), [privacy-gate.md](privacy-gate.md) §3–§4, and ADR-011 / ADR-012 / ADR-013.
-**UI source of truth for backend:** [ui.md](ui.md) (vault, export panel, `#t=` QR, nine field types, keep / blacklabel / encrypt).
+**What this is:** the technical design that implements the [requirements spec](../specs/privacy-gate.md).
+**Status:** **Partially superseded.** The detector/sanitiser/reasoner/audit algorithms (§3.3-§3.6) and merge logic are still the source of truth for backend module implementation. The Streamlit UI section (§3.7), module map (§2), system diagram (§1), data flow (§4), dependency graph (§5), build instructions (§7), testing (§8), and demo run-sheet (§9) are **obsolete** — use [architecture.md](architecture.md), [ui.md](ui.md), [testing.md](testing.md), and [development-plan.md](development-plan.md) instead.
+**Key superseded areas:**
+- §3.1 types.py: 5 types → 9 types (ADR-011), `text` → `value`, binary consent → 3-state (ADR-012)
+- §3.4 sanitiser: `[REDACTED]` → `█`/`[ENCRYPTED]`, `blocked_types` → `toggles`
+- §3.7 app.py: Streamlit → FastAPI + multi-page PWA (ADR-010, ADR-013)
+- §8 testing: "no test framework" → pytest TDD (see testing.md)
 **Build window:** ~2 hours, agent-driven.
 
 ---
@@ -266,6 +270,23 @@ def reason(payload: str) -> GeminiResult:
 - **Original text never enters this function.** It only receives the sanitised payload string (spec FR-18).
 
 **Alignment:** spec FR-17 through FR-21, §3.7, §9.2. NFR-6.
+
+### 3.5a `reasoner.chat()`, conversation (STRETCH)
+
+```python
+def chat(payload: str, history: list[dict], message: str) -> ChatResult:
+    """Free-form Q&A over the sanitised payload. Never receives original text."""
+```
+
+**Implementation:**
+- Same client, model constant and retry wrapper as `reason()`.
+- Builds `input` as the sanitised payload, then prior turns, then the new message.
+- System instruction must state that redaction markers are deliberate withholdings, that the model says plainly when it cannot see a field, and that it never guesses at removed content.
+- Returns `ChatResult(reply: str, cited_fields: list[str], refused_field_types: list[str])`.
+- Same defensive JSON parsing as `reason()`. On a parse failure, return the raw text as `reply` with both lists empty, rather than raising.
+- **Original text never enters this function.** It takes a string payload, the same boundary as `reason()` (spec FR-18, FR-40).
+
+**Alignment:** spec FR-40 through FR-43, api.md §2.6.
 
 ### 3.6 `audit.py` — audit log
 

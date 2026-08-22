@@ -36,8 +36,8 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 ### 2.2 Detection (local, on-device)
 - **FR-4 (MUST):** Detect sensitive fields on-device before any network call.
 - **FR-5 (MUST):** Use regex baseline. The exact patterns are in §8. Covers: NI numbers, UK postcodes, emails, account numbers.
-- **FR-6 (MUST):** Use Gemma 4 E2B for names in context and other sensitive fields regex can't catch (date of birth, signature, address). Gemma returns `{text, type}` pairs — matched substrings, NOT character offsets. Python resolves offsets via `str.find()`. Do not tag pay figures as a field type (ADR-011).
-- **FR-7 (MUST):** The detector merges regex + Gemma results into a single span map matching [ui.md](ui.md) §6.1: `{id, type, start, end, value, kind, image_id?, bbox?}`. `start`/`end` are zero-based char offsets resolved in Python. Image spans use `start: 0, end: 0`.
+- **FR-6 (MUST):** Use Gemma 4 E2B for names, addresses, emails, phone numbers, dates of birth, and signatures in context — fields regex can't reliably catch. Gemma returns `{text, type}` pairs — matched substrings, NOT character offsets. Python resolves offsets via `str.find()`.
+- **FR-7 (MUST):** The detector merges regex + Gemma results into a single span map: `[{id, type, start, end, value, kind, image_id, bbox}]` where `start`/`end` are zero-based char offsets resolved in Python. See §3.1 for the full Span shape.
 - **FR-8 (MUST):** Call Gemma via Ollama native `/api/generate` with `think: false`, `num_predict: 200`, `format: "json"`. System prompt in §9.1.
 - **FR-9 (MUST):** Detector is a pure function: `detect(text: str) -> list[Span]`. No side effects, no network (Ollama runs locally).
 - **FR-10 (MUST):** If Ollama is unreachable or times out after **3 seconds**, fall back to regex-only detection silently. Log a warning to the audit trail.
@@ -45,17 +45,25 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 
 ### 2.3 Consent
 - **FR-12 (MUST):** Show the document with detected spans highlighted (colour-coded by type in the web UI).
-- **FR-13 (MUST):** User approves per **field type**, not per span. One row per type with keep / blacklabel / encrypt (ADR-012). Pay figures have no row and stay visible.
+- **FR-13 (MUST):** User approves per **field type** (e.g. "share income, hide name"), not per span. One checkbox per detected type.
 - **FR-14 (MUST):** Nothing crosses the gate until the user clicks "Send approved to Gemini."
-- **FR-15 (MUST):** Produce the **sanitised payload**: `blacklabel` spans become `█` bars of the same length, `encrypt` spans become `[ENCRYPTED …]`, `keep` spans stay intact. Replacement is applied in **reverse offset order** (rightmost first). Overlapping spans are merged before replacement (see §3.6). Do not emit `[REDACTED]`. The live panel does this in the browser (`PrivacyExport`).
+- **FR-15 (MUST):** Produce the **sanitised payload**: document text with blacklabeled spans replaced by `█` bars and encrypted spans replaced by `[ENCRYPTED ...]`. `keep` spans are left intact. Replacement is applied in **reverse offset order** (rightmost first) to preserve earlier offsets. Overlapping spans are merged before replacement (see §3.6). The browser does this client-side via `PrivacyExport.mount()`.
 - **FR-16 (MUST):** Show the user the exact sanitised payload in a text area before it is sent. This is the pitch moment of the demo.
 
 ### 2.4 Cloud reasoning
 - **FR-17 (MUST):** Send only the sanitised payload to Gemini 3.7 Flash via `client.interactions.create()`. System prompt in §9.2.
 - **FR-18 (MUST):** Original document text must never be sent to the cloud. No exceptions.
-- **FR-19 (MUST):** Gemini's prompt must instruct it to reason *only* over visible text and ignore `█`, `[BLACKLABELED …]`, and `[ENCRYPTED …]` — not speculate about what was removed.
+- **FR-19 (MUST):** Gemini's prompt must explicitly instruct it to reason *only* over visible text and ignore `█`, `[BLACKLABELED ...]`, and `[ENCRYPTED ...]` markers — not speculate about what was removed.
 - **FR-20 (MUST):** Gemini performs one reasoning task: find an inconsistency between the documents (or within one document if only one is provided). Explain it in plain language. Response schema in §3.7.
 - **FR-21 (SHOULD):** Gemini also drafts a response/explanation letter (field `draft_letter` in the response schema).
+
+### 2.4a Conversation (STRETCH, cut first)
+- **FR-40 (STRETCH):** After sanitisation, the user may open a chat about the sanitised payload and ask free-form questions. Same payload, same privacy boundary as FR-17 and FR-18.
+- **FR-41 (STRETCH):** The chat carries turn history. Each request sends the sanitised payload plus prior turns. The original text is never part of the history.
+- **FR-42 (STRETCH):** When a question can only be answered from redacted material, the reply must say it cannot see that field and name the field type. It must never guess. This is the demo's proof that the gate is real.
+- **FR-43 (STRETCH):** Each answer cites which visible fields it used, so the user can check the reasoning against what they approved.
+
+Why this is worth building last and showing first: a judge who watches the model refuse to answer a question about a hidden field has seen the privacy claim tested live, rather than described.
 
 ### 2.5 Audit log
 - **FR-22 (MUST):** Record, per field type: whether it was kept local or shared, and that the user approved.
@@ -64,7 +72,7 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 
 ### 2.6 Pipeline
 - **FR-25 (MUST):** Stages run in order: intake → detect → consent → sanitise → cloud reason → audit.
-- **FR-26 (MUST):** Halt **Send to Gemini** if every detected type is `blacklabel` or `encrypt`. Download and QR share still work (the user may take a fully hidden copy away).
+- **FR-26 (MUST):** Halt before the cloud stage if the user approved nothing.
 
 ---
 
@@ -88,14 +96,13 @@ Image/signature spans use `start: 0, end: 0` (no text offset) and point at an im
 ### 3.2 Span map (full detector output)
 ```json
 [
-  {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"},
-  {"id": "ni_number", "type": "ni_number", "start": 71, "end": 80, "value": "QQ123456C", "kind": "text"},
-  {"id": "address", "type": "address", "start": 90, "end": 107, "value": "14 Pelham St, SW7", "kind": "text"},
-  {"id": "account_number", "type": "account_number", "start": 165, "end": 169, "value": "4417", "kind": "text"}
+  {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text", "image_id": "", "bbox": null},
+  {"id": "ni-1", "type": "ni_number", "start": 72, "end": 84, "value": "QQ123456C", "kind": "text", "image_id": "", "bbox": null},
+  {"id": "addr-1", "type": "address", "start": 95, "end": 111, "value": "14 Pelham St, SW7", "kind": "text", "image_id": "", "bbox": null},
+  {"id": "acct-1", "type": "account_number", "start": 130, "end": 134, "value": "4417", "kind": "text", "image_id": "", "bbox": null},
+  {"id": "email-1", "type": "email", "start": 120, "end": 141, "value": "a.okafor@example.com", "kind": "text", "image_id": "", "bbox": null}
 ]
 ```
-
-Pay figures are not spans. Offsets above match `app/export/sample.py`.
 
 ### 3.3 Consent decision
 ```json
@@ -132,7 +139,7 @@ If two documents are used, concatenate their sanitised texts with a delimiter:
 --- DOCUMENT: BANK STATEMENT ---
 <sanitised bank statement text>
 ```
-Consent is per field type **globally** (not per document). Both documents share the same `toggles` map.
+Consent is per field type **globally** (not per document). Both documents share the same `toggles`.
 
 ### 3.6 Span overlap / merge rule
 1. Merge overlapping or nested spans of the **same type** into one span (earliest start, latest end).
@@ -144,7 +151,7 @@ Consent is per field type **globally** (not per document). Both documents share 
 ```json
 {
   "inconsistency_detected": true,
-  "analysis": "The payslip shows net pay of £2,427.40 for July 2026, but the bank statement shows a deposit of £2,480.00. The difference of £52.60 is unexplained.",
+  "analysis": "The payslip shows gross pay of £2,840.00 for July 2026, but the bank statement shows a corresponding deposit of £2,480.00. The difference of £360.00 is unexplained.",
   "draft_letter": "Dear HR, I am writing to query a discrepancy..."
 }
 ```
@@ -180,7 +187,7 @@ def build_audit(all_spans: dict[str, list[Span]], toggles: dict[str, str],
                 detection_results: dict[str, DetectionResult] | None = None) -> list[AuditEntry]: ...
 ```
 
-`DetectionResult` is `{text, spans, images, documentName, fallback_triggered, warning}` when returned over HTTP (see [ui.md](ui.md) §6.4). The Python detector may still return `{spans, fallback_triggered, warning}` and the API layer adds `text` / `images` / `documentName`.
+`DetectionResult` is `{"spans": list[Span], "fallback_triggered": bool, "warning": str}`. See design doc §3.1.
 
 ---
 
@@ -208,13 +215,13 @@ See ADR-011 (supersedes ADR-004's 5-type reduction). Canonical list in `app/expo
 
 This is a requirement — 20% of the rubric.
 
-1. App loads the vault with the pre-seeded payslip. No file upload.
-2. Detect (or use the demo spans) and highlight fields on screen.
-3. User leaves pay visible and blacklabels identity fields (name, NI, address, account).
-4. **Show the sanitised copy about to leave.** This is the pitch moment. Optionally mint a `#t=` QR.
-5. Click "Send to Gemini." Gemini finds net pay £2,427.40 vs deposit £2,480.00.
+1. App loads with pre-seeded payslip (+ bank statement if time). No file upload.
+2. Click "Detect sensitive fields." Gemma + regex highlights them on screen.
+3. User toggles: blacklabel all identity fields (name, NI, address, account, email, phone, DOB, signature, photo). Pay figures stay visible (not a field type).
+4. **Show the sanitised payload about to be sent.** This is the pitch moment — `█` bars where identity was, pay figures visible.
+5. Click "Send to Gemini." Gemini finds the net pay vs deposit mismatch (£2,427.40 vs £2,480.00).
 6. Gemini's analysis + draft letter displayed.
-7. Audit log shown: keep vs blacklabel vs encrypt, and what crossed to Gemini.
+7. Audit log shown: what stayed local, what was shared.
 
 **Cut order if short on time:** second document (drop to payslip only) → draft letter → live highlight animation. Never cut the audit log.
 
@@ -284,12 +291,12 @@ REGEX_PATTERNS = {
     "ni_number":      re.compile(r'\b[A-CEGHJ-PR-TW-Z]{2}\d{6}[A-D]\b'),
     "postcode":       re.compile(r'\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b'),
     "email":          re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b'),
-    "phone":          re.compile(r'\b0\d{4}\s?\d{6}\b'),
-    "account_number": re.compile(r'(?i)(?:account(?:\s+number)?[:\s]+)(\d{4,8})\b'),
+    "phone":          re.compile(r'\b0\d{10}\b|\b0\d{3}\s\d{3}\s\d{4}\b|\b0\d{4}\s\d{6}\b'),
+    "account_number": re.compile(r'(?i)(?:account(?:\s+number)?[:\s—–-]+)(\d{4,8})\b'),
 }
 ```
 
-Note: the canonical sample uses a 4-digit labelled account (`Account: 4417`). Match 4–8 digits after an Account label so the demo span is found. Bare `\b\d{8}\b` misses that sample and also false-positives on dates.
+Type mapping: `postcode` → `address`, `email` → `email` (own type), `phone` → `phone` (own type). `account_number` has a capture group — use `match.group(1)` for the value and `match.span(1)` for offsets. See ADR-011.
 
 ---
 
@@ -297,7 +304,7 @@ Note: the canonical sample uses a 4-digit labelled account (`Account: 4417`). Ma
 
 ### 9.1 Gemma system prompt (local detector)
 ```
-You are a sensitive-field detector. Find names, addresses, emails, phone numbers, dates of birth, and signatures in the text below. Return ONLY a JSON array. No explanation, no markdown. Do not tag pay amounts, tax, or net pay.
+You are a sensitive-field detector. Find names, addresses, emails, phone numbers, dates of birth, and signatures in the text below. Return ONLY a JSON array. No explanation, no markdown.
 
 Format:
 [{"text": "exact matched substring", "type": "name|address|email|phone|date_of_birth|signature"}]
@@ -308,11 +315,13 @@ Text:
 
 Call with: `model=gemma4:e2b`, `think=false`, `num_predict=200`, `format="json"`.
 
+Note: `income`, `account_number`, `postcode`, and `personal_image` are handled by regex or images, not Gemma. Gemma detects the 6 types listed above. `date` from Gemma maps to `date_of_birth` if it looks like a birth date, otherwise dropped.
+
 ### 9.2 Gemini system prompt (cloud reasoner)
 ```
-You are a document analyst. You will receive one or more documents that have been redacted for privacy. Hidden fields appear as blocks of █, or as [BLACKLABELED …] / [ENCRYPTED …].
+You are a document analyst. You will receive one or more documents that have been redacted for privacy — sensitive fields are replaced with █ bars, [BLACKLABELED ...], or [ENCRYPTED ...] markers.
 
-IMPORTANT: Reason ONLY over the visible text. Do NOT speculate about what was removed. Do NOT attempt to identify anyone.
+IMPORTANT: Reason ONLY over the visible text. Do NOT speculate about what was removed. Do NOT attempt to identify anyone. The markers are deliberate withholdings by the user.
 
 Your task: compare the documents and find any inconsistency in the financial figures, dates, or other factual claims. If you find one, explain it clearly and draft a short letter the user could send to resolve it.
 
@@ -351,7 +360,5 @@ Documents:
 
 ## Related
 
-- [UI spec](ui.md) — live frontend contract
-- [API spec](api.md) — HTTP bodies
-- [Decisions index](../decisions/index.md) — ADR-011, ADR-012, ADR-013
+- [Decisions index](../decisions/index.md) — rationale for the choices above.
 - [Dev log index](../dev-log/index.md) — spec review history.

@@ -2,14 +2,7 @@
 
 **What this is:** TDD strategy and test definitions for Privacy Gate.
 **Approach:** Test-driven development. Tests are written before implementation. Every module and API endpoint has tests defined here first.
-**Framework:** `pytest` + `pytest-asyncio` + FastAPI `TestClient` (httpx) for new API work. Built modules already use `unittest` under `app/export/` and `app/access/`.
-**Contract:** [ui.md](ui.md) and [privacy-gate.md](privacy-gate.md). Do not assert `[REDACTED]`, `income` as a field type, or `shared_types` / `blocked_types`. Use `value` on spans, toggles `keep`/`blacklabel`/`encrypt`, and `█` for blacklabel.
-
-Run what exists today:
-
-```
-.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"
-```
+**Framework:** `pytest` + `pytest-asyncio` + FastAPI `TestClient` (httpx).
 
 ---
 
@@ -58,7 +51,7 @@ def api_client():
 def mock_ollama_success():
     """Mock Ollama returning valid JSON spans."""
     mock_response = {
-        "response": '[{"text": "A. Okafor", "type": "name"}, {"text": "14 Mar 1998", "type": "date_of_birth"}]'
+        "response": '[{"text": "A. Okafor", "type": "name"}, {"text": "14 Pelham St, SW7", "type": "address"}]'
     }
     with patch("app.detector.urllib.request.urlopen") as mock:
         mock.return_value = MagicMock()
@@ -116,33 +109,39 @@ def test_regex_finds_ni_number(payslip_text):
     spans = _detect_regex(payslip_text)
     ni_spans = [s for s in spans if s["type"] == "ni_number"]
     assert len(ni_spans) == 1
-    assert ni_spans[0]["text"] == "QQ123456C"
+    assert ni_spans[0]["value"] == "QQ123456C"
 
 def test_regex_finds_postcode_and_maps_to_address(payslip_text):
     """FR-5 + type mapping: postcode regex → type='address'."""
     spans = _detect_regex(payslip_text)
     address_spans = [s for s in spans if s["type"] == "address"]
-    assert any("SW7 2AZ" in s["text"] for s in address_spans)
+    assert any("SW7" in s["value"] for s in address_spans)
 
 def test_regex_finds_account_number_with_context(payslip_text):
     """D-11: account_number regex only matches after 'Account' label."""
     spans = _detect_regex(payslip_text)
     acct_spans = [s for s in spans if s["type"] == "account_number"]
     assert len(acct_spans) == 1
-    assert acct_spans[0]["text"] == "12345678"
+    assert acct_spans[0]["value"] == "4417"
 
 def test_regex_does_not_false_positive_on_amounts():
-    """D-11: 8-digit numbers not preceded by 'Account' are not matched."""
+    """D-11: numbers not preceded by 'Account' are not matched."""
     text = "Amount: 12345678\nDate: 20260725"
     spans = _detect_regex(text)
     acct_spans = [s for s in spans if s["type"] == "account_number"]
     assert len(acct_spans) == 0
 
 def test_regex_finds_email():
-    """FR-5: regex detects emails, mapped to 'address'."""
+    """FR-5: regex detects emails as their own type 'email'."""
     text = "Contact: john.doe@example.co.uk"
     spans = _detect_regex(text)
-    assert any(s["type"] == "address" and "john.doe" in s["text"] for s in spans)
+    assert any(s["type"] == "email" and "john.doe" in s["value"] for s in spans)
+
+def test_regex_finds_phone():
+    """FR-5: regex detects UK phone numbers as 'phone' type."""
+    text = "Phone: 07700 900123"
+    spans = _detect_regex(text)
+    assert any(s["type"] == "phone" for s in spans)
 
 def test_regex_spans_have_valid_offsets():
     """FR-7: span start/end map to correct text slice."""
@@ -160,15 +159,14 @@ def test_gemma_returns_spans_on_success(payslip_text, mock_ollama_success):
     spans, fallback, warning = _detect_gemma(payslip_text)
     assert fallback is False
     assert len(spans) == 2
-    assert any(s["type"] == "name" and (s.get("value") or s.get("text")) == "A. Okafor" for s in spans)
-    assert any(s["type"] == "date_of_birth" for s in spans)
-    assert not any(s["type"] == "income" for s in spans)
+    assert any(s["type"] == "name" and s["value"] == "A. Okafor" for s in spans)
+    assert any(s["type"] == "address" for s in spans)
 
 def test_gemma_offsets_match_text(payslip_text, mock_ollama_success):
     """ADR-001: offsets resolved via str.find match the text."""
     spans, _, _ = _detect_gemma(payslip_text)
     for span in spans:
-        assert payslip_text[span["start"]:span["end"]] == span["text"]
+        assert payslip_text[span["start"]:span["end"]] == span["value"]
 
 def test_gemma_timeout_triggers_fallback(payslip_text, mock_ollama_timeout):
     """FR-10 + NFR-5: Ollama timeout → fallback=True, regex-only."""
@@ -177,8 +175,8 @@ def test_gemma_timeout_triggers_fallback(payslip_text, mock_ollama_timeout):
     assert "regex-only" in warning.lower() or "unavailable" in warning.lower()
     assert spans == []
 
-def test_gemma_drops_date_type(payslip_text, mock_ollama_success):
-    """Type mapping: Gemma 'date' type is dropped."""
+def test_gemma_drops_unmapped_date_type(payslip_text, mock_ollama_success):
+    """Type mapping: Gemma 'date' type that is not date_of_birth is dropped."""
     mock_response = {
         "response": '[{"text": "July 2026", "type": "date"}, {"text": "A. Okafor", "type": "name"}]'
     }
@@ -199,7 +197,7 @@ def test_gemma_strips_json_code_fences(payslip_text):
         mock.return_value.read.return_value = json.dumps(mock_response).encode()
         spans, fallback, _ = _detect_gemma(payslip_text)
     assert len(spans) == 1
-    assert spans[0]["text"] == "A. Okafor"
+    assert spans[0]["value"] == "A. Okafor"
 
 def test_gemma_malformed_json_falls_back(payslip_text):
     """FR-11: completely unparseable output → fallback."""
@@ -236,15 +234,15 @@ def test_gemma_empty_array_is_not_fallback():
     assert spans == []
 
 def test_gemma_unknown_type_dropped():
-    """Type mapping: unknown Gemma types are silently dropped."""
+    """Type mapping: unknown Gemma types not in the 9 canonical types are silently dropped."""
     mock_response = {
-        "response": '[{"text": "something", "type": "phone_number"}, {"text": "A. Okafor", "type": "name"}]'
+        "response": '[{"text": "something", "type": "occupation"}, {"text": "A. Okafor", "type": "name"}]'
     }
     with patch("app.detector.urllib.request.urlopen") as mock:
         mock.return_value = MagicMock()
         mock.return_value.read.return_value = json.dumps(mock_response).encode()
-        spans, _, _ = _detect_gemma("phone: something, name: A. Okafor")
-    assert all(s["type"] != "phone_number" for s in spans)
+        spans, _, _ = _detect_gemma("occupation: something, name: A. Okafor")
+    assert all(s["type"] != "occupation" for s in spans)
     assert any(s["type"] == "name" for s in spans)
 ```
 
@@ -254,8 +252,8 @@ def test_gemma_unknown_type_dropped():
 def test_merge_same_type_overlapping():
     """ADR-007 pass 1: overlapping same-type spans merge."""
     spans = [
-        {"type": "address", "start": 0, "end": 10, "text": "14 Pelham"},
-        {"type": "address", "start": 8, "end": 20, "text": "St, London"},
+        {"type": "address", "start": 0, "end": 10, "value": "14 Pelham"},
+        {"type": "address", "start": 8, "end": 20, "value": "St, London"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 1
@@ -265,8 +263,8 @@ def test_merge_same_type_overlapping():
 def test_merge_different_type_keeps_longer():
     """ADR-007 pass 2: overlapping different-type spans → keep longer."""
     spans = [
-        {"type": "address", "start": 0, "end": 14, "text": "14 Pelham St,"},
-        {"type": "name", "start": 8, "end": 20, "text": "St, London SW"},
+        {"type": "address", "start": 0, "end": 14, "value": "14 Pelham St,"},
+        {"type": "name", "start": 8, "end": 20, "value": "St, London SW"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 1
@@ -276,8 +274,8 @@ def test_merge_different_type_keeps_longer():
 def test_merge_non_overlapping_kept_separate():
     """Non-overlapping spans are not merged."""
     spans = [
-        {"type": "name", "start": 0, "end": 10, "text": "A. Okafor"},
-        {"type": "ni_number", "start": 50, "end": 59, "text": "QQ123456C"},
+        {"type": "name", "start": 0, "end": 10, "value": "A. Okafor"},
+        {"type": "email", "start": 50, "end": 70, "value": "a.okafor@example.com"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 2
@@ -285,9 +283,9 @@ def test_merge_non_overlapping_kept_separate():
 def test_merge_transitive_chain():
     """ADR-007: three chained overlaps (A→B→C) all merge correctly."""
     spans = [
-        {"type": "address", "start": 0, "end": 10, "text": "aaaaaaaaaa"},
-        {"type": "address", "start": 5, "end": 15, "text": "bbbbbbbbbb"},
-        {"type": "address", "start": 12, "end": 20, "text": "cccccccc"},
+        {"type": "address", "start": 0, "end": 10, "value": "aaaaaaaaaa"},
+        {"type": "address", "start": 5, "end": 15, "value": "bbbbbbbbbb"},
+        {"type": "address", "start": 12, "end": 20, "value": "cccccccc"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 1
@@ -297,8 +295,8 @@ def test_merge_transitive_chain():
 def test_merge_tie_breaker_same_start():
     """Spec §3.6 rule 4: same start, larger end wins."""
     spans = [
-        {"type": "name", "start": 0, "end": 10, "text": "aaaaaaaaaa"},
-        {"type": "address", "start": 0, "end": 15, "text": "aaaaaaaaaaaaaaa"},
+        {"type": "name", "start": 0, "end": 10, "value": "aaaaaaaaaa"},
+        {"type": "address", "start": 0, "end": 15, "value": "aaaaaaaaaaaaaaa"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 1
@@ -317,63 +315,65 @@ def test_detect_falls_back_to_regex_only(payslip_text, mock_ollama_timeout):
     result = detect(payslip_text)
     assert result["fallback_triggered"] is True
     assert len(result["spans"]) > 0  # regex still found things
-    # No Gemma-only types (name) if regex-only — pay is not a type
+    # No Gemma-only types (name, income) — only regex types
     types = {s["type"] for s in result["spans"]}
     assert "ni_number" in types  # regex finds this
-    assert "income" not in types
 ```
 
 ---
 
 ## 4. Sanitiser tests (`test_sanitiser.py`)
 
-Prefer `app.export.redact.apply_export`. A thin `sanitise(text, spans, toggles)` wrapper is fine for CLI.
-
 ```python
-def test_sanitise_replaces_blacklabel_spans():
-    """FR-15: blacklabel spans become █ bars. Pay stays visible (not a type)."""
+def test_sanitise_replaces_blacklabeled_spans():
+    """FR-15: blacklabeled spans replaced with █ bars."""
     text = "Employee: A. Okafor\nPay: £2,840.00"
     spans = [
-        {"id": "name-1", "type": "name", "start": 10, "end": 19, "value": "A. Okafor", "kind": "text"},
+        {"type": "name", "start": 10, "end": 19, "value": "A. Okafor"},
     ]
-    result = sanitise(text, spans, toggles={"name": "blacklabel"})
+    toggles = {"name": "blacklabel"}
+    result = sanitise(text, spans, toggles)
     assert "A. Okafor" not in result
     assert "█" in result
-    assert "£2,840.00" in result
+    assert "£2,840.00" in result  # pay is untyped, stays visible
 
-def test_sanitise_keep_leaves_text():
-    """FR-15: keep spans are left intact."""
+def test_sanitise_preserves_kept_spans():
+    """FR-15: kept spans are left intact."""
     text = "Employee: A. Okafor\nPay: £2,840.00"
     spans = [
-        {"id": "name-1", "type": "name", "start": 10, "end": 19, "value": "A. Okafor", "kind": "text"},
+        {"type": "name", "start": 10, "end": 19, "value": "A. Okafor"},
     ]
-    result = sanitise(text, spans, toggles={"name": "keep"})
+    toggles = {"name": "keep"}
+    result = sanitise(text, spans, toggles)
     assert "A. Okafor" in result
 
 def test_sanitise_reverse_offset_preserves_earlier_spans():
     """ADR-002: reverse-offset replacement doesn't shift earlier offsets."""
     text = "AAAAABBBBB"
     spans = [
-        {"id": "x", "type": "name", "start": 0, "end": 5, "value": "AAAAA", "kind": "text"},
-        {"id": "y", "type": "address", "start": 5, "end": 10, "value": "BBBBB", "kind": "text"},
+        {"type": "x", "start": 0, "end": 5, "value": "AAAAA"},
+        {"type": "y", "start": 5, "end": 10, "value": "BBBBB"},
     ]
-    result = sanitise(text, spans, toggles={"name": "blacklabel", "address": "blacklabel"})
-    assert "A" not in result
-    assert "B" not in result
-    assert result == "██████████"
+    toggles = {"x": "blacklabel", "y": "blacklabel"}
+    result = sanitise(text, spans, toggles)
+    assert "█" in result
+    assert "AAAAA" not in result
+    assert "BBBBB" not in result
 
 def test_sanitise_all_keep_returns_original():
-    """Nothing hidden → text unchanged."""
+    """Nothing blacklabeled → text unchanged."""
     text = "Hello World"
-    spans = [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Hello", "kind": "text"}]
-    result = sanitise(text, spans, toggles={"name": "keep"})
+    spans = [{"type": "name", "start": 0, "end": 5, "value": "Hello"}]
+    toggles = {"name": "keep"}
+    result = sanitise(text, spans, toggles)
     assert result == "Hello World"
 
 def test_sanitise_multi_document_concatenates():
     """FR-3 + spec §3.5: multi-doc sanitise concatenates with delimiter."""
     documents = {"payslip": "Pay: £100", "bank": "Deposit: £100"}
     all_spans = {"payslip": [], "bank": []}
-    result = sanitise_multi(documents, all_spans, toggles={})
+    toggles = {}
+    result = sanitise_multi(documents, all_spans, toggles)
     assert "--- DOCUMENT: PAYSLIP ---" in result
     assert "--- DOCUMENT: BANK ---" in result
     assert "£100" in result
@@ -382,10 +382,11 @@ def test_sanitise_multi_document_redacts_per_doc():
     """Multi-doc: each doc's spans are applied independently."""
     documents = {"payslip": "Name: Alice", "bank": "Name: Bob"}
     all_spans = {
-        "payslip": [{"id": "a", "type": "name", "start": 6, "end": 11, "value": "Alice", "kind": "text"}],
-        "bank": [{"id": "b", "type": "name", "start": 6, "end": 9, "value": "Bob", "kind": "text"}],
+        "payslip": [{"type": "name", "start": 6, "end": 11, "value": "Alice"}],
+        "bank": [{"type": "name", "start": 6, "end": 9, "value": "Bob"}],
     }
-    result = sanitise_multi(documents, all_spans, toggles={"name": "blacklabel"})
+    toggles = {"name": "blacklabel"}
+    result = sanitise_multi(documents, all_spans, toggles)
     assert "Alice" not in result
     assert "Bob" not in result
     assert "█" in result
@@ -394,12 +395,16 @@ def test_sanitise_handles_unsorted_spans():
     """Sanitiser must sort spans by start descending internally — input order doesn't matter."""
     text = "AAAAABBBBBCCCCC"
     spans = [
-        {"id": "c", "type": "email", "start": 10, "end": 15, "value": "CCCCC", "kind": "text"},
-        {"id": "a", "type": "name", "start": 0, "end": 5, "value": "AAAAA", "kind": "text"},
-        {"id": "b", "type": "address", "start": 5, "end": 10, "value": "BBBBB", "kind": "text"},
+        {"type": "c", "start": 10, "end": 15, "value": "CCCCC"},
+        {"type": "a", "start": 0, "end": 5, "value": "AAAAA"},
+        {"type": "b", "start": 5, "end": 10, "value": "BBBBB"},
     ]
-    result = sanitise(text, spans, toggles={"name": "blacklabel", "address": "blacklabel", "email": "blacklabel"})
-    assert result == "███████████████"
+    toggles = {"a": "blacklabel", "b": "blacklabel", "c": "blacklabel"}
+    result = sanitise(text, spans, toggles)
+    assert "AAAAA" not in result
+    assert "BBBBB" not in result
+    assert "CCCCC" not in result
+    assert "█" in result
 ```
 
 ---
@@ -445,6 +450,16 @@ def test_reason_never_receives_original_text():
 
 ---
 
+## 5a. Chat tests (`test_reasoner.py`, STRETCH)
+
+Only write these if F5 is being built.
+
+- `test_chat_never_receives_original_text`. Call `chat()` with a payload containing `[REDACTED]` markers; assert the outbound prompt contains no fixture original values. This is the privacy test and it matters more than the others.
+- `test_chat_refuses_redacted_field`. Ask about a redacted account number with a stubbed model reply; assert `refused_field_types == ["account_number"]` and that `reply` contains no digits.
+- `test_chat_cites_visible_fields`. Ask about net pay; assert `cited_fields` is non-empty.
+- `test_chat_history_round_trip`. Two turns; assert prior turns appear in the outbound prompt in order.
+- `test_chat_falls_back_on_api_failure`. Stub the client to raise; assert a `ChatResult` is returned with an explanatory `reply` and empty lists, no exception.
+
 ## 6. Audit tests (`test_audit.py`)
 
 ```python
@@ -452,46 +467,50 @@ def test_audit_one_entry_per_field_type():
     """FR-22: one audit entry per field type present in spans."""
     all_spans = {
         "payslip": [
-            {"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"},
-            {"id": "a", "type": "address", "start": 10, "end": 20, "value": "14 Pelham", "kind": "text"},
+            {"type": "name", "start": 0, "end": 5, "value": "Alice"},
+            {"type": "email", "start": 10, "end": 25, "value": "alice@example.com"},
         ]
     }
-    toggles = {"name": "blacklabel", "address": "keep"}
+    toggles = {"name": "blacklabel", "email": "keep"}
     entries = build_audit(all_spans, toggles)
     assert len(entries) == 2
     types = {e["field_type"] for e in entries}
-    assert types == {"name", "address"}
+    assert types == {"name", "email"}
 
 def test_audit_correct_decision_per_type():
-    """FR-22: keep → shared, blacklabel/encrypt → kept_local."""
-    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
-    entries = build_audit(all_spans, {"name": "blacklabel"})
+    """FR-22: 'shared' for keep, 'kept_local' for blacklabel/encrypt."""
+    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "value": "Alice"}]}
+    toggles = {"name": "blacklabel"}
+    entries = build_audit(all_spans, toggles)
     name_entry = [e for e in entries if e["field_type"] == "name"][0]
     assert name_entry["decision"] == "kept_local"
 
 def test_audit_includes_fallback_entry():
     """FR-10: fallback_triggered adds a special audit entry."""
-    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
+    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "value": "Alice"}]}
+    toggles = {"name": "keep"}
     detection_results = {"payslip": {"spans": [], "fallback_triggered": True, "warning": "Model unavailable"}}
-    entries = build_audit(all_spans, {"name": "keep"}, detection_results)
+    entries = build_audit(all_spans, toggles, detection_results)
     fallback = [e for e in entries if e["decision"] == "fallback"]
     assert len(fallback) == 1
     assert "Model unavailable" in fallback[0]["details"]
 
 def test_audit_no_fallback_entry_when_healthy():
     """No fallback entry when fallback_triggered is False."""
-    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
+    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "value": "Alice"}]}
+    toggles = {"name": "keep"}
     detection_results = {"payslip": {"spans": [], "fallback_triggered": False, "warning": ""}}
-    entries = build_audit(all_spans, {"name": "keep"}, detection_results)
+    entries = build_audit(all_spans, toggles, detection_results)
     assert not any(e["decision"] == "fallback" for e in entries)
 
 def test_audit_multi_doc_unions_field_types():
     """Multi-doc: field types are unioned across documents."""
     all_spans = {
-        "payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}],
-        "bank": [{"id": "a", "type": "account_number", "start": 0, "end": 4, "value": "4417", "kind": "text"}],
+        "payslip": [{"type": "name", "start": 0, "end": 5, "value": "Alice"}],
+        "bank": [{"type": "account_number", "start": 0, "end": 8, "value": "12345678"}],
     }
-    entries = build_audit(all_spans, {"name": "blacklabel", "account_number": "blacklabel"})
+    toggles = {"name": "blacklabel", "account_number": "blacklabel"}
+    entries = build_audit(all_spans, toggles)
     types = {e["field_type"] for e in entries}
     assert types == {"name", "account_number"}
 ```
@@ -527,20 +546,19 @@ def test_post_detect_empty_documents_returns_400(api_client):
     assert response.status_code == 400
 
 def test_post_sanitise_returns_redacted_text(api_client, payslip_text):
-    """POST /api/sanitise is optional/headless. Returns █ bars, not [REDACTED]."""
+    """POST /api/sanitise returns sanitised payload with █ bars."""
     response = api_client.post("/api/sanitise", json={
         "documents": [{"id": "payslip", "text": payslip_text}],
         "spans": {"payslip": [
-            {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"},
+            {"id": "name-1", "type": "name", "start": 25, "end": 34, "value": "A. Okafor"},
         ]},
         "toggles": {"name": "blacklabel"},
-        "passphrase": None,
+        "passphrase": None
     })
     assert response.status_code == 200
     payload = response.json()["sanitised_payload"]
-    assert "█" in payload
     assert "A. Okafor" not in payload
-    assert "£2,427.40" in payload
+    assert "█" in payload
 
 def test_post_reason_returns_analysis(api_client, mock_gemini_success):
     """POST /api/reason returns GeminiResult."""
@@ -562,25 +580,26 @@ def test_post_reason_returns_200_fallback_on_gemini_failure(api_client, mock_gem
     data = response.json()
     assert data["inconsistency_detected"] is False
 
-def test_post_sanitise_blacklabel_keeps_pay(api_client):
-    """Pay is untyped. Blacklabeling name does not hide £100."""
+def test_post_sanitise_all_blacklabeled_returns_fully_redacted(api_client, payslip_text):
+    """FR-26: if all types are blacklabeled, sanitised payload is fully redacted but still returned."""
     response = api_client.post("/api/sanitise", json={
-        "documents": [{"id": "payslip", "text": "Name: Alice\nPay: £100"}],
+        "documents": [{"id": "payslip", "text": "Name: Alice\nPhone: 07700 900123"}],
         "spans": {"payslip": [
-            {"id": "n", "type": "name", "start": 6, "end": 11, "value": "Alice", "kind": "text"},
+            {"id": "n1", "type": "name", "start": 6, "end": 11, "value": "Alice"},
+            {"id": "p1", "type": "phone", "start": 20, "end": 32, "value": "07700 900123"},
         ]},
-        "toggles": {"name": "blacklabel"},
-        "passphrase": None,
+        "toggles": {"name": "blacklabel", "phone": "blacklabel"},
+        "passphrase": None
     })
     assert response.status_code == 200
     payload = response.json()["sanitised_payload"]
     assert "Alice" not in payload
-    assert "£100" in payload
+    assert "07700 900123" not in payload
 
 def test_post_audit_returns_entries(api_client):
-    """POST /api/audit returns audit log from toggles."""
+    """POST /api/audit returns audit log."""
     response = api_client.post("/api/audit", json={
-        "spans": {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]},
+        "spans": {"payslip": [{"id": "n1", "type": "name", "start": 0, "end": 5, "value": "Alice"}]},
         "toggles": {"name": "blacklabel"},
         "detection_results": {"payslip": {"spans": [], "fallback_triggered": False, "warning": ""}}
     })
@@ -590,16 +609,10 @@ def test_post_audit_returns_entries(api_client):
     assert len(data["audit_log"]) >= 1
 
 def test_get_root_redirects_to_vault(api_client):
-    """GET / redirects to /vault/."""
+    """GET / redirects to /vault/ (multi-page, not SPA)."""
     response = api_client.get("/", follow_redirects=False)
-    assert response.status_code in (301, 302, 307, 308)
+    assert response.status_code in (302, 307)
     assert "/vault" in response.headers.get("location", "")
-
-def test_get_vault_html(api_client):
-    """GET /vault/ serves the vault page."""
-    response = api_client.get("/vault/")
-    assert response.status_code == 200
-    assert "text/html" in response.headers.get("content-type", "")
 
 def test_get_manifest_json(api_client):
     """GET /manifest.json serves PWA manifest."""
@@ -629,13 +642,8 @@ def test_full_pipeline_detect_sanitise_reason_audit(api_client, payslip_text, ba
     # Extract just the spans per doc (not the full DetectionResult) for the sanitise API
     spans = {doc_id: res["spans"] for doc_id, res in detection_results.items()}
 
-    # 2. Optional headless sanitise (browser normally does this). Hide identity, leave pay.
-    toggles = {
-        "name": "blacklabel",
-        "address": "blacklabel",
-        "ni_number": "blacklabel",
-        "account_number": "blacklabel",
-    }
+    # 2. Sanitise (blacklabel all identity, pay stays visible)
+    toggles = {"name": "blacklabel", "address": "blacklabel", "ni_number": "blacklabel", "account_number": "blacklabel"}
     sanitise_resp = api_client.post("/api/sanitise", json={
         "documents": [
             {"id": "payslip", "text": payslip_text},
@@ -648,7 +656,7 @@ def test_full_pipeline_detect_sanitise_reason_audit(api_client, payslip_text, ba
     assert sanitise_resp.status_code == 200
     payload = sanitise_resp.json()["sanitised_payload"]
     assert "█" in payload
-    assert "£2,840.00" in payload or "£2,480.00" in payload
+    assert "£2,840.00" in payload or "£2,480.00" in payload  # pay figures stay visible
 
     # 3. Reason
     reason_resp = api_client.post("/api/reason", json={"sanitised_payload": payload})
@@ -664,7 +672,7 @@ def test_full_pipeline_detect_sanitise_reason_audit(api_client, payslip_text, ba
     })
     assert audit_resp.status_code == 200
     audit_log = audit_resp.json()["audit_log"]
-    assert len(audit_log) >= 1
+    assert len(audit_log) >= 4  # at least 4 field types
 
 def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_timeout, mock_gemini_success):
     """E2E: Ollama down → regex-only detection still works end-to-end, audit includes fallback entry."""
@@ -710,7 +718,6 @@ def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_time
 
 ### 9.1 Run all tests
 ```bash
-.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"
 pytest app/tests/ -v
 ```
 
@@ -751,13 +758,17 @@ If time is short, tests are cut in this order (least to most important):
 
 No automated frontend tests for the hackathon. Manual verification only:
 
-1. Open `http://localhost:8000/vault/` → page loads, payslip panel visible.
-2. Flip keep / blacklabel / encrypt → preview updates (`█` bars, pay still visible).
-3. Share file → Make link and QR. `#t=` URL under 2900 bytes.
-4. Click Detect / Send to Gemini once FastAPI exists → analysis + audit appear.
-5. Audit log displays correctly.
-6. Chrome → Install → PWA installs and opens from home screen.
-7. With wifi off → page still loads (service worker cache), detect still works (Ollama local), reason fails gracefully.
+1. Open `http://localhost:8000/vault/` → vault page loads with folders and payslip.
+2. Open `http://localhost:8000/privacy-export/` → export panel loads.
+3. Click "Detect" → spans highlighted with colours.
+4. Toggle consent per type (keep/blacklabel/encrypt) → sanitised preview updates.
+5. Click "Send to Gemini" → analysis + draft letter appear.
+6. Audit log displays correctly.
+7. Chrome → Install → PWA installs and opens from home screen.
+8. With wifi off → page still loads (service worker cache), detect still works (Ollama local), reason fails gracefully.
+9. Share QR → scan on another phone → sanitised text appears on guest.
+
+Also verify existing tests pass: `.venv/bin/python -m pytest app/export/ app/access/ -v`
 
 ---
 

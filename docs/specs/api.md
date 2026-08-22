@@ -4,7 +4,7 @@
 **Base URL:** `http://localhost:8000`
 **Content type:** `application/json` for all API requests and responses.
 **Implements:** [architecture spec](architecture.md) §4.2.
-**Frontend contract:** [ui.md](ui.md). Request and response bodies match the live panel (nine types, keep / blacklabel / encrypt, `value` not `text`). Client-side redaction is the demo path (ADR-013).
+**Frontend contract:** [ui.md](ui.md). Detect and sanitise bodies in this file still use the old five-type / `[REDACTED]` shape. Match [ui.md](ui.md) §6 and §10 when you wire FastAPI to the live panel.
 
 ---
 
@@ -30,7 +30,7 @@ List available fixture documents.
 ```json
 {
   "documents": [
-    {"id": "payslip", "name": "Payslip — July 2026", "text": "PAYSLIP — July 2026\nEmployee: A. Okafor\n..."},
+    {"id": "payslip", "name": "Payslip — July 2026", "text": "ACME LTD  —  PAYSLIP\nPeriod: July 2026\n\nEmployee: A. Okafor\n..."},
     {"id": "bank_statement", "name": "Bank Statement — Jul 2026", "text": "BANK STATEMENT — Account 12345678\n..."}
   ]
 }
@@ -48,7 +48,7 @@ Run sensitive-field detection on one or more documents. Returns spans per docume
 ```json
 {
   "documents": [
-    {"id": "payslip", "text": "PAYSLIP — July 2026\nEmployee: A. Okafor\n..."}
+    {"id": "payslip", "text": "ACME LTD  —  PAYSLIP\nPeriod: July 2026\n\nEmployee: A. Okafor\n..."}
   ]
 }
 ```
@@ -126,21 +126,19 @@ Produce the sanitised payload from document text, detected spans, and the user's
 **Response:** `200 OK`
 ```json
 {
-  "sanitised_payload": "--- DOCUMENT: PAYSLIP ---\nACME LTD  —  PAYSLIP\nEmployee: █████████\n...\nGross pay: £2,840.00\n..."
+  "sanitised_payload": "--- DOCUMENT: PAYSLIP ---\nACME LTD  —  PAYSLIP\nEmployee: ████████\nNI number: █████████\n...\nGross pay: £2,840.00\n..."
 }
 ```
 
-The `sanitised_payload` is the concatenated, redacted text. `blacklabel` spans become `█` bars of the same length. `encrypt` spans become `[ENCRYPTED …]`. `keep` spans stay intact. Pay figures are untyped and stay visible. Multi-document payloads use the delimiter from spec §3.5. Do not emit `[REDACTED]`.
-
-Prefer `app.export.redact.apply_export` over a custom sanitiser.
+The `sanitised_payload` is the concatenated, redacted text. Blacklabeled spans are replaced with `█` bars. Encrypted spans are replaced with `[ENCRYPTED ...]`. Kept spans are left intact. Multi-document payloads are joined with the delimiter from spec §3.5.
 
 **Error cases:**
-- `400` — `toggles` is missing, or any toggle is `encrypt` and `passphrase` is empty.
+- `400` — `toggles` is missing.
 - `422` — a span references a doc id not in `documents`.
 
-FR-26 (halt Send to Gemini when every detected type is hidden) is a UI rule. This endpoint still returns whatever the toggles produce.
+Note: if both `shared_types` and `blocked_types` are empty (no consent decision), the payload is returned unredacted — this is valid (the user chose to share nothing sensitive because nothing was flagged). If all types are blocked, the payload is fully redacted — also valid (FR-26 applies at the UI level, not the API level; the API returns whatever the consent decision produces).
 
-**Spec traceability:** FR-15, FR-16. Optional headless path. The browser does not call this in the normal demo.
+**Spec traceability:** FR-15, FR-16. Calls `sanitiser.sanitise_multi(documents, spans, blocked_types)` which handles per-document redaction and concatenation with delimiters (see design §3.4).
 
 ---
 
@@ -176,24 +174,34 @@ Send the sanitised payload to Gemini 3.7 Flash for inconsistency detection.
 
 ### 2.5 POST /api/audit
 
-Build the audit log from detection results and toggle decisions.
+Build the audit log from detection results and consent decision.
 
 **Request:**
 ```json
 {
   "spans": {
     "payslip": [
-      {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"}
+      {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"},
+      {"id": "email-1", "type": "email", "start": 95, "end": 116, "value": "a.okafor@example.com", "kind": "text"}
     ]
   },
   "toggles": {
     "name": "blacklabel",
+    "email": "blacklabel",
+    "address": "blacklabel",
     "ni_number": "blacklabel",
-    "address": "keep"
+    "account_number": "blacklabel",
+    "phone": "blacklabel",
+    "date_of_birth": "blacklabel",
+    "signature": "blacklabel",
+    "personal_image": "blacklabel"
   },
   "detection_results": {
     "payslip": {
+      "text": "",
       "spans": [],
+      "images": [],
+      "documentName": "",
       "fallback_triggered": false,
       "warning": ""
     }
@@ -202,7 +210,7 @@ Build the audit log from detection results and toggle decisions.
 ```
 
 - `spans`: dict of `{doc_id: list[Span]}` — the detected spans per document.
-- `toggles`: `{type: "keep"|"blacklabel"|"encrypt"}`. Map `keep` → audit `shared`, `blacklabel`/`encrypt` → `kept_local` (ADR-012).
+- `toggles`: dict of `{type: "keep"|"blacklabel"|"encrypt"}` (ADR-012).
 - `detection_results`: dict of `{doc_id: DetectionResult}` — used to add fallback entries (FR-10).
 
 **Response:** `200 OK`
@@ -210,8 +218,10 @@ Build the audit log from detection results and toggle decisions.
 {
   "audit_log": [
     {"field_type": "name", "decision": "kept_local", "approved_by": "user", "details": ""},
+    {"field_type": "email", "decision": "kept_local", "approved_by": "user", "details": ""},
+    {"field_type": "address", "decision": "kept_local", "approved_by": "user", "details": ""},
     {"field_type": "ni_number", "decision": "kept_local", "approved_by": "user", "details": ""},
-    {"field_type": "address", "decision": "shared", "approved_by": "user", "details": ""}
+    {"field_type": "account_number", "decision": "kept_local", "approved_by": "user", "details": ""}
   ]
 }
 ```
@@ -225,20 +235,59 @@ If a fallback was triggered, an additional entry appears:
 
 ---
 
+### 2.6 POST /api/chat  (STRETCH)
+
+Free-form conversation over the sanitised payload. Same privacy boundary as `/api/reason`: this endpoint never receives original text.
+
+**Request:**
+```json
+{
+  "sanitised_payload": "--- DOCUMENT: PAYSLIP ---\n...",
+  "history": [
+    {"role": "user", "content": "Does my income cover the rent?"},
+    {"role": "model", "content": "Comfortably, on the figures you shared..."}
+  ],
+  "message": "What account is the salary paid into?"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "reply": "I cannot see that. The account number was hidden before this document reached me, so there is nothing here for me to read.",
+  "cited_fields": [],
+  "refused_field_types": ["account_number"]
+}
+```
+
+- `reply` is plain text for display.
+- `cited_fields` names the visible fields the answer used, for the citation chips in the UI.
+- `refused_field_types` is non-empty when the question needed redacted material. The UI renders those differently (wood left border, per ui.md).
+
+**Error cases:**
+- `400` when `sanitised_payload` or `message` is empty.
+- `200` with a fallback body when Gemini fails after retries: `reply` explains the cloud call failed, `cited_fields` and `refused_field_types` empty. Same reasoning as §2.4: never crash the demo on a Gemini outage.
+
+**System prompt addition:** instruct the model that `[REDACTED]` and `[BLACKLABELED ...]` markers are fields the user deliberately withheld, that it must say plainly it cannot see them, and that it must never infer or guess their contents.
+
+**Spec traceability:** FR-40 through FR-43. Calls `reasoner.chat(payload, history, message)`.
+
+---
+
 ## 3. Frontend interaction flow
 
-The live vault already does redaction in the browser. FastAPI should match that order:
+The frontend calls these endpoints in sequence, matching the demo flow (spec §5):
 
 ```
-1. GET  /api/documents           → sample payslip (and bank statement if FR-3)
-2. POST /api/detect              → spans + text + images → PrivacyExport.mount
-3. (user sets keep / blacklabel / encrypt in the panel — no API call)
-4. (browser shows sanitised preview from PrivacyExport — pitch moment)
-5. POST /api/reason              → sanitised string only
-6. POST /api/audit               → receipt
+1. GET  /api/documents           → populate document selector
+2. POST /api/detect              → get spans + text + images, render highlights
+3. (user adjusts toggles in PrivacyExport panel — no API call, browser does redaction)
+4. (browser produces sanitised text via PrivacyExport.mount — no /api/sanitise call needed)
+5. POST /api/reason              → send sanitised text to Gemini, get analysis
+6. POST /api/audit               → get audit log, display
 ```
 
-Do not call `POST /api/sanitise` from the demo UI. Optional zip: `POST /api/export-zip` (see [ui.md](ui.md) §9).
+**Client-side redaction:** the browser does redaction via `PrivacyExport.mount()` (see [ui.md §5.1](ui.md)). `/api/sanitise` is optional (headless/CLI only). The frontend sends the sanitised text directly to `/api/reason`.
 
 ---
 

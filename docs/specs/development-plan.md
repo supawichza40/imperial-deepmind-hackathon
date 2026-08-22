@@ -50,15 +50,17 @@ Features are ordered by dependency. Each feature is small enough for one agent t
 
 **All API endpoints owned by Developer B.** Developer A delivers the `detect()` function; B wires it into the endpoint. No shared-file conflicts.
 
-### Phase 3 — PWA frontend (parallel with Phase 2)
+### Phase 3 — Wire existing frontend to API (parallel with Phase 2)
+
+The frontend is **already built** in `app/static/` (vault, privacy-export, theme). Phase 3 is wiring, not building. See [ui.md](ui.md).
 
 | # | Feature | Files | Depends on | Est |
 |---|---|---|---|---|
-| F3.1 | HTML skeleton + styles | `static/index.html`, `static/styles.css` | F0.5 (contract shapes) | 15 min |
-| F3.2 | App logic + state machine | `static/app.js` (built against mock responses matching F0.5 contracts) | F0.5 | 30 min |
-| F3.3 | PWA manifest + icons | `static/manifest.json`, `static/icons/` | F3.1 | 5 min |
-| F3.4 | Service worker | `static/service-worker.js` | F3.1 | 10 min |
-| F3.5 | Wire to real API | `static/app.js` (swap mocks for fetch calls) | F2.2-F2.6, F3.2 | 15 min |
+| F3.1 | PWA manifest + icons | `static/manifest.json`, `static/icons/` | nothing (can do early) | 5 min |
+| F3.2 | Service worker | `static/service-worker.js` | F3.1 | 10 min |
+| F3.3 | Wire detect → PrivacyExport.mount | `static/vault/vault.js` or glue script | F2.2, F2.3 | 15 min |
+| F3.4 | Wire reason → S7 display | `static/vault/vault.js` or glue script | F2.5 | 10 min |
+| F3.5 | Wire audit → S8 display | `static/vault/vault.js` or glue script | F2.6 | 10 min |
 
 ### Phase 4 — Integration (after Phases 2 + 3)
 
@@ -153,24 +155,22 @@ Owns the simpler core modules and the entire API layer (no shared-file conflicts
 
 **If A's detect() is late:** B stubs it inline in `api/main.py` (e.g. a temporary regex-only `detect()` function inside the endpoint handler, or a mock in `test_api.py`). B does NOT modify A's `detector.py` — that would cause a git conflict. A delivers the real `detect()` later and B removes the stub.
 
-### Developer C — Reasoner + Frontend + PWA
+### Developer C — Reasoner + Frontend wiring + PWA
 
-Owns the cloud call and the entire frontend. Starts with the reasoner (uses existing starter code), then pivots to the PWA frontend built against mock responses (using B's contract models from F0.5 for exact schema matching).
+Owns the cloud call and wiring the existing frontend to the API. Starts with the reasoner (uses existing starter code), then adds PWA metadata and wires the built vault/export pages to the real API endpoints.
 
 | Order | Feature | Est | Running total |
 |---|---|---|---|
 | 1 | F1.6 reasoner (TDD) | 15 min | 15 |
-| 2 | F3.1 HTML skeleton + styles | 15 min | 30 |
-| 3 | F3.2 app.js — state machine + mock API calls | 30 min | 60 |
-| 4 | F3.3 PWA manifest + icons | 5 min | 65 |
-| 5 | F3.4 service worker | 10 min | 75 |
-| 6 | — buffer / help others / polish — | 10 min | 85 |
-| 7 | F3.5 wire app.js to real API endpoints | 15 min | 100 |
-| 8 | F4.2 demo dry run (join A+B) | 15 min | 115 |
+| 2 | F3.1 PWA manifest + icons | 5 min | 20 |
+| 3 | F3.2 service worker | 10 min | 30 |
+| 4 | — buffer / help others — | 15 min | 45 |
+| 5 | F3.3 wire detect → PrivacyExport.mount | 15 min | 60 |
+| 6 | F3.4 wire reason → S7 display | 10 min | 70 |
+| 7 | F3.5 wire audit → S8 display | 10 min | 80 |
+| 8 | F4.2 demo dry run (join A+B) | 15 min | 95 |
 
-**Why this person:** the reasoner is a thin wrapper around existing `starter/utils.py` code — quick to build. The frontend is the largest non-Python piece and benefits from being built early against mock data (using F0.5 contract shapes), then wired to the real API once B's endpoints are ready. C has a 10-min buffer at step 6 — use it to help A or B if they're behind, or to polish the UI.
-
-**Frontend mock strategy:** Developer C builds `app.js` with hardcoded mock responses matching the Pydantic models from F0.5 (`app/api/contracts.py`). This ensures the mock shapes are identical to the real API shapes. Once B has the endpoints running, C swaps mocks for `fetch('/api/detect', ...)` calls in F3.5. Zero schema drift.
+**Why this person:** the reasoner is a thin wrapper around existing `starter/utils.py` code. The frontend is already built (vault, export panel, QR share) — C just wires it to the real API endpoints. C has a 15-min buffer at step 4 to help A or B if they're behind. See [ui.md](ui.md) for the frontend contract.
 
 ---
 
@@ -283,6 +283,13 @@ If the team is behind schedule, cut in this order:
 | `app/tests/test_api.py` | B | |
 | `app/tests/test_e2e.py` | A | |
 | `requirements.txt` | B | F0.4 |
+| `app/export/*` | existing (teammate) | do not modify |
+| `app/access/*` | existing (teammate) | do not modify |
+| `app/static/vault/*` | existing (teammate) | C may add glue script, do not rewrite |
+| `app/static/privacy-export/*` | existing (teammate) | C may add glue script, do not rewrite |
+| `app/static/theme/*` | existing (teammate) | do not modify |
+| `app/static/manifest.json` | C | F3.1 |
+| `app/static/service-worker.js` | C | F3.2 |
 
 **No file is edited by two developers simultaneously.** If B needs A's `detect()` function, B imports it — doesn't edit `detector.py`. If A is late, B creates a temporary stub in `detector.py` only if A hasn't created the file yet; otherwise B waits for A's commit.
 

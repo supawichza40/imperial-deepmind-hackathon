@@ -11,10 +11,11 @@
 | **Design** | [specs/design.md](specs/design.md) | Detector / sanitiser / reasoner algorithms. UI layout there is stale. |
 | **Architecture** | [specs/architecture.md](specs/architecture.md) | System architecture: FastAPI + PWA, process model, security |
 | **API** | [specs/api.md](specs/api.md) | REST endpoint definitions, schemas, error shapes |
+| **Security** | [specs/security.md](specs/security.md) | Threat model, crypto params, honest limitations |
 | **Testing** | [specs/testing.md](specs/testing.md) | TDD strategy, test definitions, fixtures, priorities |
 | **Dev plan** | [specs/development-plan.md](specs/development-plan.md) | Feature breakdown, 3-person team assignment, timeline, risks |
 | **Spec index** | [specs/index.md](specs/index.md) | Navigation for all specs |
-| **Decisions** | [decisions/index.md](decisions/index.md) | Why we chose what we chose (10 ADRs) |
+| **Decisions** | [decisions/index.md](decisions/index.md) | Why we chose what we chose (13 ADRs) |
 | **Dev log** | [dev-log/index.md](dev-log/index.md) | Implementation history and work items |
 
 ## War-room reference (event research, 22 Aug 2026)

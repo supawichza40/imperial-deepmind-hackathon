@@ -585,7 +585,7 @@ Later:
 
 ## 14. Mapping from older specs
 
-| Older doc says | Live UI / this spec |
+| Older doc said | Live UI / this spec |
 |---|---|
 | Streamlit `app.py` ([design.md](design.md)) | Static HTML + JS. ADR-010 still applies. |
 | Five field types, income shared by default | Nine identity types, all default blacklabel. Pay stays visible because it is not a type. |
@@ -595,7 +595,7 @@ Later:
 | Share as a signed id in `#s=` | File-in-QR `#t=` gzip payload |
 | Detector `detect(text) -> list[Span]` | Same offsets, plus `id`, `kind`, `images` |
 
-If a backend change would force the panel to parse a different shape, update this file in the same commit.
+[api.md](api.md), [privacy-gate.md](privacy-gate.md), and ADR-011/012/013 were aligned to this file. If a backend change would force the panel to parse a different shape, update this file in the same commit.
 
 ---
 

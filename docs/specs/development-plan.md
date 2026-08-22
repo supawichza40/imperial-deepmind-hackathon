@@ -2,6 +2,7 @@
 
 **What this is:** feature breakdown, TDD task sequence, and team assignment for a 3-person build.
 **Approach:** TDD — every feature has tests written first (from the [testing spec](testing.md)), then implementation.
+**Frontend already shipped:** vault, export panel, QR. Follow [ui.md](ui.md). Do not rebuild `static/app.js`.
 **Build window:** ~2 hours, agent-driven, 3 parallel tracks.
 **Reviewed by:** Gemini and Claude (see [dev-log](../dev-log/spec-review-02.md)).
 

@@ -1,7 +1,7 @@
 # Privacy Gate — Design Document
 
 **What this is:** the technical design that implements the [requirements spec](../specs/privacy-gate.md). How the system is structured, what code goes where, and how the components connect.
-**Status:** detector / sanitiser / reasoner algorithms still apply. The Streamlit UI in §3.7 is obsolete.
+**Status:** detector / sanitiser-merge / reasoner algorithms still apply. §3.1 `FieldType` (`income` + five types), binary consent, Streamlit §3.7, and `[REDACTED]` tokens are **stale**. Use [ui.md](ui.md), [privacy-gate.md](privacy-gate.md) §3–§4, and ADR-011 / ADR-012 / ADR-013.
 **UI source of truth for backend:** [ui.md](ui.md) (vault, export panel, `#t=` QR, nine field types, keep / blacklabel / encrypt).
 **Build window:** ~2 hours, agent-driven.
 

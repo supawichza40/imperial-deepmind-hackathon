@@ -1,11 +1,13 @@
 # Specs index
 
-Current project truth: what the system is, what it must do, and how to build it.
+Current project truth. If two specs disagree, later ADRs and the live UI win.
+
+Authority order: [ui.md](ui.md) (built frontend) → [privacy-gate.md](privacy-gate.md) + ADR-011/012/013 → [api.md](api.md) → [architecture.md](architecture.md) → [design.md](design.md) (algorithms only).
 
 | Spec | Status | What it covers |
 |---|---|---|
 | [privacy-gate.md](privacy-gate.md) | active | Functional requirements, data contracts, fixtures, regex patterns, prompt templates |
-| [design.md](design.md) | active | Core module designs: detector, sanitiser, reasoner, audit, types, fixtures |
+| [design.md](design.md) | algorithms only, UI stale | Detector merge and reasoner. Do not copy Streamlit or five-type consent. |
 | [architecture.md](architecture.md) | active | System architecture: FastAPI + multi-page PWA, process model, directory structure, security boundaries |
 | [api.md](api.md) | active | REST API endpoint definitions, request/response schemas, error shapes |
 | [testing.md](testing.md) | active | TDD strategy, test definitions per module, fixtures, test priorities |

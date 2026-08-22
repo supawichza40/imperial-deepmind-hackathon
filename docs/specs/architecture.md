@@ -12,7 +12,7 @@
 flowchart TB
     subgraph BROWSER["PWA FRONTEND — browser, installable"]
         SW[service-worker.js<br/>offline shell cache]
-        UI[index.html + app.js + styles.css<br/>document display, consent UI, audit log]
+        UI[vault + privacy-export + theme<br/>consent panel, QR share, ACL]
         MAN[manifest.json<br/>PWA install metadata]
     end
 
@@ -55,7 +55,8 @@ flowchart TB
 User's machine:
   ┌─────────────────────────────────────────────┐
   │  Browser (PWA)                              │
-  │    index.html + app.js + styles.css         │
+  │    /vault/  /privacy-export/  /theme/       │
+  │    PrivacyExport + PrivacyVault (plain JS)  │
   │    service-worker.js (caches static shell)  │
   │    manifest.json (PWA metadata)             │
   └──────────────┬──────────────────────────────┘
@@ -149,41 +150,40 @@ app/
 
 | Component | Responsibility |
 |---|---|
-| `index.html` | Document structure: header, document selector, document display, detect button, highlight area, consent checkboxes, sanitised payload preview, send button, Gemini output, audit log |
-| `app.js` | State management, API calls (fetch), rendering, consent toggle, stage gating |
-| `styles.css` | Layout, colours, redaction highlight styles (`.redacted`, `.shared`, `.blocked`) |
+| `static/vault/` | Folders, ACL, lock, two-step delete, `#t=` QR share, guest open |
+| `static/privacy-export/` | Consent panel (`PrivacyExport.mount`), preview, HTML/txt/audit download |
+| `static/theme/` | Tokens and controls. Not a product screen |
 | `manifest.json` | PWA metadata: name, icons, display mode, theme colour |
-| `service-worker.js` | Cache static shell (index.html, app.js, styles.css, icons) for offline load |
+| `service-worker.js` | Cache vault + export + theme shells. Scope at `/` |
 
-**Frontend state machine:**
-```
-IDLE → DOCUMENT_SELECTED → DETECTING → DETECTED → CONSENT_PENDING
-  → SANITISING → SANITISED → REASONING → COMPLETE
-```
+**Frontend state:** vault state in `localStorage["pg-vault-v1"]`. Export toggles live on the mounted panel (`el._toggles`, `el._result`). Detect/reason results, when FastAPI exists, live in page JS.
 
-Each state enables/disables the appropriate buttons. State is held in `app.js` (plain JS object, no framework).
-
-**Privacy boundary in the frontend:** the frontend never sends original document text to any external service. It sends text only to `POST /api/detect` (localhost). The backend ensures only the sanitised payload reaches Gemini.
+Redaction is **client-side** (ADR-013). The browser never sends original document text to Gemini. It may send original text to `POST /api/detect` on localhost.
 
 ### 4.2 API layer — `api/main.py`
 
 | Endpoint | Method | Purpose | Spec FR |
 |---|---|---|---|
-| `/` | GET | Serve `index.html` | — |
+| `/` | GET | Redirect to `/vault/` | — |
+| `/vault/` | GET | Vault page | — |
+| `/privacy-export/` | GET | Export panel | — |
+| `/theme/` | GET | Theme playground | — |
 | `/static/{path}` | GET | Serve static files | — |
-| `/api/documents` | GET | List available fixture documents | FR-1, FR-2 |
-| `/api/detect` | POST | Run detection on a document, return spans | FR-4–FR-11 |
-| `/api/sanitise` | POST | Produce sanitised payload from spans + consent | FR-15 |
-| `/api/reason` | POST | Send sanitised payload to Gemini, return analysis | FR-17–FR-21 |
-| `/api/audit` | POST | Build audit log from spans + consent + detection results | FR-22 |
+| `/api/documents` | GET | List fixture documents | FR-1, FR-2 |
+| `/api/detect` | POST | Run detection, return spans + text + images | FR-4–FR-11 |
+| `/api/sanitise` | POST | Optional headless redaction (browser does this itself) | FR-15 |
+| `/api/reason` | POST | Sanitised payload to Gemini | FR-17–FR-21 |
+| `/api/audit` | POST | Audit log from spans + toggles | FR-22 |
 
-**Why separate endpoints instead of one pipeline call:** each stage is a user-initiated step in the UI. The user must see the spans, approve consent, and see the sanitised payload before anything goes to Gemini. A single pipeline endpoint would skip the human gate (violating FR-14).
+**Why separate endpoints:** each stage is a user-initiated step. The user must see spans and the sanitised preview before anything goes to Gemini. A single pipeline endpoint would skip the human gate (FR-14).
 
-**API statelessness:** the API is stateless. Each request carries the data it needs (document text, spans, consent decision). No server-side session. The frontend holds state between calls.
+**API statelessness:** each request carries the data it needs. No server-side session. Vault persistence is still `localStorage` unless you build [ui.md](ui.md) §7.4.
 
-### 4.3 Core modules — minor addition
+### 4.3 Core modules
 
-`types.py`, `fixtures.py`, `detector.py`, `reasoner.py`, `audit.py` are identical to the design doc — pure functions, no changes. `sanitiser.py` gains one additional function: `sanitise_multi()` (already defined in design doc §3.4) which handles multi-document concatenation. The API layer always calls `sanitise_multi()` — even for a single document, the payload is wrapped with the `--- DOCUMENT: X ---` delimiter. This simplifies the API (one code path) and is consistent with the response examples in the API spec. No other module changes.
+`detector.py`, `reasoner.py`, `audit.py` stay pure functions. Redaction for the demo is `app.export.redact.apply_export` (and the JS twin). A Python `sanitiser.py` is optional for CLI/headless `POST /api/sanitise`. Vault/ACL/QR already live in `app/access/` and `app/static/vault/`.
+
+Do not treat design.doc `types.py` FieldType (`income` + five types) as current. Use `app/export/fields.py`.
 
 ### 4.4 External services
 
@@ -203,10 +203,10 @@ Each state enables/disables the appropriate buttons. State is held in `app.js` (
   "name": "Privacy Gate",
   "short_name": "PrivacyGate",
   "description": "Assisted redaction with human approval",
-  "start_url": "/",
+  "start_url": "/vault/",
   "display": "standalone",
-  "background_color": "#111214",
-  "theme_color": "#1a7f4b",
+  "background_color": "#f7f5f2",
+  "theme_color": "#111111",
   "icons": [
     {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
     {"src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
@@ -215,10 +215,10 @@ Each state enables/disables the appropriate buttons. State is held in `app.js` (
 ```
 
 ### 5.2 service-worker.js
-- Caches the static shell on install: `index.html`, `app.js`, `styles.css`, `manifest.json`, icons.
-- Serves from cache on fetch when offline (cache-first strategy for static assets).
-- Does NOT cache API responses — those require the local server.
-- Registration: `navigator.serviceWorker.register('/service-worker.js')` in `index.html`. The service worker is served at root (not `/static/`) so its scope covers `/` — a service worker at `/static/service-worker.js` can only intercept `/static/*`, not the root navigation request.
+- Caches the static shell on install: vault, privacy-export, theme CSS/JS, `manifest.json`, icons.
+- Serves from cache on fetch when offline (cache-first for static assets).
+- Does NOT cache API responses.
+- Registration from each product page: `navigator.serviceWorker.register('/service-worker.js')`. Served at root so scope covers `/vault/` and `/privacy-export/`.
 
 ### 5.3 What "offline" means for this PWA
 - The **UI shell** loads offline (cached by service worker).
@@ -266,7 +266,10 @@ cp starter/.env.example .env
 # Pull local model
 ollama pull gemma4:e2b
 
-# Run tests (TDD — write tests first, then implement)
+# Run tests already in the tree
+.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"
+
+# Pytest suite from this spec (when FastAPI exists)
 pytest app/tests/ -v
 
 # Start the server
@@ -284,7 +287,7 @@ open http://localhost:8000
 |---|---|
 | Warm the model | `ollama run gemma4:e2b ""` (during setup) |
 | Start the server | `uvicorn app.api.main:app --port 8000` |
-| Open the app | `http://localhost:8000` |
+| Open the app | `http://localhost:8000/vault/` |
 | Install as PWA | Chrome → Install → "Privacy Gate" appears as app |
 
 ---
@@ -296,21 +299,22 @@ open http://localhost:8000
 | Design doc says | Architecture spec says | Why |
 |---|---|---|
 | Streamlit `app.py` orchestrates everything | FastAPI `api/main.py` + static frontend | Web app + PWA requirement |
-| Session state in `st.session_state` | State in frontend `app.js` | No server-side session |
+| Session state in `st.session_state` | Vault `localStorage` + panel `_result` | No server-side session |
 | One monolithic file (`app.py`) | API layer + frontend split | Testable API, installable PWA |
 | No test framework | `pytest` with TDD | Testing spec requirement |
 
 ### 9.2 What stays the same
 
-- Core modules: `types.py`, `fixtures.py`, `detector.py`, `sanitiser.py`, `reasoner.py`, `audit.py` — unchanged.
-- Data contracts: `Span`, `DetectionResult`, `ConsentDecision`, `AuditEntry`, `GeminiResult` — unchanged.
-- Algorithms: two-pass merge, best-match offsets, reverse-offset redaction, JSON fence stripping — unchanged.
-- Prompts, regex patterns, fixtures — unchanged.
-- Privacy boundary: originals never leave the device — unchanged.
+- Detector merge, best-match offsets, reverse-offset replacement, JSON fence stripping.
+- Privacy boundary: originals never go to Gemini.
+- Gemma via Ollama native `/api/generate`, Gemini via Interactions API.
 
-### 9.3 Spec impact
+### 9.3 What changed after the frontend shipped
 
-The requirements spec (FR-12, FR-16) references "Streamlit" — these are updated to "web UI". FR-12 says "colour-coded by type in Streamlit" → "colour-coded by type in the web UI". No functional requirement changes.
+- Nine identity types, not five. No `income` type (ADR-011).
+- Toggles: keep / blacklabel / encrypt, not shared/blocked (ADR-012).
+- Three static entry points, client-side redaction (ADR-013).
+- Built tests live next to modules (`app/export/test_export.py`, `app/access/test_*.py`), not only `app/tests/`.
 
 ---
 
@@ -337,7 +341,7 @@ The requirements spec (FR-12, FR-16) references "Streamlit" — these are update
 ```
 
 - The browser never has the Gemini API key. All cloud calls go through the FastAPI backend.
-- The backend never sends original text to Gemini. The sanitiser runs before `reasoner.py` is called.
+- The backend never sends original text to Gemini. Redaction (browser `PrivacyExport` or `apply_export`) runs before `reasoner.py` is called.
 - Ollama sees the full text — it's local, that's the point.
 
 ---
@@ -345,8 +349,10 @@ The requirements spec (FR-12, FR-16) references "Streamlit" — these are update
 ## Related
 
 - [UI spec](ui.md) — live screens and JSON the frontend already consumes
+- [Security spec](security.md) — threat model and crypto params
 - [Requirements spec](privacy-gate.md) — functional requirements
-- [Design doc](design.md) — module designs (core modules unchanged)
+- [Design doc](design.md) — detector algorithms (UI layout there is stale)
 - [API spec](api.md) — endpoint definitions
 - [Testing spec](testing.md) — TDD approach
-- [ADR-010](../decisions/010-fastapi-pwa.md) — rationale for the architecture shift
+- [ADR-010](../decisions/010-fastapi-pwa.md) — FastAPI + PWA
+- [ADR-013](../decisions/013-multi-page-client-redaction.md) — multi-page routes

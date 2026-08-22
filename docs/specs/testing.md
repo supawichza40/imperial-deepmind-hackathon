@@ -2,7 +2,14 @@
 
 **What this is:** TDD strategy and test definitions for Privacy Gate.
 **Approach:** Test-driven development. Tests are written before implementation. Every module and API endpoint has tests defined here first.
-**Framework:** `pytest` + `pytest-asyncio` + FastAPI `TestClient` (httpx).
+**Framework:** `pytest` + `pytest-asyncio` + FastAPI `TestClient` (httpx) for new API work. Built modules already use `unittest` under `app/export/` and `app/access/`.
+**Contract:** [ui.md](ui.md) and [privacy-gate.md](privacy-gate.md). Do not assert `[REDACTED]`, `income` as a field type, or `shared_types` / `blocked_types`. Use `value` on spans, toggles `keep`/`blacklabel`/`encrypt`, and `█` for blacklabel.
+
+Run what exists today:
+
+```
+.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"
+```
 
 ---
 
@@ -51,7 +58,7 @@ def api_client():
 def mock_ollama_success():
     """Mock Ollama returning valid JSON spans."""
     mock_response = {
-        "response": '[{"text": "A. Okafor", "type": "name"}, {"text": "£2,840.00", "type": "income"}]'
+        "response": '[{"text": "A. Okafor", "type": "name"}, {"text": "14 Mar 1998", "type": "date_of_birth"}]'
     }
     with patch("app.detector.urllib.request.urlopen") as mock:
         mock.return_value = MagicMock()
@@ -153,8 +160,9 @@ def test_gemma_returns_spans_on_success(payslip_text, mock_ollama_success):
     spans, fallback, warning = _detect_gemma(payslip_text)
     assert fallback is False
     assert len(spans) == 2
-    assert any(s["type"] == "name" and s["text"] == "A. Okafor" for s in spans)
-    assert any(s["type"] == "income" and s["text"] == "£2,840.00" for s in spans)
+    assert any(s["type"] == "name" and (s.get("value") or s.get("text")) == "A. Okafor" for s in spans)
+    assert any(s["type"] == "date_of_birth" for s in spans)
+    assert not any(s["type"] == "income" for s in spans)
 
 def test_gemma_offsets_match_text(payslip_text, mock_ollama_success):
     """ADR-001: offsets resolved via str.find match the text."""
@@ -269,7 +277,7 @@ def test_merge_non_overlapping_kept_separate():
     """Non-overlapping spans are not merged."""
     spans = [
         {"type": "name", "start": 0, "end": 10, "text": "A. Okafor"},
-        {"type": "income", "start": 50, "end": 60, "text": "£2,840.00"},
+        {"type": "ni_number", "start": 50, "end": 59, "text": "QQ123456C"},
     ]
     merged = _merge_spans(spans)
     assert len(merged) == 2
@@ -309,60 +317,63 @@ def test_detect_falls_back_to_regex_only(payslip_text, mock_ollama_timeout):
     result = detect(payslip_text)
     assert result["fallback_triggered"] is True
     assert len(result["spans"]) > 0  # regex still found things
-    # No Gemma-only types (name, income) — only regex types
+    # No Gemma-only types (name) if regex-only — pay is not a type
     types = {s["type"] for s in result["spans"]}
     assert "ni_number" in types  # regex finds this
+    assert "income" not in types
 ```
 
 ---
 
 ## 4. Sanitiser tests (`test_sanitiser.py`)
 
-```python
-def test_sanitise_replaces_blocked_spans():
-    """FR-15: blocked spans replaced with [REDACTED]."""
-    text = "Employee: A. Okafor\nPay: £2,840.00"
-    spans = [
-        {"type": "name", "start": 10, "end": 19, "text": "A. Okafor"},
-        {"type": "income", "start": 25, "end": 35, "text": "£2,840.00"},
-    ]
-    result = sanitise(text, spans, blocked_types=["name"])
-    assert "[REDACTED]" in result
-    assert "A. Okafor" not in result
-    assert "£2,840.00" in result  # income is shared, not blocked
+Prefer `app.export.redact.apply_export`. A thin `sanitise(text, spans, toggles)` wrapper is fine for CLI.
 
-def test_sanitise_preserves_shared_spans():
-    """FR-15: shared spans are left intact."""
+```python
+def test_sanitise_replaces_blacklabel_spans():
+    """FR-15: blacklabel spans become █ bars. Pay stays visible (not a type)."""
     text = "Employee: A. Okafor\nPay: £2,840.00"
     spans = [
-        {"type": "name", "start": 10, "end": 19, "text": "A. Okafor"},
-        {"type": "income", "start": 25, "end": 35, "text": "£2,840.00"},
+        {"id": "name-1", "type": "name", "start": 10, "end": 19, "value": "A. Okafor", "kind": "text"},
     ]
-    result = sanitise(text, spans, blocked_types=["name"], )
+    result = sanitise(text, spans, toggles={"name": "blacklabel"})
+    assert "A. Okafor" not in result
+    assert "█" in result
     assert "£2,840.00" in result
+
+def test_sanitise_keep_leaves_text():
+    """FR-15: keep spans are left intact."""
+    text = "Employee: A. Okafor\nPay: £2,840.00"
+    spans = [
+        {"id": "name-1", "type": "name", "start": 10, "end": 19, "value": "A. Okafor", "kind": "text"},
+    ]
+    result = sanitise(text, spans, toggles={"name": "keep"})
+    assert "A. Okafor" in result
 
 def test_sanitise_reverse_offset_preserves_earlier_spans():
     """ADR-002: reverse-offset replacement doesn't shift earlier offsets."""
     text = "AAAAABBBBB"
     spans = [
-        {"type": "x", "start": 0, "end": 5, "text": "AAAAA"},
-        {"type": "y", "start": 5, "end": 10, "text": "BBBBB"},
+        {"id": "x", "type": "name", "start": 0, "end": 5, "value": "AAAAA", "kind": "text"},
+        {"id": "y", "type": "address", "start": 5, "end": 10, "value": "BBBBB", "kind": "text"},
     ]
-    result = sanitise(text, spans, blocked_types=["x", "y"])
-    assert result == "[REDACTED][REDACTED]"
+    result = sanitise(text, spans, toggles={"name": "blacklabel", "address": "blacklabel"})
+    assert "A" not in result
+    assert "B" not in result
+    assert result == "██████████"
 
-def test_sanitise_empty_blocked_types_returns_original():
-    """Nothing blocked → text unchanged."""
+def test_sanitise_all_keep_returns_original():
+    """Nothing hidden → text unchanged."""
     text = "Hello World"
-    spans = [{"type": "name", "start": 0, "end": 5, "text": "Hello"}]
-    result = sanitise(text, spans, blocked_types=[])
+    spans = [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Hello", "kind": "text"}]
+    result = sanitise(text, spans, toggles={"name": "keep"})
     assert result == "Hello World"
 
 def test_sanitise_multi_document_concatenates():
     """FR-3 + spec §3.5: multi-doc sanitise concatenates with delimiter."""
     documents = {"payslip": "Pay: £100", "bank": "Deposit: £100"}
     all_spans = {"payslip": [], "bank": []}
-    result = sanitise_multi(documents, all_spans, blocked_types=[])
+    result = sanitise_multi(documents, all_spans, toggles={})
     assert "--- DOCUMENT: PAYSLIP ---" in result
     assert "--- DOCUMENT: BANK ---" in result
     assert "£100" in result
@@ -371,24 +382,24 @@ def test_sanitise_multi_document_redacts_per_doc():
     """Multi-doc: each doc's spans are applied independently."""
     documents = {"payslip": "Name: Alice", "bank": "Name: Bob"}
     all_spans = {
-        "payslip": [{"type": "name", "start": 6, "end": 11, "text": "Alice"}],
-        "bank": [{"type": "name", "start": 6, "end": 9, "text": "Bob"}],
+        "payslip": [{"id": "a", "type": "name", "start": 6, "end": 11, "value": "Alice", "kind": "text"}],
+        "bank": [{"id": "b", "type": "name", "start": 6, "end": 9, "value": "Bob", "kind": "text"}],
     }
-    result = sanitise_multi(documents, all_spans, blocked_types=["name"])
+    result = sanitise_multi(documents, all_spans, toggles={"name": "blacklabel"})
     assert "Alice" not in result
     assert "Bob" not in result
-    assert "[REDACTED]" in result
+    assert "█" in result
 
 def test_sanitise_handles_unsorted_spans():
     """Sanitiser must sort spans by start descending internally — input order doesn't matter."""
     text = "AAAAABBBBBCCCCC"
     spans = [
-        {"type": "c", "start": 10, "end": 15, "text": "CCCCC"},
-        {"type": "a", "start": 0, "end": 5, "text": "AAAAA"},
-        {"type": "b", "start": 5, "end": 10, "text": "BBBBB"},
+        {"id": "c", "type": "email", "start": 10, "end": 15, "value": "CCCCC", "kind": "text"},
+        {"id": "a", "type": "name", "start": 0, "end": 5, "value": "AAAAA", "kind": "text"},
+        {"id": "b", "type": "address", "start": 5, "end": 10, "value": "BBBBB", "kind": "text"},
     ]
-    result = sanitise(text, spans, blocked_types=["a", "b", "c"])
-    assert result == "[REDACTED][REDACTED][REDACTED]"
+    result = sanitise(text, spans, toggles={"name": "blacklabel", "address": "blacklabel", "email": "blacklabel"})
+    assert result == "███████████████"
 ```
 
 ---
@@ -441,50 +452,46 @@ def test_audit_one_entry_per_field_type():
     """FR-22: one audit entry per field type present in spans."""
     all_spans = {
         "payslip": [
-            {"type": "name", "start": 0, "end": 5, "text": "Alice"},
-            {"type": "income", "start": 10, "end": 15, "text": "£100"},
+            {"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"},
+            {"id": "a", "type": "address", "start": 10, "end": 20, "value": "14 Pelham", "kind": "text"},
         ]
     }
-    decision = {"shared_types": ["income"], "blocked_types": ["name"]}
-    entries = build_audit(all_spans, decision)
+    toggles = {"name": "blacklabel", "address": "keep"}
+    entries = build_audit(all_spans, toggles)
     assert len(entries) == 2
     types = {e["field_type"] for e in entries}
-    assert types == {"name", "income"}
+    assert types == {"name", "address"}
 
 def test_audit_correct_decision_per_type():
-    """FR-22: 'shared' for shared types, 'kept_local' for blocked types."""
-    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "text": "Alice"}]}
-    decision = {"shared_types": [], "blocked_types": ["name"]}
-    entries = build_audit(all_spans, decision)
+    """FR-22: keep → shared, blacklabel/encrypt → kept_local."""
+    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
+    entries = build_audit(all_spans, {"name": "blacklabel"})
     name_entry = [e for e in entries if e["field_type"] == "name"][0]
     assert name_entry["decision"] == "kept_local"
 
 def test_audit_includes_fallback_entry():
     """FR-10: fallback_triggered adds a special audit entry."""
-    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "text": "Alice"}]}
-    decision = {"shared_types": ["name"], "blocked_types": []}
+    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
     detection_results = {"payslip": {"spans": [], "fallback_triggered": True, "warning": "Model unavailable"}}
-    entries = build_audit(all_spans, decision, detection_results)
+    entries = build_audit(all_spans, {"name": "keep"}, detection_results)
     fallback = [e for e in entries if e["decision"] == "fallback"]
     assert len(fallback) == 1
     assert "Model unavailable" in fallback[0]["details"]
 
 def test_audit_no_fallback_entry_when_healthy():
     """No fallback entry when fallback_triggered is False."""
-    all_spans = {"payslip": [{"type": "name", "start": 0, "end": 5, "text": "Alice"}]}
-    decision = {"shared_types": ["name"], "blocked_types": []}
+    all_spans = {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]}
     detection_results = {"payslip": {"spans": [], "fallback_triggered": False, "warning": ""}}
-    entries = build_audit(all_spans, decision, detection_results)
+    entries = build_audit(all_spans, {"name": "keep"}, detection_results)
     assert not any(e["decision"] == "fallback" for e in entries)
 
 def test_audit_multi_doc_unions_field_types():
     """Multi-doc: field types are unioned across documents."""
     all_spans = {
-        "payslip": [{"type": "name", "start": 0, "end": 5, "text": "Alice"}],
-        "bank": [{"type": "account_number", "start": 0, "end": 8, "text": "12345678"}],
+        "payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}],
+        "bank": [{"id": "a", "type": "account_number", "start": 0, "end": 4, "value": "4417", "kind": "text"}],
     }
-    decision = {"shared_types": [], "blocked_types": ["name", "account_number"]}
-    entries = build_audit(all_spans, decision)
+    entries = build_audit(all_spans, {"name": "blacklabel", "account_number": "blacklabel"})
     types = {e["field_type"] for e in entries}
     assert types == {"name", "account_number"}
 ```
@@ -520,17 +527,20 @@ def test_post_detect_empty_documents_returns_400(api_client):
     assert response.status_code == 400
 
 def test_post_sanitise_returns_redacted_text(api_client, payslip_text):
-    """POST /api/sanitise returns sanitised payload with [REDACTED]."""
+    """POST /api/sanitise is optional/headless. Returns █ bars, not [REDACTED]."""
     response = api_client.post("/api/sanitise", json={
         "documents": [{"id": "payslip", "text": payslip_text}],
         "spans": {"payslip": [
-            {"type": "name", "start": 25, "end": 34, "text": "A. Okafor"},
+            {"id": "name-1", "type": "name", "start": 50, "end": 59, "value": "A. Okafor", "kind": "text"},
         ]},
-        "consent": {"shared_types": [], "blocked_types": ["name"]}
+        "toggles": {"name": "blacklabel"},
+        "passphrase": None,
     })
     assert response.status_code == 200
-    assert "[REDACTED]" in response.json()["sanitised_payload"]
-    assert "A. Okafor" not in response.json()["sanitised_payload"]
+    payload = response.json()["sanitised_payload"]
+    assert "█" in payload
+    assert "A. Okafor" not in payload
+    assert "£2,427.40" in payload
 
 def test_post_reason_returns_analysis(api_client, mock_gemini_success):
     """POST /api/reason returns GeminiResult."""
@@ -552,26 +562,26 @@ def test_post_reason_returns_200_fallback_on_gemini_failure(api_client, mock_gem
     data = response.json()
     assert data["inconsistency_detected"] is False
 
-def test_post_sanitise_all_blocked_returns_fully_redacted(api_client, payslip_text):
-    """FR-26: if all types are blocked, sanitised payload is fully redacted but still returned."""
+def test_post_sanitise_blacklabel_keeps_pay(api_client):
+    """Pay is untyped. Blacklabeling name does not hide £100."""
     response = api_client.post("/api/sanitise", json={
         "documents": [{"id": "payslip", "text": "Name: Alice\nPay: £100"}],
         "spans": {"payslip": [
-            {"type": "name", "start": 6, "end": 11, "text": "Alice"},
-            {"type": "income", "start": 18, "end": 23, "text": "£100"},
+            {"id": "n", "type": "name", "start": 6, "end": 11, "value": "Alice", "kind": "text"},
         ]},
-        "consent": {"shared_types": [], "blocked_types": ["name", "income"]}
+        "toggles": {"name": "blacklabel"},
+        "passphrase": None,
     })
     assert response.status_code == 200
     payload = response.json()["sanitised_payload"]
     assert "Alice" not in payload
-    assert "£100" not in payload
+    assert "£100" in payload
 
 def test_post_audit_returns_entries(api_client):
-    """POST /api/audit returns audit log."""
+    """POST /api/audit returns audit log from toggles."""
     response = api_client.post("/api/audit", json={
-        "spans": {"payslip": [{"type": "name", "start": 0, "end": 5, "text": "Alice"}]},
-        "consent": {"shared_types": [], "blocked_types": ["name"]},
+        "spans": {"payslip": [{"id": "n", "type": "name", "start": 0, "end": 5, "value": "Alice", "kind": "text"}]},
+        "toggles": {"name": "blacklabel"},
         "detection_results": {"payslip": {"spans": [], "fallback_triggered": False, "warning": ""}}
     })
     assert response.status_code == 200
@@ -579,9 +589,15 @@ def test_post_audit_returns_entries(api_client):
     assert "audit_log" in data
     assert len(data["audit_log"]) >= 1
 
-def test_get_root_serves_index_html(api_client):
-    """GET / serves the PWA index.html."""
-    response = api_client.get("/")
+def test_get_root_redirects_to_vault(api_client):
+    """GET / redirects to /vault/."""
+    response = api_client.get("/", follow_redirects=False)
+    assert response.status_code in (301, 302, 307, 308)
+    assert "/vault" in response.headers.get("location", "")
+
+def test_get_vault_html(api_client):
+    """GET /vault/ serves the vault page."""
+    response = api_client.get("/vault/")
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
 
@@ -613,20 +629,26 @@ def test_full_pipeline_detect_sanitise_reason_audit(api_client, payslip_text, ba
     # Extract just the spans per doc (not the full DetectionResult) for the sanitise API
     spans = {doc_id: res["spans"] for doc_id, res in detection_results.items()}
 
-    # 2. Sanitise (block identity, share income)
-    consent = {"shared_types": ["income"], "blocked_types": ["name", "address", "ni_number", "account_number"]}
+    # 2. Optional headless sanitise (browser normally does this). Hide identity, leave pay.
+    toggles = {
+        "name": "blacklabel",
+        "address": "blacklabel",
+        "ni_number": "blacklabel",
+        "account_number": "blacklabel",
+    }
     sanitise_resp = api_client.post("/api/sanitise", json={
         "documents": [
             {"id": "payslip", "text": payslip_text},
             {"id": "bank_statement", "text": bank_statement_text},
         ],
         "spans": spans,
-        "consent": consent,
+        "toggles": toggles,
+        "passphrase": None,
     })
     assert sanitise_resp.status_code == 200
     payload = sanitise_resp.json()["sanitised_payload"]
-    assert "[REDACTED]" in payload
-    assert "£2,840.00" in payload or "£2,480.00" in payload  # income is shared
+    assert "█" in payload
+    assert "£2,840.00" in payload or "£2,480.00" in payload
 
     # 3. Reason
     reason_resp = api_client.post("/api/reason", json={"sanitised_payload": payload})
@@ -637,12 +659,12 @@ def test_full_pipeline_detect_sanitise_reason_audit(api_client, payslip_text, ba
     # 4. Audit
     audit_resp = api_client.post("/api/audit", json={
         "spans": spans,
-        "consent": consent,
+        "toggles": toggles,
         "detection_results": detect_resp.json()["results"],
     })
     assert audit_resp.status_code == 200
     audit_log = audit_resp.json()["audit_log"]
-    assert len(audit_log) >= 5  # at least 5 field types
+    assert len(audit_log) >= 1
 
 def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_timeout, mock_gemini_success):
     """E2E: Ollama down → regex-only detection still works end-to-end, audit includes fallback entry."""
@@ -657,11 +679,12 @@ def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_time
     spans = {"payslip": detection_results["payslip"]["spans"]}
 
     # 2. Sanitise
-    consent = {"shared_types": ["income"], "blocked_types": ["name", "address", "ni_number", "account_number"]}
+    toggles = {"name": "blacklabel", "address": "blacklabel", "ni_number": "blacklabel", "account_number": "blacklabel"}
     sanitise_resp = api_client.post("/api/sanitise", json={
         "documents": [{"id": "payslip", "text": payslip_text}],
         "spans": spans,
-        "consent": consent,
+        "toggles": toggles,
+        "passphrase": None,
     })
     assert sanitise_resp.status_code == 200
 
@@ -672,7 +695,7 @@ def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_time
     # 4. Audit — should include a fallback entry
     audit_resp = api_client.post("/api/audit", json={
         "spans": spans,
-        "consent": consent,
+        "toggles": toggles,
         "detection_results": detection_results,
     })
     assert audit_resp.status_code == 200
@@ -687,6 +710,7 @@ def test_full_pipeline_regex_fallback(api_client, payslip_text, mock_ollama_time
 
 ### 9.1 Run all tests
 ```bash
+.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"
 pytest app/tests/ -v
 ```
 
@@ -727,10 +751,10 @@ If time is short, tests are cut in this order (least to most important):
 
 No automated frontend tests for the hackathon. Manual verification only:
 
-1. Open `http://localhost:8000` → page loads, documents visible.
-2. Click "Detect" → spans highlighted with colours.
-3. Toggle consent checkboxes → sanitised payload updates.
-4. Click "Send to Gemini" → analysis + draft letter appear.
+1. Open `http://localhost:8000/vault/` → page loads, payslip panel visible.
+2. Flip keep / blacklabel / encrypt → preview updates (`█` bars, pay still visible).
+3. Share file → Make link and QR. `#t=` URL under 2900 bytes.
+4. Click Detect / Send to Gemini once FastAPI exists → analysis + audit appear.
 5. Audit log displays correctly.
 6. Chrome → Install → PWA installs and opens from home screen.
 7. With wifi off → page still loads (service worker cache), detect still works (Ollama local), reason fails gracefully.

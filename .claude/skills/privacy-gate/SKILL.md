@@ -26,7 +26,8 @@ because getting it wrong cost something real today.
   reference for the vision path.
 - **Keep local output short and structured.** A label, a field, a span map,
   never prose. At roughly 10 tok/s every token is a tenth of a second on
-  screen. Return character offsets, not rewritten text.
+  screen. Gemma returns matched substrings plus type, not offsets and not
+  rewritten text. Python resolves character offsets (ADR-001).
 - **A deterministic fallback sits under the model.** Regex for account
   numbers, postcodes, NI numbers and emails catches the obvious cases
   instantly. The model handles what regex cannot: names in context,
@@ -64,8 +65,9 @@ because getting it wrong cost something real today.
   answer is that it does not, which is exactly why a human approves every
   field before it leaves.
 - **Exports must outlive the app.** Every document downloads as ordinary
-  files that open anywhere: sanitised PDF, plain text, `audit.json`, and
-  `vault.enc.json` for locked fields. Nothing expires, nothing phones home.
+  files that open anywhere: sanitised HTML, plain text, `audit.json`, a zip
+  from `build_zip_bytes`, and `vault.enc.json` for locked fields. Nothing
+  expires, nothing phones home.
 - **Seed demos with synthetic documents.** Never a real person's payslip,
   statement or passport.
 - **Do not self-verify novelty.** Four of eight agents had their own top idea

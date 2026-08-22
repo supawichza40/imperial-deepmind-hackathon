@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px;
+            background: #111111; color: #ffffff; font-family: inherit; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+    .pill.ghost { background: #ffffff; color: #111111; }
+    .card { background: #ffffff; border-radius: 28px; padding: 40px;
+            box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
+            display: flex; flex-direction: column; gap: 24px; }
+    .h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+    .step { display: grid; grid-template-columns: 20px 1fr; gap: 16px; align-items: start; }
+    .use { display: grid; grid-template-columns: 22px 1fr; gap: 16px; align-items: start;
+           padding: 20px 0; border-bottom: 1px solid #e6e1d8; }
+    .use:last-child { border-bottom: 0; }
+    .file { display: grid; grid-template-columns: 22px 1fr auto; gap: 16px; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid #e6e1d8; }
+  </style>
+</helmet>
+
+<div style="min-height: 100%; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 40px; border-bottom: 1px solid #e6e1d8">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">Privacy Gate</span>
+      <span class="mono" style="color: #666666">/ 3 safe copies</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span class="mono" style="color: #666666">gemini 3.7 flash · cloud</span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #c4a574"></span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 48px 40px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lbl">Optional · the hiding is already done</span>
+        <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; text-transform: none">Now put the safe copies to work</h1>
+        <p style="margin: 0; max-width: 720px; color: #666666">Only the approved text goes up. The originals stay on this machine, and you can stop here: the files are already yours to download and use anywhere.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: stretch">
+
+        <div class="card">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+            <h2 class="h2">The agent, working</h2>
+            <span class="mono" style="color: #666666">4 steps · 11 seconds</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 20px">
+            <div class="step">
+              <span style="width: 20px; height: 20px; border-radius: 50%; background: #111111; color: #ffffff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">1</span>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Read 3 sanitised documents</span>
+                <span class="mono" style="color: #666666">payslip, tenancy, bank statement</span>
+              </div>
+            </div>
+            <div class="step">
+              <span style="width: 20px; height: 20px; border-radius: 50%; background: #111111; color: #ffffff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">2</span>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Cross check the figures</span>
+                <span class="mono" style="color: #666666">tool call: compare_fields</span>
+              </div>
+            </div>
+            <div class="step">
+              <span style="width: 20px; height: 20px; border-radius: 50%; background: #c4a574; color: #111111; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">3</span>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Found one mismatch</span>
+                <span class="mono" style="color: #8c6a3c">stated income 2,558 vs statement 2,401</span>
+              </div>
+            </div>
+            <div class="step">
+              <span style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #111111; color: #111111; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">4</span>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Drafted the covering note</span>
+                <span class="mono" style="color: #666666">ready to edit, nothing sent</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #f4f1ea; border-radius: 16px; padding: 24px; font-size: 14px">
+            <span style="color: #666666">Your August payslip shows a net figure that does not match the deposit on the statement. The difference is 157.42, which lines up with the deduction listed on page two.</span>
+          </div>
+
+          <div style="display: flex; gap: 16px; flex-wrap: wrap">
+            <button class="pill ghost">Edit draft</button>
+            <button class="pill ghost">Run again</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+            <h2 class="h2">What you can ask for</h2>
+            <span class="mono" style="color: #666666">pick one</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column">
+            <div class="use">
+              <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M4 6h7"></path><path d="M4 12h7"></path><path d="M4 18h7"></path><path d="M15 8l3 3 3-6"></path></svg>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Check these against each other</span>
+                <span style="color: #666666; font-size: 14px">Find the figure that does not agree across documents.</span>
+              </div>
+            </div>
+            <div class="use">
+              <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Turn it into a checklist</span>
+                <span style="color: #666666; font-size: 14px">What this application still needs from you.</span>
+              </div>
+            </div>
+            <div class="use">
+              <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3 2.4V13"></path><path d="M12 16.5h.01"></path></svg>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Explain it in plain language</span>
+                <span style="color: #666666; font-size: 14px">What this letter is actually asking of you.</span>
+              </div>
+            </div>
+            <div class="use">
+              <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M4 6h16"></path><path d="M4 11h16"></path><path d="M4 16h9"></path><path d="M16 19l3-3 2 2-3 3z"></path></svg>
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Draft the reply</span>
+                <span style="color: #666666; font-size: 14px">A first version you edit, never one that sends itself.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+          <h2 class="h2">Take the files with you</h2>
+          <span style="color: #666666; font-size: 14px">These are ordinary files. They open anywhere, and none of them needs this app to be readable.</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 40px">
+
+          <div class="file">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-weight: 500">payslip-safe.pdf</span>
+              <span class="mono" style="color: #666666">the copy with fields hidden</span>
+            </div>
+            <span class="mono" style="color: #666666">184 KB</span>
+          </div>
+
+          <div class="file">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-weight: 500">payslip-safe.txt</span>
+              <span class="mono" style="color: #666666">plain text, paste anywhere</span>
+            </div>
+            <span class="mono" style="color: #666666">4 KB</span>
+          </div>
+
+          <div class="file">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M5 7h14"></path><path d="M5 12h9"></path><path d="M5 17h6"></path></svg>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-weight: 500">audit.json</span>
+              <span class="mono" style="color: #666666">every field and what you chose</span>
+            </div>
+            <span class="mono" style="color: #666666">12 KB</span>
+          </div>
+
+          <div class="file" style="border-bottom: 0">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #8c6a3c; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-weight: 500">vault.enc.json</span>
+              <span class="mono" style="color: #8c6a3c">locked fields, needs your passphrase</span>
+            </div>
+            <span class="mono" style="color: #666666">9 KB</span>
+          </div>
+
+        </div>
+
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+          <button class="pill">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #ffffff; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 20h16"></path></svg>
+            Download all as zip
+          </button>
+          <button class="pill ghost">Save to shared folder</button>
+          <span style="color: #666666; font-size: 14px">Nothing here expires, and nothing phones home.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

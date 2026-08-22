@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .spec { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px; color: #666666; }
+    .row { display: flex; flex-direction: column; gap: 16px;
+           padding: 32px 0; border-bottom: 1px solid #e6e1d8; }
+    .row:last-child { border-bottom: 0; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+  </style>
+</helmet>
+
+<div style="padding: 64px 40px; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span class="lbl">Built from components.css</span>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; text-transform: none; line-height: 1.15">The controls</h1>
+  </div>
+
+  <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08)">
+
+    <div class="row">
+      <span class="lbl">Buttons</span>
+      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+        <button style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px; background: #111111; color: #ffffff; font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer">Primary</button>
+        <button style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px; background: #ffffff; color: #111111; font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer">Ghost</button>
+        <button style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px; background: #111111; color: #ffffff; font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.86; cursor: pointer">Hover</button>
+      </div>
+      <span class="spec">44px min-height · 999px radius · 11px / 600 / 0.16em uppercase · hover drops to 0.86 opacity</span>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Switch</span>
+      <div style="display: flex; gap: 24px; align-items: center">
+        <span style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 999px; background: #e6e1d8">
+          <span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18)"></span>
+        </span>
+        <span style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 999px; background: #111111">
+          <span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18); transform: translateX(18px)"></span>
+        </span>
+        <span style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 999px; background: #e6e1d8; opacity: 0.35">
+          <span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff"></span>
+        </span>
+        <span class="spec">off · on · disabled</span>
+      </div>
+      <span class="spec">44 × 26 · 20px knob · 18px travel · checked fills ink</span>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Segmented · the treatment picker</span>
+      <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap">
+        <div style="display: inline-flex; border: 1px solid #111111; border-radius: 999px; overflow: hidden">
+          <button style="font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 12px; border: 0; background: #111111; color: #ffffff; cursor: pointer">Keep</button>
+          <button style="font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 12px; border: 0; background: transparent; color: #111111; cursor: pointer">Blacklabel</button>
+          <button style="font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 12px; border: 0; background: transparent; color: #111111; cursor: pointer">Encrypt</button>
+        </div>
+        <span class="spec">pressed = ink fill, paper text</span>
+      </div>
+      <span class="spec">10px / 600 / 0.12em uppercase · 7px 12px · blacklabel paints ink, encrypt paints wood</span>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Input</span>
+      <input placeholder="Passphrase for the encrypted vault" style="width: 100%; min-height: 44px; padding: 10px 16px; border: 1px solid #e6e1d8; border-radius: 16px; background: #ffffff; color: #111111; font-family: inherit; font-size: 15px">
+      <span class="spec">16px radius · softer than a card, never a pill</span>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Dots and swatches</span>
+      <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap">
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span style="width: 8px; height: 8px; border: 1px solid #111111; border-radius: 50%; background: #111111"></span>
+          <span style="width: 8px; height: 8px; border: 1px solid #111111; border-radius: 50%; background: transparent"></span>
+          <span style="width: 8px; height: 8px; border: 1px solid #111111; border-radius: 50%; background: transparent"></span>
+          <span class="spec">8px dots</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 50%; background: #111111"></span>
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 50%; background: #c4a574"></span>
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 50%; background: #c47b6a"></span>
+          <span style="width: 18px; height: 18px; border: 1px solid #e6e1d8; border-radius: 50%; background: #ffffff"></span>
+          <span class="spec">18px swatches · clay is only ever a dot</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Icons</span>
+      <div style="display: flex; gap: 24px; align-items: center">
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 5c-5 0-8 7-8 7s3 7 8 7 8-7 8-7-3-7-8-7z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M5 7h14"></path><path d="M5 12h9"></path><path d="M5 17h6"></path></svg>
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 20h16"></path></svg>
+        <span class="spec">22px · 1.5px stroke · round caps · never filled</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

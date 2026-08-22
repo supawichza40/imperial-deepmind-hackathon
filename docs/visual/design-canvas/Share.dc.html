@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px;
+            background: #111111; color: #ffffff; font-family: inherit; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+    .pill.ghost { background: #ffffff; color: #111111; }
+    .seg { display: inline-flex; border: 1px solid #111111; border-radius: 999px; overflow: hidden; }
+    .seg button { font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+                  text-transform: uppercase; padding: 7px 12px; border: 0; background: transparent;
+                  color: #111111; cursor: pointer; }
+    .seg button.on { background: #111111; color: #ffffff; }
+    .bar { display: inline-block; height: 14px; border-radius: 3px; background: #111111;
+           vertical-align: middle; }
+    .trace { display: flex; gap: 16px; align-items: flex-start; }
+  </style>
+</helmet>
+
+<div style="min-height: 100%; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 40px; border-bottom: 1px solid #e6e1d8">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">Privacy Gate</span>
+      <span class="mono" style="color: #666666">/ ready to share</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span class="mono" style="color: #666666">gemma4:e2b · warm · offline</span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #111111"></span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 48px 40px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lbl">Done · 11 hidden, 2 locked, 1 shared</span>
+        <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; text-transform: none">This is what leaves your machine</h1>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: stretch">
+
+        <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">The safe copy</h2>
+            <div class="seg">
+              <button>Original</button>
+              <button class="on">What gets sent</button>
+            </div>
+          </div>
+
+          <div style="background: #f4f1ea; border-radius: 16px; padding: 32px; font-size: 14px; line-height: 2">
+            <div style="font-weight: 600; margin-bottom: 16px">NORTHWIND LOGISTICS LTD · PAY STATEMENT</div>
+            <div>Employee: <span class="bar" style="width: 128px"></span></div>
+            <div>Address: <span class="mono" style="color: #8c6a3c">[LOCKED ADDRESS]</span></div>
+            <div>NI number: <span class="bar" style="width: 96px"></span></div>
+            <div>Paid into: <span class="bar" style="width: 172px"></span></div>
+            <div style="margin-top: 16px">Gross this period: <b>£3,412.00</b></div>
+            <div>Tax: <b>£612.40</b> &nbsp; National Insurance: <b>£241.18</b></div>
+            <div>Net pay: <b>£2,558.42</b></div>
+            <div style="margin-top: 16px; color: #666666">Period 05 · 31 August 2026 · Employee ref <span class="bar" style="width: 48px"></span></div>
+          </div>
+
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+            <button class="pill">
+              <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #ffffff; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 20h16"></path></svg>
+              Download
+            </button>
+            <button class="pill ghost">Put in shared folder</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 24px">
+
+          <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">What happened</h2>
+            <div style="display: flex; flex-direction: column; gap: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.6">
+              <div class="trace">
+                <span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border: 1px solid #111111; border-radius: 50%; background: #111111"></span>
+                <span>Gemma read 4 documents<span style="color: #666666"> · on device, network off</span></span>
+              </div>
+              <div class="trace">
+                <span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border: 1px solid #111111; border-radius: 50%; background: #111111"></span>
+                <span>14 fields found, 11 hidden<span style="color: #666666"> · originals never copied</span></span>
+              </div>
+              <div class="trace">
+                <span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border: 1px solid #111111; border-radius: 50%; background: #c4a574"></span>
+                <span>2 locked into vault.enc<span style="color: #666666"> · passphrase not stored</span></span>
+              </div>
+              <div class="trace">
+                <span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border: 1px solid #111111; border-radius: 50%; background: transparent"></span>
+                <span>Gemini compared the safe copies<span style="color: #666666"> · sanitised text only</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">Where it goes</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Safe to share</span>
+                <span class="mono" style="color: #666666">~/Google Drive/.../Safe to share</span>
+              </div>
+              <span style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 999px; background: #111111; flex: none">
+                <span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18); transform: translateX(18px)"></span>
+              </span>
+            </div>
+            <div style="height: 1px; background: #e6e1d8"></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+              <div style="display: flex; flex-direction: column">
+                <span style="font-weight: 500">Anyone with the link</span>
+                <span class="mono" style="color: #666666">off until you turn it on</span>
+              </div>
+              <span style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 999px; background: #e6e1d8; flex: none">
+                <span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18)"></span>
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="background: #f3e8e4; border-radius: 28px; padding: 32px 40px; display: flex; gap: 24px; align-items: flex-start">
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; flex: none; margin-top: 3px; stroke: #8a2a22; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 4l9 16H3z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>
+        <p style="margin: 0; color: #8a2a22; font-size: 14px; max-width: 720px">Read the safe copy before you turn the link on. This is assisted redaction with your approval. It can miss something, and a public link cannot be taken back once someone has opened it.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

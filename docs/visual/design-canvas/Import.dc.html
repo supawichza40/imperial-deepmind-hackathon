@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 44px; padding: 0 22px; border: 1px solid #111111; border-radius: 999px;
+            background: #111111; color: #ffffff; font-family: inherit; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+    .pill.ghost { background: #ffffff; color: #111111; }
+  </style>
+</helmet>
+
+<div style="min-height: 100%; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 40px; border-bottom: 1px solid #e6e1d8">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em">Privacy Gate</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span class="mono" style="color: #666666">gemma4:e2b · warm · offline</span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #111111"></span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 64px 40px">
+    <div style="width: 100%; max-width: 880px; display: flex; flex-direction: column; gap: 40px">
+
+      <div style="display: flex; flex-direction: column; gap: 16px; text-align: center; align-items: center">
+        <span class="lbl">Step one of three</span>
+        <h1 style="margin: 0; font-size: 46px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; text-transform: none">Bring in your documents</h1>
+        <p style="margin: 0; max-width: 560px; color: #666666">Nothing is uploaded. Everything is read on this machine first, and nothing leaves until you have seen it and said yes.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+
+        <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px; align-items: flex-start">
+          <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 20h16"></path></svg>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">Drop files</h2>
+            <p style="margin: 0; color: #666666; font-size: 14px">A payslip, a bank statement, a letter. PDF, image or text.</p>
+          </div>
+          <div style="width: 100%; border: 1px dashed #e6e1d8; border-radius: 16px; padding: 32px; text-align: center; background: #f4f1ea">
+            <span class="mono" style="color: #666666">drag here, or browse</span>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 24px; align-items: flex-start">
+          <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #111111; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M4 8a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path></svg>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">Scan a folder</h2>
+            <p style="margin: 0; color: #666666; font-size: 14px">Your whole Google Drive folder at once, read from disk.</p>
+          </div>
+          <input value="~/Google Drive/My Drive/Documents" style="width: 100%; min-height: 44px; padding: 10px 16px; border: 1px solid #e6e1d8; border-radius: 16px; background: #ffffff; color: #111111; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px">
+          <button class="pill">Scan folder</button>
+        </div>
+
+      </div>
+
+      <div style="background: #f4f1ea; border-radius: 28px; padding: 32px 40px; display: flex; gap: 24px; align-items: flex-start">
+        <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; flex: none; margin-top: 3px; stroke: #8c6a3c; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+        <p style="margin: 0; color: #666666; font-size: 14px">This finds sensitive material and helps you remove it. It is assisted redaction with your approval, not guaranteed anonymisation. You see every field before anything is shared.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

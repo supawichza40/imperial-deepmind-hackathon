@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #f7f5f2; color: #111111;
+           font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+           font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { color: #8c6a3c; } a:hover { color: #111111; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+           text-transform: uppercase; color: #666666; }
+  </style>
+</helmet>
+
+<div style="padding: 64px 40px; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span class="lbl">tokens.css</span>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; text-transform: none; line-height: 1.15">Colour and type</h1>
+  </div>
+
+  <div style="background: #ffffff; border-radius: 28px; padding: 40px; box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08); display: flex; flex-direction: column; gap: 40px">
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span class="lbl">Surfaces</span>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #f7f5f2; border: 1px solid #e6e1d8"></div>
+          <span class="mono">mist<br>#f7f5f2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #ffffff; border: 1px solid #e6e1d8"></div>
+          <span class="mono">paper<br>#ffffff</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #f4f1ea; border: 1px solid #e6e1d8"></div>
+          <span class="mono">sand<br>#f4f1ea</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #e6e1d8"></div>
+          <span class="mono">line<br>#e6e1d8</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span class="lbl">Ink and accents</span>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #111111"></div>
+          <span class="mono">ink<br>#111111</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #666666"></div>
+          <span class="mono">mute<br>#666666</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #c4a574"></div>
+          <span class="mono">wood<br>#c4a574</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #8c6a3c"></div>
+          <span class="mono">wood deep<br>#8c6a3c</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 72px; border-radius: 16px; background: #c47b6a"></div>
+          <span class="mono">clay<br>#c47b6a</span>
+        </div>
+      </div>
+      <p style="margin: 0; color: #666666; font-size: 14px">Blacklabel is ink. Encrypt is wood. Clay only ever appears as a colour dot, never a button.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span class="lbl">Type</span>
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1">14 fields found</span>
+          <span class="mono" style="color: #666666">metric · 40px / 600 / −0.03em</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15">Privacy Gate</span>
+          <span class="mono" style="color: #666666">title · 700 / −0.02em / mixed case · product names never shout</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase">The audit trail</span>
+          <span class="mono" style="color: #666666">heading · 600 / 0.12em / uppercase</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #666666">On device</span>
+          <span class="mono" style="color: #666666">kicker · 11px / 500 / 0.18em / mute</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; max-width: 620px">
+          <span>Body copy runs at fifteen pixels with a 1.7 line height, which is loose for an interface and deliberately so. This product asks people to read carefully before they share something.</span>
+          <span class="mono" style="color: #666666">body · 15px / 400 / 1.7</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span class="lbl">Radii and rhythm</span>
+      <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+          <div style="width: 92px; height: 60px; border-radius: 16px; background: #f4f1ea; border: 1px solid #e6e1d8"></div>
+          <span class="mono">input 16</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+          <div style="width: 92px; height: 60px; border-radius: 28px; background: #f4f1ea; border: 1px solid #e6e1d8"></div>
+          <span class="mono">card 28</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+          <div style="width: 92px; height: 60px; border-radius: 32px; background: #f4f1ea; border: 1px solid #e6e1d8"></div>
+          <span class="mono">image 32</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+          <div style="width: 92px; height: 44px; border-radius: 999px; background: #111111"></div>
+          <span class="mono">pill 999</span>
+        </div>
+      </div>
+      <span class="mono" style="color: #666666">spacing 8 · 16 · 24 · 40 · 64 · 80 · page 1120 · shadow 0 18px 40px rgba(17,17,17,.08)</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

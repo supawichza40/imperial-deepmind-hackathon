@@ -5,13 +5,15 @@
  * Detect finishes before the export panel mounts, so Send to Gemini
  * reads live spans instead of the static demo payload.
  *
- * Files are read in the browser. Only the approved text later hits /api/detect
+ * Files are read on this machine. PDFs are opened locally through
+ * /api/extract. Only the approved text later hits /api/detect
  * and, if the user sends, /api/reason.
  */
 (function (root) {
   "use strict";
 
   var MAX_BYTES = 200 * 1024;
+  var PDF_MAX_BYTES = 2 * 1024 * 1024;
   var TEXT_EXT = /\.(txt|md|csv|json|html|htm|text|log)$/i;
   var detectInflight = {};
   var docsPromise = null;
@@ -64,23 +66,70 @@
     return TEXT_EXT.test(file.name);
   }
 
-  function readLocalFile(file) {
+  function isPdfFile(file) {
+    if (!file || !file.name) return false;
+    if (/\.pdf$/i.test(file.name)) return true;
+    return file.type === "application/pdf";
+  }
+
+  function bytesToB64(buf) {
+    var bytes = new Uint8Array(buf);
+    var chunk = 0x8000;
+    var parts = [];
+    for (var i = 0; i < bytes.length; i += chunk) {
+      parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunk)));
+    }
+    return btoa(parts.join(""));
+  }
+
+  function extractPdf(file) {
     return new Promise(function (resolve, reject) {
-      if (!file) {
-        reject(new Error("Choose a file first."));
+      if (file.size > PDF_MAX_BYTES) {
+        reject(new Error("That PDF is over 2 MB. Use a smaller file, or paste the text."));
         return;
       }
+      var reader = new FileReader();
+      reader.onload = function () {
+        fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name, bytes_b64: bytesToB64(reader.result) })
+        }).then(function (r) {
+          return r.json().then(function (body) {
+            if (!r.ok) {
+              throw new Error((body && (body.error || body.detail)) || "Could not read that PDF.");
+            }
+            var text = String((body && body.text) || "").replace(/^\uFEFF/, "");
+            if (!text.trim()) {
+              throw new Error("No selectable text in that PDF. Paste the text instead.");
+            }
+            resolve({
+              id: "local-" + Date.now(),
+              name: (file.name || "document").replace(/\.[^.]+$/, "") || "Dropped file",
+              text: text
+            });
+          });
+        }).catch(function (err) {
+          reject(err instanceof Error ? err : new Error("Could not read that PDF."));
+        });
+      };
+      reader.onerror = function () {
+        reject(new Error("Could not read that file."));
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function readLocalFile(file) {
+    if (!file) return Promise.reject(new Error("Choose a file first."));
+    if (isPdfFile(file)) return extractPdf(file);
+    return new Promise(function (resolve, reject) {
       if (file.size > MAX_BYTES) {
         reject(new Error("That file is over 200 KB. Use a smaller text copy."));
         return;
       }
-      var name = file.name || "";
-      if (/\.pdf$/i.test(name)) {
-        reject(new Error("PDF is not read in this demo. Save a .txt copy, or paste the text below."));
-        return;
-      }
       if (!isTextFile(file)) {
-        reject(new Error("Use a text file (.txt, .md, .csv, .json, .html), or paste the text below."));
+        reject(new Error("Use a text file or a PDF, or paste the text below."));
         return;
       }
       var reader = new FileReader();
@@ -92,7 +141,7 @@
         }
         resolve({
           id: "local-" + Date.now(),
-          name: name.replace(/\.[^.]+$/, "") || "Dropped file",
+          name: (file.name || "Dropped file").replace(/\.[^.]+$/, "") || "Dropped file",
           text: text
         });
       };
@@ -198,8 +247,8 @@
       '<p class="pgp-copy">Nothing is uploaded. The file is read on this machine, then you approve each field.</p>' +
       '<div class="pgp-drop" id="pgp-drop">' +
       '<p class="pgp-drop-title">Drop a payslip, statement or letter</p>' +
-      '<p class="pgp-drop-sub">Text files only in this demo. PDF needs a .txt copy or a paste.</p>' +
-      '<input id="pgp-file" class="pgp-file" type="file" accept=".txt,.md,.csv,.json,.html,.htm,.log,text/plain">' +
+      '<p class="pgp-drop-sub">Text or PDF. If a scan has no selectable text, paste it instead.</p>' +
+      '<input id="pgp-file" class="pgp-file" type="file" accept=".txt,.md,.csv,.json,.html,.htm,.log,.pdf,text/plain,application/pdf">' +
       '<button type="button" class="theme-btn" id="pgp-browse">Add file</button>' +
       "</div>" +
       '<details class="pgp-paste-more">' +
@@ -503,6 +552,7 @@
     detectAndPublish: detectAndPublish,
     allHidden: allHidden,
     isTextFile: isTextFile,
+    isPdfFile: isPdfFile,
     readLocalFile: readLocalFile,
     docFromPaste: docFromPaste
   };

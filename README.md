@@ -102,7 +102,7 @@ cd imperial-deepmind-hackathon
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r starter/requirements.txt
-pip install fastapi "uvicorn[standard]" httpx pytest pytest-asyncio
+pip install fastapi "uvicorn[standard]" httpx pytest pytest-asyncio pypdf
 
 cp starter/.env.example .env        # then paste your key into .env
 # get a key at https://aistudio.google.com/apikey

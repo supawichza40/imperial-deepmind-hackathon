@@ -263,3 +263,17 @@ def test_get_favicon(api_client):
     response = api_client.get("/favicon.ico")
     assert response.status_code == 200
     assert "image" in response.headers.get("content-type", "")
+
+
+def test_post_extract_pdf(api_client):
+    import base64
+
+    from app.test_extract_pdf import pdf_with_text
+
+    raw = pdf_with_text("Payslip for A. Okafor")
+    response = api_client.post(
+        "/api/extract",
+        json={"filename": "payslip.pdf", "bytes_b64": base64.b64encode(raw).decode("ascii")},
+    )
+    assert response.status_code == 200
+    assert "Okafor" in response.json()["text"]

@@ -29,6 +29,16 @@ class DocumentsResponse(BaseModel):
     documents: list[DocumentSummary]
 
 
+class ExtractRequest(BaseModel):
+    filename: str = ""
+    bytes_b64: str
+
+
+class ExtractResponse(BaseModel):
+    text: str
+    pages: int = 0
+
+
 class SpanModel(BaseModel):
     id: str = ""
     type: str

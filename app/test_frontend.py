@@ -69,6 +69,9 @@ class AddFileTests(unittest.TestCase):
         self.assertIn("function readLocalFile", src)
         self.assertIn("function docFromPaste", src)
         self.assertIn("function isTextFile", src)
+        self.assertIn("function isPdfFile", src)
+        self.assertIn("/api/extract", src)
+        self.assertIn("application/pdf", src)
         self.assertIn("addLocalDoc", src)
         self.assertIn("pgp-paste-more", src)
         self.assertIn("pgp-picker-host", src)
@@ -76,7 +79,8 @@ class AddFileTests(unittest.TestCase):
     def test_paste_rejects_empty_and_keeps_text(self):
         src = (STATIC / "privacy-export" / "pipeline.js").read_text(encoding="utf-8")
         self.assertIn("Paste some text first.", src)
-        self.assertIn("PDF is not read in this demo", src)
+        self.assertIn("No selectable text in that PDF", src)
+        self.assertNotIn("PDF is not read in this demo", src)
 
     def test_vault_can_store_an_uploaded_file(self):
         src = (STATIC / "vault" / "vault.js").read_text(encoding="utf-8")

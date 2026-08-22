@@ -63,6 +63,8 @@ def test_pipeline_js_wires_send_and_fr26():
     assert "pgp-leaving" in src
     assert "detectInflight" in src
     assert 'data-pgp-init' in src
+    assert "isPdfFile" in src
+    assert "/api/extract" in src
 
 
 def test_share_button_opens_vault_when_off_vault():

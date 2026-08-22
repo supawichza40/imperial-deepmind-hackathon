@@ -27,6 +27,8 @@ from app.api.contracts import (
     DetectResponse,
     DocumentsResponse,
     DocumentSummary,
+    ExtractRequest,
+    ExtractResponse,
     ReasonRequest,
     SanitiseRequest,
     SanitiseResponse,
@@ -114,6 +116,28 @@ def post_detect(req: DetectRequest) -> DetectResponse:
         )
 
     return DetectResponse(results=results)
+
+
+@app.post("/api/extract", response_model=ExtractResponse)
+def post_extract(req: ExtractRequest) -> ExtractResponse:
+    import base64
+
+    from app.extract_pdf import extract_pdf_text
+
+    raw_b64 = (req.bytes_b64 or "").strip()
+    if raw_b64.startswith("data:") and "," in raw_b64:
+        raw_b64 = raw_b64.split(",", 1)[1]
+    if not raw_b64:
+        raise HTTPException(400, "PDF bytes are missing")
+    try:
+        raw = base64.b64decode(raw_b64, validate=False)
+    except Exception:
+        raise HTTPException(400, "That file is not a PDF.")
+    try:
+        text, pages = extract_pdf_text(raw)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return ExtractResponse(text=text, pages=pages)
 
 
 @app.post("/api/sanitise", response_model=SanitiseResponse)

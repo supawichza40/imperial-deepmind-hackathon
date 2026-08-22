@@ -99,7 +99,50 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
   }
 
+  function isPdfFile(file) {
+    if (!file || !file.name) return false;
+    if (/\.pdf$/i.test(file.name)) return true;
+    return file.type === "application/pdf";
+  }
+
+  function bytesToB64(buf) {
+    var bytes = new Uint8Array(buf);
+    var chunk = 0x8000;
+    var parts = [];
+    for (var i = 0; i < bytes.length; i += chunk) {
+      parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunk)));
+    }
+    return btoa(parts.join(""));
+  }
+
   function readFileAsText(file) {
+    if (isPdfFile(file)) {
+      return new Promise(function (resolve, reject) {
+        if (file.size > 2 * 1024 * 1024) {
+          reject(new Error("That PDF is over 2 MB. Use a smaller file, or paste the text."));
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          fetch("/api/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: file.name, bytes_b64: bytesToB64(reader.result) })
+          }).then(function (r) {
+            return r.json().then(function (body) {
+              if (!r.ok) throw new Error((body && (body.error || body.detail)) || "Could not read that PDF.");
+              var text = String((body && body.text) || "");
+              if (!text.trim()) throw new Error("No selectable text in that PDF. Paste the text instead.");
+              resolve(text);
+            });
+          }).catch(function (err) {
+            reject(err instanceof Error ? err : new Error("Could not read that PDF."));
+          });
+        };
+        reader.onerror = function () { reject(reader.error || new Error("Could not read that file.")); };
+        reader.readAsArrayBuffer(file);
+      });
+    }
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () { resolve(reader.result); };
@@ -473,13 +516,18 @@
 
   // ---------- wiring ----------
 
+  function showPickError(err) {
+    var sub = document.querySelector("#drop .drop-sub");
+    if (sub) sub.textContent = err && err.message ? err.message : "Could not read that file.";
+  }
+
   function wireS1() {
     var input = document.getElementById("filepick");
     var drop = document.getElementById("drop");
     input.addEventListener("change", function () {
       var f = input.files && input.files[0];
       if (!f) return;
-      readFileAsText(f).then(function (text) { startWithFile(f.name, text); });
+      readFileAsText(f).then(function (text) { startWithFile(f.name, text); }).catch(showPickError);
     });
     drop.addEventListener("dragover", function (e) { e.preventDefault(); drop.classList.add("is-over"); });
     drop.addEventListener("dragleave", function () { drop.classList.remove("is-over"); });
@@ -488,7 +536,7 @@
       drop.classList.remove("is-over");
       var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
       if (!f) return;
-      readFileAsText(f).then(function (text) { startWithFile(f.name, text); });
+      readFileAsText(f).then(function (text) { startWithFile(f.name, text); }).catch(showPickError);
     });
     var samples = document.querySelectorAll("[data-sample]");
     for (var i = 0; i < samples.length; i++) {

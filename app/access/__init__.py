@@ -16,6 +16,7 @@ from .acl import Acl, ROLES, inherit
 from .share import mint, mint_with_key, open_token
 from .store import Vault
 from .totp import new_secret, totp, verify_totp
+from .transfer import pack_file, unpack_file
 
 __all__ = [
     "Acl",
@@ -26,6 +27,8 @@ __all__ = [
     "mint_with_key",
     "new_secret",
     "open_token",
+    "pack_file",
     "totp",
+    "unpack_file",
     "verify_totp",
 ]

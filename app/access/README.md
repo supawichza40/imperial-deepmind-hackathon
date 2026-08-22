@@ -10,7 +10,7 @@ What you get
 - Roles. owner, admin, editor, downloader, viewer
 - Delete needs the folder name typed exactly, plus a 6 digit authenticator code
 
-Turn on Ask for my key when you share. You see a one time key. The other person scans the QR or opens the link, then types that key. The encrypt passphrase is never in the link.
+Turn on Ask for my key when you share. You see a one time key. The QR holds the sanitised file, not a pointer into this laptop. A phone on the same WiFi can scan and open it. The encrypt passphrase is never in the QR.
 
 This is assisted access control for the demo. It is not a production identity provider. Share links never include the encrypt passphrase.
 

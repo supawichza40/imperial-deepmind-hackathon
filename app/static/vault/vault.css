@@ -135,13 +135,18 @@
   padding: 18px;
   background: var(--theme-sand);
   border-radius: 32px;
-  width: min(240px, 100%);
+  width: min(280px, 100%);
 }
 
-.pg-qr svg {
-  display: block;
-  width: 100%;
-  height: auto;
+.pg-transfer-doc {
+  white-space: pre-wrap;
+  font-family: var(--theme-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--theme-sand);
+  border-radius: 16px;
+  padding: 20px 18px;
+  margin: 8px 0 24px;
 }
 
 #share-key-box {

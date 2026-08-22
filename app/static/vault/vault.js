@@ -160,13 +160,6 @@
     var current = state.folders[0];
     var guest = null;
     var hash = (location.hash || "").replace(/^#/, "");
-    if (hash.indexOf("s=") === 0) {
-      try {
-        guest = await openShare(state, hash.slice(2));
-      } catch (err) {
-        guest = { error: String(err.message || err) };
-      }
-    }
 
     function normalizeKey(key) {
       return String(key || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -180,22 +173,164 @@
       return raw.slice(0, 4) + "-" + raw.slice(4);
     }
 
-    async function openShare(st, raw, creatorKey) {
+    function isLanIp(ip) {
+      if (!ip || ip === "127.0.0.1" || ip === "0.0.0.0") return false;
+      var p = ip.split(".").map(Number);
+      if (p.length !== 4 || p.some(function (n) { return n !== n || n < 0 || n > 255; })) return false;
+      if (p[0] === 10) return true;
+      if (p[0] === 192 && p[1] === 168) return true;
+      if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
+      return false;
+    }
+
+    function findLanHost() {
+      return new Promise(function (resolve) {
+        var done = false;
+        function finish(v) {
+          if (done) return;
+          done = true;
+          resolve(v || null);
+        }
+        try {
+          var pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel("pg");
+          pc.onicecandidate = function (ev) {
+            if (!ev || !ev.candidate) return;
+            var m = String(ev.candidate.candidate || "").match(/([0-9]{1,3}(?:\.[0-9]{1,3}){3})/);
+            if (m && isLanIp(m[1])) {
+              try { pc.close(); } catch (e) {}
+              finish(m[1]);
+            }
+          };
+          pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).catch(function () { finish(null); });
+          setTimeout(function () { finish(null); }, 900);
+        } catch (e) {
+          finish(null);
+        }
+      });
+    }
+
+    async function qrOrigin() {
+      var path = location.pathname;
+      if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        return location.origin + path;
+      }
+      var lan = await findLanHost();
+      if (!lan) return location.origin + path;
+      return location.protocol + "//" + lan + (location.port ? ":" + location.port : "") + path;
+    }
+
+    async function gzipBytes(bytes) {
+      if (typeof CompressionStream === "undefined") return null;
+      var cs = new CompressionStream("gzip");
+      var writer = cs.writable.getWriter();
+      await writer.write(bytes);
+      await writer.close();
+      return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    }
+
+    async function gunzipBytes(bytes) {
+      if (typeof DecompressionStream === "undefined") {
+        throw new Error("This browser cannot open a transferred file.");
+      }
+      var ds = new DecompressionStream("gzip");
+      var writer = ds.writable.getWriter();
+      await writer.write(bytes);
+      await writer.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    }
+
+    async function deriveAes(pass, salt) {
+      var base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 210000, hash: "SHA-256" },
+        base,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    async function packTransfer(file, creatorKey) {
+      var obj;
+      if (creatorKey) {
+        var salt = crypto.getRandomValues(new Uint8Array(16));
+        var nonce = crypto.getRandomValues(new Uint8Array(12));
+        var aes = await deriveAes(normalizeKey(creatorKey), salt);
+        var inner = enc.encode(JSON.stringify({ n: file.name, p: file.perm, t: file.text }));
+        var ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aes, inner));
+        obj = { v: 1, x: file.exp, k: 1, s: b64url(salt), i: b64url(nonce), c: b64url(ct) };
+      } else {
+        obj = { v: 1, n: file.name, p: file.perm, x: file.exp, t: file.text };
+      }
+      var gz = await gzipBytes(enc.encode(JSON.stringify(obj)));
+      if (!gz) throw new Error("This browser cannot pack a file for QR.");
+      return b64url(gz);
+    }
+
+    async function unpackTransfer(payload, creatorKey) {
+      var raw = await gunzipBytes(unb64url(payload));
+      var obj = JSON.parse(new TextDecoder().decode(raw));
+      if ((obj.x || 0) < Date.now() / 1000) throw new Error("This share has expired.");
+      if (obj.k) {
+        if (!normalizeKey(creatorKey)) return { needsKey: true, payload: payload };
+        try {
+          var aes = await deriveAes(normalizeKey(creatorKey), unb64url(obj.s));
+          var pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64url(obj.i) }, aes, unb64url(obj.c));
+          var inner = JSON.parse(new TextDecoder().decode(pt));
+          return { perm: inner.p, doc: { name: inner.n, text: inner.t }, transferred: true };
+        } catch (e) {
+          throw new Error("That key does not match.");
+        }
+      }
+      return { perm: obj.p, doc: { name: obj.n, text: obj.t }, transferred: true };
+    }
+
+    function sanitisedFile(doc) {
+      var name = (doc && doc.name) || "document";
+      var panel = el.querySelector(".pg-export");
+      if (panel && panel._result && panel._result.text) {
+        return { name: name, text: panel._result.text };
+      }
+      var demo = root.PRIVACY_EXPORT_DEMO;
+      if (demo && root.PrivacyExport && root.PrivacyExport.apply) {
+        var toggles = (panel && panel._toggles) || root.PrivacyExport.defaultToggles(demo.spans);
+        var result = root.PrivacyExport.apply(demo.text, demo.spans, toggles);
+        return { name: name, text: result.text };
+      }
+      return { name: name, text: (doc && doc.text) || "" };
+    }
+
+    if (hash.indexOf("t=") === 0) {
+      try {
+        guest = await unpackTransfer(hash.slice(2));
+      } catch (err) {
+        guest = { error: String(err.message || err) };
+      }
+    } else if (hash.indexOf("s=") === 0) {
+      try {
+        guest = await openShareSoon(hash.slice(2));
+      } catch (err) {
+        guest = { error: String(err.message || err) };
+      }
+    }
+
+    async function openShareSoon(raw, creatorKey) {
       var token = raw;
-      if (st.shares && st.shares[raw] && st.shares[raw].token) token = st.shares[raw].token;
+      if (state.shares && state.shares[raw] && state.shares[raw].token) token = state.shares[raw].token;
       var parts = token.split(".");
       if (parts.length !== 2) throw new Error("This share link is broken.");
-      var sig = b64url(await hmacSha(unb64url(st.hmac), parts[0], "SHA-256"));
+      var sig = b64url(await hmacSha(unb64url(state.hmac), parts[0], "SHA-256"));
       if (sig !== parts[1]) throw new Error("This share link was altered.");
       var body = JSON.parse(new TextDecoder().decode(unb64url(parts[0])));
       if (body.exp < Date.now() / 1000) throw new Error("This share link has expired.");
       if (body.kh) {
         var typed = normalizeKey(creatorKey);
         if (!typed) return { needsKey: true, token: raw };
-        var mac = b64url(await hmacSha(unb64url(st.hmac), "pg-key:" + typed, "SHA-256")).slice(0, 22);
+        var mac = b64url(await hmacSha(unb64url(state.hmac), "pg-key:" + typed, "SHA-256")).slice(0, 22);
         if (mac !== body.kh) throw new Error("That key does not match.");
       }
-      var doc = st.docs.find(function (d) { return d.id === body.d; });
+      var doc = state.docs.find(function (d) { return d.id === body.d; });
       if (!doc) throw new Error("That file is gone from this vault.");
       return { perm: body.p, doc: doc, by: body.by };
     }
@@ -217,6 +352,27 @@
 
     function renderGuest(opened) {
       el.innerHTML = "";
+      if (opened.transferred) {
+        el.appendChild($(
+          "<div class=\"vault-main\">" +
+          "<p class=\"theme-kicker\">Arrived by QR · " + esc(opened.perm) + "</p>" +
+          "<h1>" + esc(opened.doc.name) + "</h1>" +
+          "<p class=\"theme-mute\">This is the sanitised copy from the other device. The original stayed there.</p>" +
+          "<pre class=\"pg-transfer-doc\">" + esc(opened.doc.text) + "</pre>" +
+          "<div class=\"vault-bar\">" +
+          (opened.perm === "download" ? "<button type=\"button\" class=\"theme-btn\" id=\"g-dl\">Download copy</button>" : "") +
+          "<a class=\"theme-btn ghost\" href=\"./index.html\">Open your vault</a>" +
+          "</div></div>"
+        ));
+        var tdl = el.querySelector("#g-dl");
+        if (tdl) tdl.addEventListener("click", function () {
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(new Blob([opened.doc.text], { type: "text/plain" }));
+          a.download = (opened.doc.name || "privacy-gate") + "-sanitized.txt";
+          a.click();
+        });
+        return;
+      }
       el.appendChild($(
         "<div class=\"vault-main\">" +
         "<p class=\"theme-kicker\">Shared with you · " + esc(opened.perm) + "</p>" +
@@ -241,7 +397,7 @@
         "<div class=\"vault-main\">" +
         "<p class=\"theme-kicker\">Shared file</p>" +
         "<h1>This file needs the creator's key</h1>" +
-        "<p class=\"theme-mute\">The QR and the link do not contain the key. Ask the person who sent this.</p>" +
+        "<p class=\"theme-mute\">The QR carries the locked file. The key is not in the QR. Ask the person who sent this.</p>" +
         "<form id=\"key-form\">" +
         "<label for=\"creator-key\">Creator key</label>" +
         "<input id=\"creator-key\" name=\"key\" autocomplete=\"off\" spellcheck=\"false\" required>" +
@@ -256,7 +412,9 @@
       el.querySelector("#key-form").addEventListener("submit", async function (ev) {
         ev.preventDefault();
         try {
-          var opened = await openShare(state, guest.token, keyInput.value);
+          var opened = guest.payload
+            ? await unpackTransfer(guest.payload, keyInput.value)
+            : await openShareSoon(guest.token, keyInput.value);
           if (opened.needsKey) return;
           renderGuest(opened);
         } catch (err) {
@@ -386,7 +544,7 @@
       if (!doc) return;
       var wrap = modal(
         "<h3>Share this file</h3>" +
-        "<p>The other person only gets the sanitised copy. Your encrypt passphrase stays with you.</p>" +
+        "<p>The QR carries the sanitised copy. A phone on this WiFi can open it without your vault.</p>" +
         "<label for=\"share-perm\">Access</label>" +
         "<select id=\"share-perm\"><option value=\"view\">View</option><option value=\"download\" selected>Download</option></select>" +
         "<label for=\"share-ttl\">Expires</label>" +
@@ -395,7 +553,7 @@
         "<input class=\"theme-switch\" type=\"checkbox\" id=\"share-key\">" +
         "<label for=\"share-key\">Ask for my key</label>" +
         "</div>" +
-        "<p class=\"theme-mute\" id=\"share-key-hint\">Anyone with the link or the QR can open it.</p>" +
+        "<p class=\"theme-mute\" id=\"share-key-hint\">Anyone who scans the QR gets the sanitised file.</p>" +
         "<div class=\"vault-bar\" style=\"margin-top:18px\">" +
         "<button type=\"button\" class=\"theme-btn\" id=\"mint\">Make link and QR</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" data-close>Close</button></div>" +
@@ -416,45 +574,44 @@
       var hint = wrap.querySelector("#share-key-hint");
       wrap.querySelector("#share-key").addEventListener("change", function (ev) {
         hint.textContent = ev.target.checked
-          ? "The link and QR stay shut until they type your key. You are the only person who sees that key."
-          : "Anyone with the link or the QR can open it.";
+          ? "The QR carries a locked file. They type your key on their phone. You are the only person who sees that key."
+          : "Anyone who scans the QR gets the sanitised file.";
       });
       wrap.querySelector("#mint").addEventListener("click", async function () {
         var perm = wrap.querySelector("#share-perm").value;
         var ttl = parseInt(wrap.querySelector("#share-ttl").value, 10);
         var wantKey = wrap.querySelector("#share-key").checked;
         var creatorKey = wantKey ? newCreatorKey() : "";
-        var claim = {
-          f: current.id,
-          d: doc.id,
-          p: perm,
-          by: state.email,
-          exp: Math.floor(Date.now() / 1000) + ttl
-        };
-        if (wantKey) {
-          claim.kh = b64url(await hmacSha(unb64url(state.hmac), "pg-key:" + normalizeKey(creatorKey), "SHA-256")).slice(0, 22);
+        var file = sanitisedFile(doc);
+        file.perm = perm;
+        file.exp = Math.floor(Date.now() / 1000) + ttl;
+        var payload;
+        try {
+          payload = await packTransfer(file, wantKey ? creatorKey : "");
+        } catch (err) {
+          wrap.querySelector("#share-qr-note").textContent = String(err.message || err);
+          wrap.querySelector("#share-result").hidden = false;
+          return;
         }
-        var body = b64url(enc.encode(JSON.stringify(claim)));
-        var sig = b64url(await hmacSha(unb64url(state.hmac), body, "SHA-256"));
-        var shortId = hexId();
-        if (!state.shares) state.shares = {};
-        state.shares[shortId] = { token: body + "." + sig, exp: claim.exp };
-        save(state);
-        var url = location.origin + location.pathname + "#s=" + shortId;
+        var origin = await qrOrigin();
+        var url = origin + "#t=" + payload;
         wrap.querySelector("#share-result").hidden = false;
         wrap.querySelector("#share-out").textContent = url;
         var keyBox = wrap.querySelector("#share-key-box");
         keyBox.hidden = !wantKey;
         wrap.querySelector("#share-key-code").textContent = wantKey ? creatorKey : "";
-        wrap.querySelector("#share-qr-note").textContent = wantKey
-          ? "Scan to reach the file. They still need your key."
-          : "Scan to open the file.";
+        var onLoopback = /127\.0\.0\.1|localhost/.test(url);
+        wrap.querySelector("#share-qr-note").textContent = onLoopback
+          ? "This QR has the file in it. On a phone, 127.0.0.1 is the phone itself. Open the vault as your WiFi IP first, then share again."
+          : (wantKey
+            ? "Scan on a phone. The file is in the QR. They still type your key."
+            : "Scan on a phone. The file is in the QR.");
         var qrHost = wrap.querySelector("#share-qr");
         qrHost.innerHTML = "";
         if (root.PrivacyQr) {
           var mark = root.PrivacyQr.svg(url);
           if (mark) qrHost.innerHTML = mark;
-          else qrHost.textContent = "QR skipped. The link is long. Copy it instead.";
+          else qrHost.textContent = "The file is packed. This QR encoder could not fit the URL. Copy the link instead.";
         }
         wrap.querySelector("#copy-link").onclick = async function () {
           try { await navigator.clipboard.writeText(url); } catch (e) {}

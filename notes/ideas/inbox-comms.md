@@ -55,15 +55,22 @@ Build in 3h:                  is_this_real.py (structured output per 04_structur
                                never live-capture, per demo_fallback.md); gemma_local.py cloning
                                07_local_gemma.py's Ollama client for the private toggle. Riskiest
                                20 minutes: screenshot mode needs a multimodal image-input request
-                               — the docs confirm image input is supported but none of the 8
-                               starter scripts show the actual call shape, so it's unverified
-                               until tested live. Text-paste is the safe, proven golden path.
-When the API throttles:       Genuine and good. Local Gemma 4 via Ollama handles a short
-                               classify-and-flag task fine — the measured 4.74 tok/s / 65s cold
-                               load only bites on long generation, and "verdict + 3 red flags" is
-                               exactly the short-answer case the measured-reality doc calls
-                               stage-viable if the model is pre-warmed and thinking tokens are
-                               suppressed. Text mode keeps working with the wifi cable pulled.
+                               — docs/05 confirms gemma4:e4b is natively multimodal (a real
+                               vision encoder, `ollama run gemma4:e4b`), but no script in this
+                               kit shows the actual image-call shape for either the cloud or
+                               local path, so it's architecturally sound but unverified until
+                               tested live. Text-paste is the safe, proven golden path.
+When the API throttles:       Real, but narrower than "everything works offline." Per
+                               notes/MEASURED-on-device-reality.md's own guidance (measured on
+                               this exact machine: 4.74 tok/s, 65s cold load, most tokens burned
+                               on visible chain-of-thought), the local path is only demo-viable
+                               if the model is pre-warmed before the judge walks up, thinking
+                               tokens are suppressed, and the on-device schema is trimmed — drop
+                               the free-text "why" field from the local path specifically and
+                               keep it cloud-only; a full verdict+flags+action+why response as
+                               prose is exactly what the measured doc calls not stage-viable.
+                               Text mode keeps working with the wifi cable pulled; screenshot
+                               mode has no offline path at all.
 Quotable number:              A 3am panic-read of a bank-fraud text → a verdict and the exact
                                three words that gave it away, in under 10 seconds.
 Which track it fits:          safety / on-device
@@ -113,16 +120,21 @@ When the API throttles:       Text-paste mode falls back to local Gemma cleanly 
                                output is the stage-viable case). Audio-clip and live-mic modes
                                have no local fallback at all — no ASR shipped in the kit, and
                                Ollama's gemma4 audio-in path is unconfirmed — so those modes just
-                               break offline. Scope: text-paste is the must-work golden path;
-                               live-mic is a stretch goal to cut first if behind schedule.
+                               break offline. Scope: text-paste is the must-work golden path.
+                               Two independent feasibility passes against this exact starter kit
+                               agree live-mic mode (06_live_voice_agent.py's real audio streaming)
+                               cannot be built to a working state inside a 3-hour budget — treat
+                               it as out of scope, not a stretch goal to attempt and fall back
+                               from. Uploaded-audio-clip mode is the only multimodal stretch worth
+                               attempting, and only after text-paste is solid.
 Quotable number:              An unknown 12-option phone menu → the exact 4 button-presses to a
                                human, mapped in 15 seconds.
 Which track it fits:          agents / productivity
-Kill risk:                    Building live-mic mode as the demo path instead of the safer
-                               text-paste path — portaudio install issues, mic permission
-                               prompts, and an untested streaming-audio call, live, on stage, is
-                               exactly the kind of 20 minutes that eats the whole budget and
-                               leaves nothing to show.
+Kill risk:                    Attempting live-mic mode at all — portaudio install issues, mic
+                               permission prompts, and an untested streaming-audio call, live, on
+                               stage, is exactly the kind of 20 minutes that eats the whole
+                               budget and leaves nothing to show. Scope it out before building,
+                               not after running out of time.
 ```
 
 ```
@@ -154,7 +166,12 @@ Build in 3h:                  voicemail_triage.py (audio upload → interactions
                                pyaudio+wave — simpler and safer than real-time streaming).
                                Riskiest 20 minutes: the audio-input request shape appears nowhere
                                in any of the 8 starter scripts, so the first real call either
-                               works in 5 minutes or burns an hour with no way to know in advance.
+                               works in 5 minutes or burns an hour with no way to know in advance
+                               — and combining audio input with a structured-output response in
+                               one call (needed for the transcript+assessment+action+script
+                               schema) is a pairing this kit never demonstrates, so budget for a
+                               two-call fallback (transcribe, then extract) if the combined call
+                               doesn't behave.
 When the API throttles:       Weak — the least safe fallback of the five ideas here. Gemma 4 has
                                a native audio encoder on paper, but Ollama's exposed API for
                                gemma4 audio input is unconfirmed; even if it works, transcribing
@@ -207,10 +224,13 @@ Build in 3h:                  chat_unstick.py — near-identical to 04_structure
                                nicknames, no timestamps, and reactions instead of replies, which
                                makes "who hasn't responded" genuinely ambiguous. Budget time to
                                test against 3-4 real sample chats, not just one clean example.
-When the API throttles:       The best fallback of the five. Output is short — a plan, a name
-                               list, one message — exactly the case the measured-reality doc
-                               calls stage-viable for gemma4:latest pre-warmed with thinking
-                               suppressed. A genuine, working local path.
+When the API throttles:       The best fallback of the five, with one caveat. Output is short —
+                               a plan, a name list, one message — which is the case the
+                               measured-reality doc calls stage-viable for gemma4:latest, but
+                               only pre-warmed with thinking suppressed; keep the non-responder
+                               list and nudge message genuinely short (a handful of names, one
+                               line), not full prose, to stay inside a demo-safe response time.
+                               With that discipline it's a genuine, working local path.
 Quotable number:              47 unread messages in a group chat → the actual decided plan and
                                who still needs a nudge, in 15 seconds.
 Which track it fits:          productivity

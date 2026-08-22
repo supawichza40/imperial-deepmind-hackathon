@@ -1,10 +1,13 @@
-# PROJECT_NAME
+# Privacy Gate
 
-> **TODO before 17:30 — replace `PROJECT_NAME` and this line with a one-sentence description
-> of what this does. Under 20 words. This is the first thing a judge reads.**
+A consent-aware document agent: a local model redacts sensitive material on-device, you
+approve exactly what may leave, and only the approved subset reaches the cloud.
+
+> **Working direction as of 13:30 — not final.** Full write-up and scope in
+> [`notes/ideas/privacy-gate.md`](notes/ideas/privacy-gate.md).
 
 **UK AI Agent Lab: Gemini Edition** · Imperial College London · 22 August 2026
-**Track:** _TODO — 1 (Gemini 3.7 Flash) / 2 (Gemma 4 local) / 3 (Hybrid)_
+**Track:** 3 — Best Hybrid AI & Human-Centric Utility
 
 ## The problem
 
@@ -12,37 +15,43 @@ _TODO — two sentences. Who has this problem, and what does it cost them today?
 
 ## What it does
 
-_TODO — the core user flow, in three bullets. What the user does, what the system does,
-what they get back._
-
-- 
-- 
-- 
+- **You drop in a sensitive document.** Gemma 4 runs locally and marks every name,
+  address, account number and sensitive field it finds. Nothing has left the machine.
+- **You approve what may be shared**, field type by field type — "share income, hide
+  identity and account details".
+- **Gemini 3.7 Flash reasons over the approved subset only**: compares documents, finds
+  inconsistencies, explains it plainly, drafts what you need.
+- **An audit trail shows exactly what stayed local and what was shared.**
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    U[User input<br/>photo / voice / text] --> R{Router}
+    D[Sensitive document<br/>statement / payslip / letter] --> L
 
-    R -->|private or short<br/>stays on device| G4[Gemma 4 E2B<br/>local via Ollama]
-    R -->|reasoning, multimodal,<br/>tool use| GF[Gemini 3.7 Flash<br/>Interactions API]
+    subgraph LOCAL["ON DEVICE — no network"]
+        L[Gemma 4 E2B<br/>+ regex baseline] --> S[Redaction span map<br/>field type + offsets]
+        S --> C[Consent UI<br/>user approves per field]
+    end
 
-    G4 -->|structured label<br/>no network| M[Merge]
-    GF -->|grounded response<br/>+ tool calls| M
+    C -->|approved subset only| GF[Gemini 3.7 Flash<br/>Interactions API]
+    C -.->|originals never sent| X[( )]
 
-    GF -.->|tools| T1[Custom functions]
-    GF -.->|tools| T2[Google Search grounding]
-    GF -.->|tools| T3[Remote MCP server]
+    GF --> R[Compare · find inconsistencies<br/>explain · draft response]
+    R --> A[Audit log<br/>what stayed local, what was shared]
 
-    M --> O[Output to user]
-
-    style G4 fill:#1a4d2e,stroke:#4ade80,color:#fff
+    style LOCAL fill:#0f2818,stroke:#4ade80,color:#fff
+    style L fill:#1a4d2e,stroke:#4ade80,color:#fff
     style GF fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style X fill:#3f1d1d,stroke:#f87171,color:#fff
 ```
 
-**Why this split:** _TODO — one paragraph. The honest engineering reason each model is
-where it is. This is a scored write-up field, not decoration._
+**Why this split:** the boundary is the product. Redaction has to happen before the data
+leaves, so it must run locally — that is the whole guarantee. Everything downstream is
+cross-document reasoning over an already-sanitised payload, which is exactly what a fast
+frontier model is for and carries no privacy cost once the originals are gone. Gemma is
+asked for a structured span map rather than prose, which keeps its output short enough to
+stay fast on modest hardware.
 
 ## Model integration
 
@@ -50,8 +59,8 @@ Submission rules require explicit proof of model use. Point at the real lines:
 
 | Model | Where | What it does |
 |---|---|---|
-| **Gemini 3.7 Flash** | `app/pipeline.py` → `gemini_step()` | _TODO_ |
-| **Gemma 4 (E2B, local)** | `app/pipeline.py` → `local_step()` | _TODO_ |
+| **Gemini 3.7 Flash** | `app/pipeline.py` → `gemini_step()` | Cross-document reasoning, inconsistency detection, plain-language explanation, drafting |
+| **Gemma 4 (E2B, local)** | `app/pipeline.py` → `local_step()` | On-device detection and classification of sensitive fields, before anything is sent |
 
 Gemini is called through the Google GenAI SDK (`google-genai`) using the **Interactions
 API**, which has been GA and recommended since June 2026. Gemma 4 runs locally through

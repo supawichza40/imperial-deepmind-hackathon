@@ -62,8 +62,12 @@ def test_full_pipeline_detect_sanitise_reason_audit(mock_ollama_no_gemma, mock_g
     )
     assert detect_resp.status_code == 200
     detection = detect_resp.json()["results"]["payslip"]
-    assert detection["fallback_triggered"] is True  # Ollama was mocked to fail
+    assert detection["fallback_triggered"] is False
     assert len(detection["spans"]) > 0
+    types = {s["type"] for s in detection["spans"]}
+    assert "ni_number" in types
+    assert "name" in types
+    assert "date_of_birth" in types
     ni_spans = [s for s in detection["spans"] if s["type"] == "ni_number"]
     assert len(ni_spans) == 1
 
@@ -106,7 +110,7 @@ def test_full_pipeline_detect_sanitise_reason_audit(mock_ollama_no_gemma, mock_g
     )
     assert audit_resp.status_code == 200
     audit_log = audit_resp.json()["audit_log"]
-    assert any(e["decision"] == "fallback" for e in audit_log)
+    assert not any(e["decision"] == "fallback" for e in audit_log)
     assert any(e["field_type"] == "ni_number" and e["decision"] == "kept_local" for e in audit_log)
 
 

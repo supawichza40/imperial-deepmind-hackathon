@@ -81,6 +81,35 @@ def test_regex_skips_document_title_as_name():
     assert [s for s in spans if s["type"] == "name"] == []
 
 
+def test_regex_finds_date_of_birth(payslip_text):
+    spans = _detect_regex(payslip_text)
+    dobs = [s for s in spans if s["type"] == "date_of_birth"]
+    assert any(s["value"] == "03 May 1994" for s in dobs)
+    pay_dates = [s for s in dobs if "July 2026" in s["value"] or "25 July" in s["value"]]
+    assert pay_dates == []
+
+
+def test_regex_finds_labelled_address(payslip_text):
+    spans = _detect_regex(payslip_text)
+    addresses = [s for s in spans if s["type"] == "address"]
+    assert any("14 Pelham St" in s["value"] for s in addresses)
+    assert any("SW7" in s["value"] for s in addresses)
+
+
+def test_regex_finds_signature_line():
+    text = "Kind regards\nSignature: A. Okafor\n"
+    spans = _detect_regex(text)
+    assert any(s["type"] == "signature" and s["value"] == "A. Okafor" for s in spans)
+
+
+def test_regex_finds_ni_with_spaces():
+    text = "NI Number: QQ 12 34 56 C\n"
+    spans = _detect_regex(text)
+    ni = [s for s in spans if s["type"] == "ni_number"]
+    assert len(ni) == 1
+    assert "QQ" in ni[0]["value"] and "C" in ni[0]["value"]
+
+
 def test_regex_spans_have_valid_offsets():
     """FR-7: span start/end map to correct text slice."""
     text = "NI: QQ123456C done"
@@ -272,13 +301,28 @@ def test_detect_returns_detection_result(payslip_text, mock_ollama_success):
     assert "fallback_triggered" in result
     assert "warning" in result
     assert isinstance(result["spans"], list)
-
-
-def test_detect_falls_back_to_regex_only(payslip_text, mock_ollama_timeout):
-    """FR-10: with Ollama down, detect returns regex-only spans + fallback flag."""
-    result = detect(payslip_text)
-    assert result["fallback_triggered"] is True
-    assert len(result["spans"]) > 0  # regex still found things
-    # No Gemma-only types (name, income) — only regex types
     types = {s["type"] for s in result["spans"]}
-    assert "ni_number" in types  # regex finds this
+    assert {
+        "name",
+        "email",
+        "phone",
+        "ni_number",
+        "address",
+        "date_of_birth",
+        "account_number",
+    } <= types
+    assert result["fallback_triggered"] is False
+
+
+def test_detect_skips_model_when_regex_is_enough(payslip_text):
+    with patch("app.detector._detect_gemma") as mock_gemma:
+        result = detect(payslip_text)
+        mock_gemma.assert_not_called()
+    assert result["fallback_triggered"] is False
+
+
+def test_detect_falls_back_to_regex_only(mock_ollama_timeout):
+    """FR-10: thin free text still calls the model, then regex-only on timeout."""
+    text = "Please write to the occupier about the leak in the kitchen."
+    result = detect(text)
+    assert result["fallback_triggered"] is True

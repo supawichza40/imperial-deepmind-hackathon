@@ -1,24 +1,12 @@
 """Sensitive-field detection: deterministic regex plus a local model.
 
-Regex catches the obvious, syntactic cases (NI numbers, postcodes, emails,
-phone numbers, labelled account numbers) instantly. The model handles what
-regex cannot: names in context, free-text disclosure. A 3-second timeout on
-the model call means the product degrades to regex-only rather than hanging
-a demo (ADR-006).
+Regex catches labelled and syntactic fields instantly: names, addresses,
+NI numbers, account numbers, emails, phones, dates of birth, signatures.
+The local model only runs when that first pass is thin, so a drop stays
+fast and the same document always yields the same spans.
 
-Model: `gemma4:31b-cloud`, called through the exact same native Ollama route
-as a locally-pulled model — Ollama proxies the `-cloud` tag to a hosted
-endpoint, so the code path here is unaffected. See
-.claude/skills/privacy-gate/SKILL.md, "The local model", for why this is the
-model name in force (not `gemma4:e2b` — that model was never actually pulled
-on the build machine).
-
-Gemma returns `{text, type}` pairs, never offsets: small models hallucinate
-arithmetic on character positions (ADR-001). Python resolves offsets via
-best-match `str.find()` with claimed-interval tracking so repeated or
-out-of-order substrings resolve correctly (ADR-008). Overlapping spans are
-then merged in two passes: same-type merge, then cross-type overlap
-resolution keeping the longer span (ADR-002 / ADR-007).
+Model: `gemma4:e2b` on this machine, overridable with LOCAL_MODEL. Do not
+ship a `-cloud` tag on this path. See .claude/skills/privacy-gate/SKILL.md.
 """
 
 from __future__ import annotations
@@ -65,7 +53,7 @@ _CANONICAL_TYPES = frozenset(
 
 # --- Regex patterns -------------------------------------------------------
 
-_NI_RE = re.compile(r"\b[A-Za-z]{2}\d{6}[A-Za-z]\b")
+_NI_RE = re.compile(r"\b[A-Za-z]{2}\s?\d{2}\s?\d{2}\s?\d{2}\s?[A-Za-z]\b")
 _POSTCODE_RE = re.compile(r"\b[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}\b")
 _EMAIL_RE = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
 _PHONE_RE = re.compile(r"\b(?:\+44[\s\-]*|0)7\d{3}[\s\-]?\d{6}\b")
@@ -74,6 +62,22 @@ _PHONE_RE = re.compile(r"\b(?:\+44[\s\-]*|0)7\d{3}[\s\-]?\d{6}\b")
 _ACCOUNT_RE = re.compile(r"(?i)\baccount(?:\s+number)?\s*[:#-]?\s*(\d{3,})\b")
 _NAME_LABEL_RE = re.compile(
     r"(?im)^\s*(?:employee|patient|account\s+holder|name|applicant|candidate|full\s+name)\s*:\s*(.+?)\s*$"
+)
+_ADDRESS_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:address|home\s+address|residential\s+address|correspondence)\s*:\s*(.+?)\s*$"
+)
+_DOB_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:date\s+of\s+birth|d\.?o\.?b\.?|born)\s*:\s*(.+?)\s*$"
+)
+_PHONE_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:phone|tel|telephone|mobile|mob)\s*[:#]?\s*(.+?)\s*$"
+)
+_SIGNATURE_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:signature|signed|signatory)\s*:\s*(.+?)\s*$"
+)
+_SINCERELY_RE = re.compile(r"(?im)^\s*yours\s+(?:sincerely|faithfully)\s*,?\s*$")
+_REGEX_ENOUGH = frozenset(
+    {"email", "phone", "ni_number", "account_number", "address", "date_of_birth"}
 )
 _SKIP_HEADINGS = frozenset(
     {
@@ -107,6 +111,26 @@ _SKIP_HEADINGS = frozenset(
         "confidential",
     }
 )
+_NAME_STOP = frozenset(
+    {
+        "ltd",
+        "limited",
+        "llc",
+        "plc",
+        "university",
+        "college",
+        "school",
+        "consulting",
+        "hospital",
+        "clinic",
+        "bank",
+        "statement",
+        "payslip",
+        "invoice",
+        "resume",
+        "cv",
+    }
+)
 
 
 def _looks_like_person_name(value: str) -> bool:
@@ -123,6 +147,8 @@ def _looks_like_person_name(value: str) -> bool:
     words = re.findall(r"[A-Za-z][A-Za-z'.\-]*", value)
     if not (1 <= len(words) <= 4):
         return False
+    if any(w.lower() in _NAME_STOP for w in words):
+        return False
     leftover = re.sub(r"[A-Za-z'.\-]+", "", value)
     leftover = leftover.replace(" ", "").replace(".", "")
     if leftover:
@@ -132,8 +158,58 @@ def _looks_like_person_name(value: str) -> bool:
     return all(w[0].isupper() for w in words)
 
 
+def _span(field_type: str, text: str, start: int, end: int) -> dict[str, Any]:
+    return {"type": field_type, "start": start, "end": end, "value": text[start:end]}
+
+
+def _add_labelled(
+    text: str,
+    pattern: re.Pattern[str],
+    field_type: str,
+    spans: list[dict[str, Any]],
+    ok=None,
+) -> None:
+    for match in pattern.finditer(text):
+        raw = match.group(1)
+        value = raw.strip()
+        if not value:
+            continue
+        if ok and not ok(value):
+            continue
+        lead = len(raw) - len(raw.lstrip())
+        start = match.start(1) + lead
+        end = start + len(value)
+        spans.append(_span(field_type, text, start, end))
+
+
+def _looks_like_dob(value: str) -> bool:
+    if len(value) > 32 or not re.search(r"\d", value):
+        return False
+    if re.search(r"(?i)\b(?:pay|paid|period|statement)\b", value):
+        return False
+    return bool(
+        re.search(
+            r"(?i)\b\d{1,2}\s+[A-Za-z]{3,9}\s+\d{2,4}\b|\b\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b",
+            value,
+        )
+    )
+
+
+def _looks_like_phone(value: str) -> bool:
+    digits = re.sub(r"\D", "", value)
+    return 10 <= len(digits) <= 13
+
+
+def _looks_like_address(value: str) -> bool:
+    if len(value) < 6 or len(value) > 120:
+        return False
+    if "@" in value:
+        return False
+    return bool(re.search(r"\d", value) or _POSTCODE_RE.search(value))
+
+
 def _name_span(text: str, start: int, end: int) -> dict[str, Any]:
-    return {"type": "name", "start": start, "end": end, "value": text[start:end]}
+    return _span("name", text, start, end)
 
 
 def _detect_names(text: str) -> list[dict[str, Any]]:
@@ -163,34 +239,60 @@ def _detect_names(text: str) -> list[dict[str, Any]]:
     return spans
 
 
+def _detect_signatures(text: str) -> list[dict[str, Any]]:
+    spans: list[dict[str, Any]] = []
+    _add_labelled(text, _SIGNATURE_LABEL_RE, "signature", spans, _looks_like_person_name)
+    lines = text.splitlines()
+    for i, line in enumerate(lines[:-1]):
+        if not _SINCERELY_RE.match(line.strip()):
+            continue
+        nxt = lines[i + 1].strip()
+        if _looks_like_person_name(nxt):
+            idx = text.find(nxt)
+            if idx != -1:
+                spans.append(_span("signature", text, idx, idx + len(nxt)))
+            break
+    return spans
+
+
+def _regex_is_enough(spans: list[dict[str, Any]]) -> bool:
+    types = {s["type"] for s in spans}
+    return "name" in types and len(types & _REGEX_ENOUGH) >= 2
+
+
 def _detect_regex(text: str) -> list[dict[str, Any]]:
-    """Deterministic fallback. Returns plain span dicts (type/start/end/value)."""
+    """Deterministic first pass. Returns plain span dicts (type/start/end/value)."""
     spans: list[dict[str, Any]] = []
 
     for m in _NI_RE.finditer(text):
-        spans.append({"type": "ni_number", "start": m.start(), "end": m.end(), "value": m.group(0)})
-
-    for m in _POSTCODE_RE.finditer(text):
-        spans.append({"type": "address", "start": m.start(), "end": m.end(), "value": m.group(0)})
+        spans.append(_span("ni_number", text, m.start(), m.end()))
 
     for m in _EMAIL_RE.finditer(text):
-        spans.append({"type": "email", "start": m.start(), "end": m.end(), "value": m.group(0)})
+        spans.append(_span("email", text, m.start(), m.end()))
 
     for m in _PHONE_RE.finditer(text):
-        spans.append({"type": "phone", "start": m.start(), "end": m.end(), "value": m.group(0)})
+        spans.append(_span("phone", text, m.start(), m.end()))
 
     for m in _ACCOUNT_RE.finditer(text):
-        spans.append(
-            {
-                "type": "account_number",
-                "start": m.start(1),
-                "end": m.end(1),
-                "value": m.group(1),
-            }
-        )
+        spans.append(_span("account_number", text, m.start(1), m.end(1)))
 
+    _add_labelled(text, _ADDRESS_LABEL_RE, "address", spans, _looks_like_address)
+    for m in _POSTCODE_RE.finditer(text):
+        spans.append(_span("address", text, m.start(), m.end()))
+
+    _add_labelled(text, _DOB_LABEL_RE, "date_of_birth", spans, _looks_like_dob)
+    _add_labelled(text, _PHONE_LABEL_RE, "phone", spans, _looks_like_phone)
     spans.extend(_detect_names(text))
-    return spans
+    spans.extend(_detect_signatures(text))
+    seen: set[tuple[str, int, int]] = set()
+    unique: list[dict[str, Any]] = []
+    for item in spans:
+        key = (item["type"], item["start"], item["end"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return unique
 
 
 # --- Gemma (native Ollama /api/generate) ----------------------------------
@@ -328,7 +430,8 @@ def _resolve_gemma_spans(text: str, items: list[Any]) -> list[dict[str, Any]]:
 
 def _detect_gemma(text: str) -> tuple[list[dict[str, Any]], bool, str]:
     """Calls the local model. Returns (spans, fallback_triggered, warning)."""
-    prompt = _SYSTEM_PROMPT_TEMPLATE.replace("<DOCUMENT TEXT HERE>", text)
+    snippet = text if len(text) <= 4000 else text[:4000]
+    prompt = _SYSTEM_PROMPT_TEMPLATE.replace("<DOCUMENT TEXT HERE>", snippet)
 
     try:
         raw = _call_ollama(prompt)
@@ -393,10 +496,15 @@ def _merge_spans(spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def detect(text: str) -> DetectionResult:
-    """Pure function. Regex first, then Gemma. Merges results, resolves offsets."""
+    """Pure function. Regex first. Gemma only when labelled fields are thin."""
     regex_spans = _detect_regex(text)
-    gemma_spans, fallback, warning = _detect_gemma(text)
+    if _regex_is_enough(regex_spans):
+        gemma_spans, fallback, warning = [], False, ""
+    else:
+        gemma_spans, fallback, warning = _detect_gemma(text)
     merged = _merge_spans(regex_spans + gemma_spans)
+    for item in merged:
+        item["value"] = text[item["start"] : item["end"]]
 
     spans: list[Span] = []
     counters: dict[str, int] = {}

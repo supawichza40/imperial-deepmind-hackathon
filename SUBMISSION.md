@@ -87,7 +87,7 @@ faster local pull can be dropped back in without touching the API layer at all.
 
 | Item | Link |
 |---|---|
-| Repo | _TODO, fill in the public GitHub URL_ |
+| Repo | https://github.com/supawichza40/imperial-deepmind-hackathon |
 | Demo video | _TODO, record by 16:45_ |
 | Live deployment (optional) | not applicable, runs locally |
 

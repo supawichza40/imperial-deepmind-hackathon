@@ -1,7 +1,8 @@
 # Privacy Gate — Design Document
 
 **What this is:** the technical design that implements the [requirements spec](../specs/privacy-gate.md). How the system is structured, what code goes where, and how the components connect.
-**Status:** draft, pending review.
+**Status:** detector / sanitiser / reasoner algorithms still apply. The Streamlit UI in §3.7 is obsolete.
+**UI source of truth for backend:** [ui.md](ui.md) (vault, export panel, `#t=` QR, nine field types, keep / blacklabel / encrypt).
 **Build window:** ~2 hours, agent-driven.
 
 ---
@@ -547,6 +548,7 @@ Expected: spans detected, sanitised payload printed, Gemini response with incons
 
 ## Related
 
+- [UI spec](ui.md) — live frontend contract for backend
 - [Requirements spec](../specs/privacy-gate.md) — what this design implements
 - [Decisions index](../decisions/index.md) — rationale for architectural choices
 - [Idea write-up](../../notes/ideas/privacy-gate.md) — the original concept

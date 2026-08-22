@@ -328,6 +328,7 @@ python starter/01_hello_gemini.py
 
 ## Related
 
+- [UI spec](ui.md) — live frontend. Backend should implement against this.
 - [Requirements spec](privacy-gate.md) — what each feature implements
 - [Design doc](design.md) — module designs and algorithms
 - [Architecture spec](architecture.md) — system structure

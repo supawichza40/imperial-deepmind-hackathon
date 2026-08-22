@@ -321,6 +321,7 @@ The requirements spec (FR-12, FR-16) references "Streamlit" — these are update
 
 ## Related
 
+- [UI spec](ui.md) — live screens and JSON the frontend already consumes
 - [Requirements spec](privacy-gate.md) — functional requirements
 - [Design doc](design.md) — module designs (core modules unchanged)
 - [API spec](api.md) — endpoint definitions

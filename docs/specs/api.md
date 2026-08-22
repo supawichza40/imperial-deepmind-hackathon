@@ -4,6 +4,7 @@
 **Base URL:** `http://localhost:8000`
 **Content type:** `application/json` for all API requests and responses.
 **Implements:** [architecture spec](architecture.md) §4.2.
+**Frontend contract:** [ui.md](ui.md). Detect and sanitise bodies in this file still use the old five-type / `[REDACTED]` shape. Match [ui.md](ui.md) §6 and §10 when you wire FastAPI to the live panel.
 
 ---
 
@@ -346,6 +347,7 @@ These are available in development but can be disabled in production with `app =
 
 ## Related
 
+- [UI spec](ui.md) — live frontend contract. Prefer this for request bodies.
 - [Architecture spec](architecture.md) — system architecture
 - [Requirements spec](privacy-gate.md) — functional requirements, data contracts
 - [Design doc](design.md) — core module designs

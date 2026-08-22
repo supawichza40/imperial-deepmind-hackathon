@@ -7,7 +7,8 @@
 | Area | Document | What it is |
 |---|---|---|
 | **Requirements** | [specs/privacy-gate.md](specs/privacy-gate.md) | Functional requirements, data contracts, fixtures, prompts |
-| **Design** | [specs/design.md](specs/design.md) | Core module designs: detector, sanitiser, reasoner, audit |
+| **UI (backend contract)** | [specs/ui.md](specs/ui.md) | Live vault / export / QR screens and JSON the backend must match |
+| **Design** | [specs/design.md](specs/design.md) | Detector / sanitiser / reasoner algorithms. UI layout there is stale. |
 | **Architecture** | [specs/architecture.md](specs/architecture.md) | System architecture: FastAPI + PWA, process model, security |
 | **API** | [specs/api.md](specs/api.md) | REST endpoint definitions, schemas, error shapes |
 | **Testing** | [specs/testing.md](specs/testing.md) | TDD strategy, test definitions, fixtures, priorities |

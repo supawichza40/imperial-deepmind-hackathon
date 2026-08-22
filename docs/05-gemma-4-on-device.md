@@ -1,5 +1,15 @@
 # Gemma 4 on-device — practical reference (verified 2026-08-22)
 
+> **MEASURED CORRECTION (22 Aug 2026, 12:15):** the performance figures below were
+> derived from published sources and are **wrong for this team's M1/16GB machine**.
+> Actual measured rate on `gemma4:latest`: **4.74 tokens/s**, plus a 65-second cold load —
+> roughly 10x slower than the 50-80 tok/s estimated here.
+> See [`notes/MEASURED-on-device-reality.md`](../notes/MEASURED-on-device-reality.md)
+> before planning any on-device demo. Also note `gemma4:latest` and `gemma4:e4b` are the
+> same model (blob `c6eb396dbd59`).
+
+
+
 **Yes, Gemma 4 is real and current.** Google DeepMind shipped it on **April 2, 2026**, built "from Gemini 3 research and technology" — this is not the Gemma 3 family. ([DeepMind](https://deepmind.google/models/gemma/gemma-4/), [Google blog](https://blog.google/innovation-and-ai/technology/developers-tools/gemma-4/)) Everything below is Gemma 4 unless a section explicitly says otherwise (some specialized weights — MedGemma, EmbeddingGemma, ShieldGemma — are **still on Gemma 3**, see §2).
 
 ---

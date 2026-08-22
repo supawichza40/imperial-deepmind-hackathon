@@ -1,17 +1,19 @@
 # Judging & Win Strategy: UK AI Agent Lab, Gemini Edition (22 Aug 2026)
 
-This event's own rubric, tracks, and judge panel get announced at the 12:30 briefing, and nothing online matches this exact title or date. Everything below comes from published rubrics and outcomes of the closest comparable events: Google DeepMind's own Gemini 3 Hackathon (Feb 2026, $100K in prizes, the most recent and most directly comparable event, same sponsor and same year), Google Cloud's ADK Hackathon, the Gemini Live Agent Challenge, the 2024 Gemini API Developer Competition, and Kaggle's Gemma 3n Impact Challenge. Claims about a past event are sourced inline. Recommendations for today are marked **JUDGEMENT**.
+This event's own rubric and track list get announced at the 12:15-12:30 briefing, and no published judging criteria exist for it anywhere online (confirmed by event-recon; see the companion brief at `docs/01-event-brief.md` for full logistics, sourcing, and what's still unconfirmed). Everything below comes from published rubrics and outcomes of the closest comparable events: Google DeepMind's own Gemini 3 Hackathon (Feb 2026, $100K in prizes, the most recent and most directly comparable event, same sponsor and same year), Google Cloud's ADK Hackathon, the Gemini Live Agent Challenge, the 2024 Gemini API Developer Competition, and Kaggle's Gemma 3n Impact Challenge. Claims about a past event are sourced inline. Recommendations for today are marked **JUDGEMENT**.
+
+One thing is not inference: this morning's own keynotes were "Frontier Agents with Gemini 3.7 Flash" (Amit Vadi, GDM) and "On-Device AI with Gemma 4" (Ian Ballantyne, GDM), per the confirmed schedule in `docs/01-event-brief.md`. The two features this playbook biases toward in section 4 are the two topics GDM chose to open the day with, not a guess.
 
 ---
 
 ## If you read nothing else
 
-Judges score technical execution highest (25-50% across every published rubric), but in a 2-3 minute live look they can only *perceive* your demo and your one-sentence pitch, not read your code. So the real game is: build the smallest thing that makes a judge feel the "wow" in 90 seconds, using a feature Google just shipped (Gemini 3.7 Flash's agentic tool use or Gemma 4's on-device multimodal), narrate it like a person who understands their own tech, and have a recorded backup in case your live call hits a rate limit.
+Judges score technical execution highest (25-50% across every published rubric), but in a 2-3 minute live look they can only *perceive* your demo and your one-sentence pitch, not read your code. So the real game is: build the smallest thing that makes a judge feel the "wow" in 90 seconds, using a feature Google just shipped (Gemini 3.7 Flash's agentic tool use or Gemma 4's on-device multimodal, the exact two topics this morning's keynotes covered), narrate it like a person who understands their own tech, and have a recorded backup in case your live call hits a rate limit.
 
 Four numbers to hold in your head:
 - **Idea locked by 13:00.** Everything after that is execution, not exploration.
 - **One feature, not three.** Every judging source that discusses losers says the same thing: half-finished feature lists lose to one polished workflow.
-- **Submit by 17:00, not 17:30.** The last 30 minutes belong to platform hiccups, not building.
+- **Submit by 17:00, not 17:30.** 17:30 is the organizers' actual hard deadline; treat 17:00 as your working target so the last 30 minutes belong to platform hiccups, not building.
 - **Public link, no login.** A demo judges can't open scores as if it doesn't exist.
 
 ---
@@ -53,7 +55,7 @@ Gemini Live Agent Challenge: every winner in it was voice-first and hands-free.
 - **Rayan Memory**: a voice-built, explorable 3D "memory palace."
 ([cloud.google.com/blog: Gemini Live Agent Challenge](https://cloud.google.com/blog/topics/developers-practitioners/winners-and-highlights-of-the-gemini-live-agent-challenge))
 
-Gemini API Developer Competition (2024): Vite Vere (visual guidance for cognitive disabilities), Outdraw (a draw-to-fool-the-AI game), Prospera (a real-time AI sales coach), Jayu (a multimodal, OS-level assistant), ViddyScribe (video audio-description for blind users). ([developers.googleblog.com](https://developers.googleblog.com/en/announcing-the-winners-of-the-gemini-api-developer-competition/))
+Gemini API Developer Competition (2024): **Grand Prize: Jayu**, an AI personal assistant integrating a browser, code editor, music, and games, with visual interpretation and real-time translation. Category winners skewed heavily toward accessibility (Vite Vere for cognitive disabilities, Gaze Link for ALS eye-tracking, ViddyScribe for video audio-description) and toward concrete vertical utility (Prospera for sales coaching, Outdraw as a draw-to-fool-the-AI game) over generic chatbots. ([developers.googleblog.com](https://developers.googleblog.com/en/announcing-the-winners-of-the-gemini-api-developer-competition/))
 
 Kaggle Gemma 3n Impact Challenge (600+ submissions, 8 winners, on-device theme): Vite Vere's Gemma 3n rebuild ran the same cognitive-disability assistant fully offline; a separate winner fine-tuned Gemma 3n to translate pictograms into a specific nonverbal user's own voice; the AI Edge special prize went to an app built on MediaPipe's LLM Inference API with streamed on-device responses. ([kaggle.com/.../hackathon-winners](https://www.kaggle.com/competitions/google-gemma-3n-hackathon/hackathon-winners), [blog.google](https://blog.google/innovation-and-ai/technology/developers-tools/developers-changing-lives-with-gemma-3n/))
 
@@ -68,7 +70,7 @@ Patterns across all five events (**JUDGEMENT**, drawn from the above):
 
 A judge spends roughly 90 seconds to 3 minutes per project live, per the JetBrains judge-table writeup and Devpost's own "5 judges" post, both of which describe judges physically clicking through and using the product rather than reading about it ([blog.jetbrains.com](https://blog.jetbrains.com/ai/2026/06/how-to-win-a-hackathon-notes-from-the-judging-table/), [info.devpost.com/blog/hackathon-judging-tips](https://info.devpost.com/blog/hackathon-judging-tips)). A forum investigation into the Gemini 3 Hackathon's own third-place result found that even though Technical Execution was formally weighted 40%, judges were not required to actually run the code, so the submission's written description carried more real weight than anyone assumed ([gemini3.devpost.com forum thread](https://gemini3.devpost.com/forum_topics/43667-third-place-was-a-prompt-injection-attack-devpost-and-google-owe-participants-an-answer)).
 
-**What this means (JUDGEMENT):** what judges can perceive in the room (a working click-path, a one-sentence problem statement, a specific model feature named out loud, a presenter who sounds like they built it) outweighs anything invisible: your test coverage, your clean service boundaries, your commit history, how close you came to not finishing. Since a subset of teams do a live demo round today, that risk cuts both ways: a live click-path can also fail in front of judges in a way a recorded video cannot. Spend your 4 working hours on what a judge will actually see and hear in under 3 minutes, not on correctness nobody will check.
+**What this means (JUDGEMENT):** what judges can perceive in the room (a working click-path, a one-sentence problem statement, a specific model feature named out loud, a presenter who sounds like they built it) outweighs anything invisible: your test coverage, your clean service boundaries, your commit history, how close you came to not finishing. An earlier organizer draft mentioned a "top 3-5 projects" live demo round, but it dropped out of the confirmed schedule, so treat it as possible, not confirmed (`docs/01-event-brief.md` section 1). Build as if it might happen anyway: a live click-path can fail in front of judges in a way a recorded video cannot. Spend your 4 working hours on what a judge will actually see and hear in under 3 minutes, not on correctness nobody will check.
 
 ## 4. Idea-selection heuristics and candidate ideas
 
@@ -77,6 +79,7 @@ Heuristics (**JUDGEMENT**, derived from section 2):
 - Name your agents' jobs out loud in the pitch. It's the cheapest way to make "multi-agent orchestration" legible in 10 seconds.
 - Bias toward whichever keynote feature you can demonstrate unambiguously on screen: Gemini 3.7 Flash's agentic tool-calling and multi-step planning (launched 13 Aug 2026, "our most intelligent workhorse model yet for coding and agents," [appwrite.io](https://appwrite.io/blog/post/gemini-37-flash), [datanorth.ai](https://datanorth.ai/news/google-releases-gemini-3-7-flash)) or Gemma 4's on-device multimodal capability (edge-tier E2B/E4B, native function-calling, runs with no network, [blog.google](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemma-4-12b/), [ai.google.dev model card](https://ai.google.dev/gemma/docs/core/model_card_4)).
 - Offline/on-device demos have a structural demo-safety advantage: they can't hit a rate limit or lose wifi on stage.
+- **JUDGEMENT, strongest signal available:** the two speakers most likely on today's panel are Amit Vadi (Head of Community, GDM Developer Experience, who gave this morning's "Frontier Agents with Gemini 3.7 Flash" keynote) and Ian Ballantyne (GDM DevRel, 9 years in Google DevRel, whose whole focus is on-device AI via Google AI Edge and who has publicly demoed Gemma running multi-agent workloads on Pixel, Raspberry Pi, and Jetson hardware). A third name, Denish KC (AI GTM Lead, Google Cloud), does Q&A but an unconfirmed judging role. DevRel speakers tend to reward demos of exactly what they just presented, so a Gemma-4-on-device idea (ideas #3, #7, #8, #10 below) plays directly to Ian Ballantyne's own public track record, not just to the keynote topic. (`docs/01-event-brief.md` section 2)
 
 | # | Idea | Wow moment | Gemini/Gemma feature shown | Build risk | Why a GDM judge cares |
 |---|---|---|---|---|---|
@@ -119,7 +122,7 @@ Heuristics (**JUDGEMENT**, derived from section 2):
 | 16:00-16:30 | **Feature freeze.** Bug fixes and error-state handling only. Rehearse the pitch once, out loud | **Feature freeze by 16:30** |
 | 16:30-16:50 | Record the fallback demo video using the exact rehearsed script and seed data | **Demo recorded by 16:50** |
 | 16:50-17:00 | Write the roughly 200-word submission text, attach video, public link, and repo, then submit | **Submitted by 17:00** |
-| 17:00-17:30 | Buffer for platform issues, final pitch rehearsal, be ready if called for a live demo round | Slack time, not build time |
+| 17:00-17:30 | Buffer for platform issues and final pitch rehearsal, in case a live demo round happens (unconfirmed, see section 3) | Slack time, not build time |
 
 **JUDGEMENT:** never target 17:30 as your actual submit time. Every account of Devpost-style submissions mentions last-minute upload congestion. Treat 17:00 as the deadline and 17:30 as a dead zone you should already be clear of.
 
@@ -153,4 +156,4 @@ Heuristics (**JUDGEMENT**, derived from section 2):
 
 ---
 
-*Sources are inline throughout. Anything about today's specific event (rubric, tracks, judge panel) was unpublished at the time of writing and should be checked against the 12:30 briefing before locking an idea.*
+*Sources are inline throughout. Anything about today's specific event (rubric, tracks, judge panel) was unpublished at the time of writing and should be checked against the 12:15-12:30 briefing before locking an idea. Full event logistics and sourcing live in `docs/01-event-brief.md`.*

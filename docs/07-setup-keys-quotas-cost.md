@@ -55,10 +55,12 @@ setx GEMINI_API_KEY "<your key>"
 
 ## 2. SDK install + hello world
 
-### ⚠️ Important: the API surface changed in 2026 — there are now two ways to call it
-As of today, Google's docs lead with a new **Interactions API** (`client.interactions.create` / `POST /v1beta/interactions`), which is **stateful by default** (multi-turn history is tracked server-side via `previous_interaction_id`) — it supersedes the older stateless `generateContent`. [[source]](https://ai.google.dev/gemini-api/docs/migrate-to-interactions) [[source]](https://ai.google.dev/gemini-api/docs/quickstart)
+### ⚠️ Important: the API surface changed in 2026 — use Interactions API, not generateContent
+The **Interactions API** (`client.interactions.create` / `POST /v1beta/interactions`) reached **General Availability on 22 June 2026** and is now Google's official primary/recommended interface — it's **stateful by default** (multi-turn history tracked server-side via `previous_interaction_id`), supports background/long-running execution, and is where new capabilities land first. [[GA announcement]](https://blog.google/innovation-and-ai/technology/developers-tools/interactions-api-general-availability/) [[docs]](https://ai.google.dev/gemini-api/docs/interactions-overview)
 
-The classic `models.generateContent` call **still works and is still documented** (and is the *only* thing the Batch API currently supports — see §4.2), so both are shown below. For a simple hackathon script, either is fine; if you're building multi-turn chat/agent behaviour, prefer `interactions.create` since it saves you from managing chat history yourself.
+The older `models.generateContent` call is now explicitly labelled **"(Legacy)"** in Google's own docs (that's the literal page title today) — it still works and is still fully supported, and it's the *only* thing the Batch API currently accepts (§4.2), but **don't start new code on it.** [[source: legacy page title, live-fetched]](https://ai.google.dev/gemini-api/docs/generate-content/get-started)
+
+**Write your hello-world with `interactions.create`.** `generateContent` is shown second, for Batch API use and for reading older tutorials.
 
 ### 2.1 Python
 ```bash
@@ -71,20 +73,20 @@ from google import genai
 
 client = genai.Client()  # reads GEMINI_API_KEY / GOOGLE_API_KEY automatically
 
-# Classic, stateless call
+# Interactions API — recommended, GA, stateful
+interaction = client.interactions.create(
+    model="gemini-2.5-flash", input="Tell me a joke."
+)
+print(interaction.output_text)
+
+# generateContent (Legacy) — still fine for one-off stateless calls, required for Batch API
 response = client.models.generate_content(
     model="gemini-2.5-flash",
     contents="Tell me a story in 100 words.",
 )
 print(response.text)
-
-# New, stateful Interactions API
-interaction = client.interactions.create(
-    model="gemini-2.5-flash", input="Tell me a joke."
-)
-print(interaction.output_text)
 ```
-[[source: generate_content]](https://ai.google.dev/gemini-api/docs/migrate) [[source: interactions.create]](https://ai.google.dev/gemini-api/docs/migrate-to-interactions)
+[[source: interactions.create]](https://ai.google.dev/gemini-api/docs/migrate-to-interactions) [[source: generate_content]](https://ai.google.dev/gemini-api/docs/migrate)
 
 **Old package alert:** if you or a teammate finds a tutorial using `import google.generativeai as genai` (package name `google-generativeai`) — that's the pre-2025 SDK. Google's own migration guide walks the old→new mapping; use `google-genai` (`from google import genai`) for anything you write today. [[source]](https://ai.google.dev/gemini-api/docs/migrate) *(We could not find an explicit sunset/EOL date for `google-generativeai` in the docs — mark as UNVERIFIED, but don't start new code on it regardless.)*
 
@@ -100,27 +102,26 @@ import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({}); // reads GOOGLE_API_KEY from env
 // or explicitly: new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
+// Interactions API — recommended, GA, stateful
+const interaction = await ai.interactions.create({
+  model: "gemini-2.5-flash",
+  input: "Tell me a joke.",
+});
+console.log(interaction.output_text);
+
+// generateContent (Legacy) — still fine for one-off stateless calls
 const response = await ai.models.generateContent({
   model: "gemini-2.5-flash",
   contents: "Tell me a story in 300 words.",
 });
 console.log(response.text);
 ```
-[[source]](https://ai.google.dev/gemini-api/docs/migrate)
+[[source: interactions.create]](https://ai.google.dev/gemini-api/docs/quickstart) [[source: generateContent]](https://ai.google.dev/gemini-api/docs/migrate)
 
 Node-only env var note: the SDK's own README says to set `GOOGLE_API_KEY` (not `GEMINI_API_KEY`) for env-var auto-detection in Node. [[source]](https://www.npmjs.com/package/@google/genai) — to be safe, set **both** vars to the same value in Node projects.
 
 ### 2.3 Plain REST (curl) — no SDK
-Classic `generateContent`:
-```bash
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
-  -H "x-goog-api-key: $GEMINI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"contents":[{"parts":[{"text":"Explain how AI works"}]}]}'
-```
-[[source: header pattern]](https://ai.google.dev/gemini-api/docs/batch-mode)
-
-New Interactions endpoint:
+Interactions API (recommended):
 ```bash
 curl -X POST "https://generativelanguage.googleapis.com/v1beta/interactions" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
@@ -132,6 +133,15 @@ curl -X POST "https://generativelanguage.googleapis.com/v1beta/interactions" \
   }'
 ```
 [[source]](https://ai.google.dev/gemini-api/docs/text-generation)
+
+`generateContent` (Legacy — still needed for Batch API, §4.2):
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"contents":[{"parts":[{"text":"Explain how AI works"}]}]}'
+```
+[[source: header pattern]](https://ai.google.dev/gemini-api/docs/batch-mode)
 
 ---
 
@@ -145,17 +155,19 @@ Three dimensions, evaluated independently — hitting **any one** triggers a rat
 
 Limits are per **Google Cloud project**, not per API key, and are tighter for experimental/preview models. [[source]](https://ai.google.dev/gemini-api/docs/rate-limits)
 
-### 3.2 The actual numbers — read this caveat first
-Google renders the exact free-tier/Tier-1/Tier-2/Tier-3 RPM/TPM/RPD numbers as an interactive, per-model table on the [rate-limits page](https://ai.google.dev/gemini-api/docs/rate-limits) that requires JavaScript — our automated fetch of that page could only retrieve the surrounding prose, not the live numbers, and third-party trackers disagree with each other on exact figures (e.g. reported free-tier RPD for `gemini-2.5-pro` ranges from 25 to 100 depending on the source, checked Aug 2026). **Treat every number below as directionally right but UNVERIFIED at the exact digit — before you rely on a number, open [aistudio.google.com/usage](https://aistudio.google.com/usage) or the live rate-limits page for your own project.**
+### 3.2 The actual numbers — Google does not publish a static table anymore
+We loaded the live rate-limits page in a real browser (not just a static fetch) to check this properly. Confirmed directly from the rendered page today: **Google has removed the old per-model RPM/TPM/RPD table entirely.** The page now says, verbatim: *"Rate limits depend on a variety of factors (such as your usage tier) and can be viewed in Google AI Studio... Specified rate limits are not guaranteed and actual capacity may vary."* [[source, live-rendered]](https://ai.google.dev/gemini-api/docs/rate-limits)
 
-Rough shape reported by multiple independent trackers (cross-referenced, not primary-sourced): [[aggregator 1]](https://www.aifreeapi.com/en/posts/gemini-api-free-tier-rate-limits) [[aggregator 2]](https://tokenmix.ai/blog/gemini-api-free-tier-limits) [[aggregator 3]](https://aipromptshub.co/blog/gemini-api-free-tier-rate-limits)
+**So there is no single correct number to print here — limits are account-specific and change automatically as your tier changes.** Here's exactly where to look, right now:
 
-| Model class | Free tier RPM | Free tier TPM | Free tier RPD |
-|---|---|---|---|
-| Flash / Flash-Lite | ~10–15 | ~250K–1M | ~250–1,500 |
-| Pro (2.5 Pro) | ~5 | ~250K | ~25–100 |
+1. Go to **https://aistudio.google.com/rate-limit?timeRange=last-28-days** — this is the exact "View your active rate limits in AI Studio" link off the official rate-limits page, confirmed via the live page's own markup.
+2. Or: **AI Studio → Projects page** to check your current tier (Free / Tier 1 / 2 / 3).
 
-Paid Tier 1 jumps roughly 20–200x on RPM and removes the RPD cap entirely on Flash models, per the same trackers.
+Two extra numbers Google *does* publish as fixed, verified today:
+- **Priority inference** (paid tier, low-latency lane): rate limit is **0.3× the standard rate limit** for the same model/tier. [[source]](https://ai.google.dev/gemini-api/docs/rate-limits)
+- **Batch API** (§4.2) has its own separate limits: **100 concurrent batch jobs**, **2GB max input file size**, **20GB total file storage**. [[source]](https://ai.google.dev/gemini-api/docs/rate-limits)
+
+Third-party trackers publish rough estimates (e.g. free-tier Flash around 10–15 RPM / 250K–1M TPM / 250–1,500 RPD, `gemini-2.5-pro` around 5 RPM / 250K TPM / 25–100 RPD), but they disagree with each other and cannot be verified against an official static source because none currently exists — **treat any such number you see anywhere, including in this doc's earlier drafts, as unreliable, and check the live link above instead.** [[aggregator, for shape only]](https://www.aifreeapi.com/en/posts/gemini-api-free-tier-rate-limits)
 
 ### 3.3 What's actually verified: the tier ladder and spend caps
 This part **is** confirmed directly from Google's own docs and is consistent across the rate-limits and billing pages:
@@ -180,7 +192,7 @@ Separately, there's a **spend-based rate limit** (a rolling 10-minute window, in
 
 [[source]](https://ai.google.dev/gemini-api/docs/rate-limits)
 
-Tier upgrades are **automatic** once you meet the qualification (no form to fill for Tier 1→3); the monthly cap is enforced at the **billing account** level across all linked projects — hit it and every project on that billing account pauses until the 1st of next month. [[source]](https://ai.google.dev/gemini-api/docs/billing)
+Tier upgrades are **automatic** once you meet the qualification (no form to fill for Tier 1→3): **Free → Tier 1 typically applies instantly** after you set up billing in AI Studio; **Tier 2 and Tier 3 upgrades apply within about 10 minutes** of meeting the spend/time criteria. [[source, live-rendered]](https://ai.google.dev/gemini-api/docs/rate-limits) The monthly cap is enforced at the **billing account** level across all linked projects — hit it and every project on that billing account pauses until the 1st of next month. [[source]](https://ai.google.dev/gemini-api/docs/billing)
 
 ### 3.4 Training data — and a real legal gotcha for a UK event
 - **Free tier:** your prompts/outputs **are** used to improve Google's products. **Paid tier:** they are **not**. This is stated per-model on the pricing page (every model row has a "Used to improve our products: Yes/No" line). [[source]](https://ai.google.dev/gemini-api/docs/pricing) — if your demo uses any real/sensitive data, use the paid tier (min $10 prepay, see §1.1) or synthetic data instead.
@@ -330,4 +342,4 @@ google-genai
 
 ---
 
-*Compiled 22 Aug 2026 from ai.google.dev/gemini-api/docs (api-key, quickstart, rate-limits, pricing, billing, caching, batch-mode, thinking, tokens, migrate, migrate-to-interactions, terms, available-regions, live-api/capabilities), the `@google/genai` npm page, the `google-genai` GitHub repo, Google Cloud's Vertex AI Express Mode docs, and cross-referenced third-party trackers for the items explicitly marked UNVERIFIED above. Where Google's own rate-limit numbers are JS-rendered and couldn't be scraped, this doc says so rather than guessing.*
+*Compiled 22 Aug 2026 from ai.google.dev/gemini-api/docs (api-key, quickstart, rate-limits — including a live browser render, not just a static fetch, to check for a per-model limits table — pricing, billing, caching, batch-mode, thinking, tokens, migrate, migrate-to-interactions, interactions-overview, generate-content/get-started, terms, available-regions, live-api/capabilities), Google's Interactions API GA announcement on blog.google, the `@google/genai` npm page, the `google-genai` GitHub repo, Google Cloud's Vertex AI Express Mode docs, and cross-referenced third-party trackers for the items explicitly marked UNVERIFIED above. Confirmed directly: Google removed the old static per-model rate-limit table from its docs — limits are now account-specific, viewed live at aistudio.google.com/rate-limit. This doc reports that rather than guessing a number.*

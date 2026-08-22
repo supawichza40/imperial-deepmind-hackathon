@@ -821,8 +821,8 @@ def call_with_backoff(fn, *args, max_retries=6, **kwargs):
 
 ### Sources index
 
-- [Interactions API overview](https://ai.google.dev/gemini-api/docs/interactions-overview) · [Why use it / features](https://ai.google.dev/gemini-api/docs/interactions) · [Migration guide](https://ai.google.dev/gemini-api/docs/migrate-to-interactions)
-- [Gemini 3 developer guide](https://ai.google.dev/gemini-api/docs/gemini-3)
+- [Interactions API overview](https://ai.google.dev/gemini-api/docs/interactions-overview) · [Why use it / features](https://ai.google.dev/gemini-api/docs/interactions) · [Migration guide](https://ai.google.dev/gemini-api/docs/migrate-to-interactions) · [Full REST reference](https://ai.google.dev/api/interactions-api)
+- [Gemini 3 developer guide](https://ai.google.dev/gemini-api/docs/gemini-3) · [What's new in Gemini 3.7 Flash](https://ai.google.dev/gemini-api/docs/latest-model) · [Gemini thinking](https://ai.google.dev/gemini-api/docs/thinking)
 - [Function calling (Interactions)](https://ai.google.dev/gemini-api/docs/function-calling) · [Function calling (legacy generateContent)](https://ai.google.dev/gemini-api/docs/generate-content/function-calling)
 - [Tools overview](https://ai.google.dev/gemini-api/docs/tools) · [Google Search grounding](https://ai.google.dev/gemini-api/docs/grounding) · [Maps grounding](https://ai.google.dev/gemini-api/docs/maps-grounding) · [URL context](https://ai.google.dev/gemini-api/docs/url-context) · [Code execution](https://ai.google.dev/gemini-api/docs/code-execution)
 - [Structured outputs](https://ai.google.dev/gemini-api/docs/structured-output)

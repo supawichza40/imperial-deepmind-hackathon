@@ -53,6 +53,11 @@ def test_pipeline_js_wires_send_and_fr26():
     assert "initVaultPage" in src
     assert 'querySelector("#vault")' in src
     assert 'querySelector("#slot")' in src
+    assert 'id="pgp-file"' in src
+    assert 'id="pgp-browse"' in src
+    assert 'id="pgp-paste"' in src
+    assert "readLocalFile" in src
+    assert "pgp-leaving" in src
 
 
 def test_share_button_opens_vault_when_off_vault():
@@ -72,7 +77,7 @@ def test_lock_modal_rejects_empty_passphrase():
     assert "btn-share" in src
     assert "btn-dl" in src
     assert "btn-lock" in src
-    assert "btn-del" in src
+    assert "btn-add-file" in src
 
 
 def test_mobile_css_stacks_rows_and_wraps_audit():

@@ -68,6 +68,8 @@ def test_get_documents(api_client):
     assert "documents" in data
     assert len(data["documents"]) >= 1
     assert data["documents"][0]["id"] == "payslip"
+    ids = {d["id"] for d in data["documents"]}
+    assert "medical_letter" in ids
 
 
 # --- /api/detect ---------------------------------------------------------

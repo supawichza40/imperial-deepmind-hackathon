@@ -116,3 +116,4 @@ def test_documents_endpoint_lists_fixtures():
     ids = {d["id"] for d in resp.json()["documents"]}
     assert "payslip" in ids
     assert "bank_statement" in ids
+    assert "medical_letter" in ids

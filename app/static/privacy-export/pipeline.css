@@ -7,6 +7,75 @@
   margin-bottom: 24px;
 }
 
+.pgp-drop {
+  position: relative;
+  border: 2px dashed var(--theme-line);
+  border-radius: var(--theme-radius-input);
+  padding: 36px 20px;
+  text-align: center;
+  background: var(--theme-mist);
+  transition: border-color var(--theme-fast), background var(--theme-fast);
+}
+
+.pgp-drop.is-over {
+  border-color: var(--theme-wood);
+  background: var(--theme-sand);
+}
+
+.pgp-drop-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.pgp-drop-sub {
+  margin: 6px 0 18px;
+  font-size: 13px;
+  color: var(--theme-mute);
+}
+
+.pgp-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.pgp-paste-label {
+  display: block;
+  margin: 24px 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--theme-track-kicker);
+  text-transform: uppercase;
+  color: var(--theme-mute);
+}
+
+.pgp-paste {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--theme-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pgp-samples-kicker {
+  margin-top: 28px;
+}
+
+#pgp-paste-go {
+  margin-top: 12px;
+}
+
+#pgp-leaving {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0 0 20px;
+}
+
 .pgp-doc-row {
   display: flex;
   flex-wrap: wrap;

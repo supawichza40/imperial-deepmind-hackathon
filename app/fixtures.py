@@ -49,4 +49,19 @@ Date       Description              Amount
 Balance: £1,195.68
 """
 
-DOCUMENTS = {"payslip": PAYSLIP, "bank_statement": BANK_STATEMENT}
+MEDICAL_LETTER = """\
+CLINIC LETTER: 12 July 2026
+Patient: A. Okafor
+Date of Birth: 03 May 1994
+Email: a.okafor@example.co.uk
+Phone: 07700 900123
+Address: 14 Pelham St, SW7 2AZ
+
+Thank you for seeing this patient. They report migraine. No new medication. Please write to the employer Pelham Consulting Ltd if occupational health needs a note.
+"""
+
+DOCUMENTS = {
+    "payslip": PAYSLIP,
+    "bank_statement": BANK_STATEMENT,
+    "medical_letter": MEDICAL_LETTER,
+}

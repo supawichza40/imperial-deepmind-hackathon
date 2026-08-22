@@ -29,6 +29,17 @@
     name: 1, address: 1, ni_number: 1, account_number: 1, email: 1,
     phone: 1, date_of_birth: 1, signature: 1, personal_image: 1
   };
+  var CONSEQUENCES = {
+    name: "With a date of birth, this can pass a phone banking identity check.",
+    address: "A full address can confirm a credit file or a delivery intercept.",
+    ni_number: "An NI number can be used to open a tax or payroll record in your name.",
+    account_number: "Sort code plus account number can set up a direct debit in your name.",
+    email: "An email lets someone impersonate HR or a landlord in your inbox.",
+    phone: "A mobile number is enough to start a SIM swap or a bank callback scam.",
+    date_of_birth: "With a full name, this can pass a phone banking identity check.",
+    signature: "A signature image can be copied onto a form you never saw.",
+    personal_image: "A staff photo can be reused on a fake ID or a phishing page."
+  };
 
   function labelFor(t) {
     return LABELS[t] || t.replace(/_/g, " ");
@@ -252,7 +263,7 @@
         "<input type=\"checkbox\" " + (toggles[type] !== "keep" ? "checked " : "") +
         (found ? "" : "disabled ") + "id=\"pg-" + type + "\">" +
         "<div><div class=\"type\">" + esc(labelFor(type)) + "</div>" +
-        "<div class=\"hint\">" + (found ? "found in this document" : "not in this document") + "</div></div>" +
+        "<div class=\"hint\">" + (found ? esc(CONSEQUENCES[type] || "Found in this document.") : "Not in this document.") + "</div></div>" +
         "<div class=\"pg-seg\" role=\"group\" aria-label=\"" + esc(labelFor(type)) + " treatment\">" +
         "<button type=\"button\" data-act=\"blacklabel\">Blacklabel</button>" +
         "<button type=\"button\" data-act=\"encrypt\">Encrypt</button></div>";

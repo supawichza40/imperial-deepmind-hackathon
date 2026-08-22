@@ -5,6 +5,7 @@
 (function (root) {
   var KEY = "pg-vault-v1";
   var enc = new TextEncoder();
+  var pendingLocalDocs = [];
 
   function esc(s) {
     return String(s)
@@ -447,6 +448,7 @@
         "<section class=\"vault-main\">" +
           "<div class=\"vault-bar\" id=\"folder-actions\"></div>" +
           "<div id=\"acl-box\"></div>" +
+          "<div id=\"doc-list\"></div>" +
           "<div id=\"export-slot\"></div>" +
         "</section>" +
       "</div>"
@@ -509,6 +511,7 @@
         "<h1 style=\"flex:1 1 100%;margin:0 0 8px\">" + esc(current.name) + "</h1>" +
         "<button type=\"button\" class=\"theme-btn\" id=\"btn-dl\" " + (can(current, state.email, "download") && !lockedOut ? "" : "disabled ") + ">Download</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-share\" " + (can(current, state.email, "share") && !lockedOut ? "" : "disabled ") + ">Share file</button>" +
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-add-file\" " + (lockedOut ? "disabled " : "") + ">Add file</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-lock\">" + (current.locked && !current.unlocked ? "Unlock folder" : "Lock folder") + "</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-del\" " + (can(current, state.email, "delete") ? "" : "disabled ") + ">Delete folder</button>";
       bar.querySelector("#btn-dl").addEventListener("click", function () {
@@ -516,6 +519,10 @@
         if (htmlBtn) htmlBtn.click();
       });
       bar.querySelector("#btn-share").addEventListener("click", function () { shareModal(); });
+      bar.querySelector("#btn-add-file").addEventListener("click", function () {
+        var input = document.getElementById("pgp-file");
+        if (input) input.click();
+      });
       bar.querySelector("#btn-lock").addEventListener("click", function () { lockModal(); });
       bar.querySelector("#btn-del").addEventListener("click", function () { deleteModal(); });
     }
@@ -732,10 +739,51 @@
       renderAll();
     });
 
+    function renderDocs() {
+      var box = el.querySelector("#doc-list");
+      if (!box || !current) return;
+      var lockedOut = current.locked && !current.unlocked;
+      var items = state.docs.filter(function (d) { return d.folder === current.id && d.text; });
+      if (!items.length) {
+        box.innerHTML = "<p class=\"theme-mute\">No files you added yet. Drop a file above, or pick a sample.</p>";
+        return;
+      }
+      box.innerHTML = "<p class=\"theme-kicker\">Files in " + esc(current.name) + "</p><div class=\"pgp-doc-row\" id=\"vault-docs\"></div>";
+      var row = box.querySelector("#vault-docs");
+      items.forEach(function (d) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "theme-btn ghost pgp-doc-btn";
+        b.textContent = d.name;
+        b.disabled = lockedOut;
+        b.addEventListener("click", function () {
+          if (!d.text) return;
+          window.dispatchEvent(new CustomEvent("pg-open-doc", { detail: { id: d.id, name: d.name, text: d.text } }));
+        });
+        row.appendChild(b);
+      });
+    }
+
+    function addLocalDoc(name, text) {
+      if (!current || (current.locked && !current.unlocked)) return;
+      state.docs.push({
+        id: hexId(),
+        folder: current.id,
+        name: name || "Dropped file",
+        kind: "upload",
+        text: text || ""
+      });
+      save(state);
+      renderAll();
+    }
+
+    el._addDoc = addLocalDoc;
+
     function renderAll() {
       renderFolders();
       renderActions();
       renderAcl();
+      renderDocs();
       paint();
       var slot = el.querySelector("#export-slot");
       if (!slot) return;
@@ -749,9 +797,21 @@
       }
     }
 
+    pendingLocalDocs.splice(0).forEach(function (d) {
+      addLocalDoc(d.name, d.text);
+    });
     renderAll();
     setInterval(paint, 1000);
   }
 
-  root.PrivacyVault = { mount: mount, totp: totp };
+  function addLocalDocPublic(name, text) {
+    var host = document.getElementById("vault");
+    if (host && typeof host._addDoc === "function") {
+      host._addDoc(name, text);
+      return;
+    }
+    pendingLocalDocs.push({ name: name, text: text });
+  }
+
+  root.PrivacyVault = { mount: mount, totp: totp, addLocalDoc: addLocalDocPublic };
 })(typeof window !== "undefined" ? window : this);

@@ -67,7 +67,7 @@ Target product flow is in `docs/visual/2026-08-22-privacy-gate-screens.html`. Bu
 
 | ID | Screen | Built? | What the user does | What backend must supply |
 |---|---|---|---|---|
-| S1 | Drop a document | mock only | Click the sample payslip. No live file upload. | `GET /api/documents` with the synthetic payslip (and bank statement if you build FR-3). |
+| S1 | Drop a document | **live** | Drop or browse a text file, paste text, or click a sample. | `GET /api/documents` for samples. User files are read in the browser, then `POST /api/detect`. |
 | S2 | Reading it | not built | Short local wait. Copy says nothing left the machine. | No request yet. |
 | S3 | Finding private fields | not built in UI | Gemma + regex highlight spans. Wifi-off still works. | `POST /api/detect`. Span shape in §6. Timeout 3s then regex-only + warning. |
 | S4 | Review and approve | **live** `PrivacyExport` | Per-type toggle. Keep / blacklabel / encrypt. | Feed `{text, spans, images}` into the panel. Do not replace this widget. |
@@ -501,7 +501,7 @@ Keep [api.md](api.md) for HTTP conventions (JSON, `/api` prefix, error shape `{e
 
 | Order | Call | UI trigger | Must |
 |---|---|---|---|
-| 1 | `GET /api/documents` | S1 sample buttons | Synthetic only. No upload. |
+| 1 | `GET /api/documents` | S1 sample buttons | Synthetic samples plus live drop, browse, and paste of text files. |
 | 2 | `POST /api/detect` | S3 | Local Ollama. 3s timeout. Span contract §6.1. Include `text` + `images`. |
 | 3 | (no call) | S4 toggles | State in the browser. |
 | 4 | optional `POST /api/export-zip` | S5 download | Python zip. |

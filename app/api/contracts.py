@@ -39,6 +39,25 @@ class ExtractResponse(BaseModel):
     pages: int = 0
 
 
+class TransferIn(BaseModel):
+    name: str = "document"
+    text: str = ""
+    perm: str = "download"
+    ttl: int = 3600
+    packed: str = ""
+
+
+class TransferOut(BaseModel):
+    id: str
+
+
+class TransferGet(BaseModel):
+    name: str = "document"
+    text: str = ""
+    perm: str = "download"
+    packed: str = ""
+
+
 class SpanModel(BaseModel):
     id: str = ""
     type: str

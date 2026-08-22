@@ -157,16 +157,57 @@
     return set;
   }
 
+  function safeDownloadName(name) {
+    var base = String(name || "privacy-gate").replace(/\.[^.\\/]+$/, "");
+    var cleaned = base.replace(/[^A-Za-z0-9._]+/g, "-").replace(/^-+|-+$/g, "");
+    return cleaned || "privacy-gate";
+  }
+
   function downloadBlob(filename, blob) {
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = filename;
+    a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
     setTimeout(function () {
       URL.revokeObjectURL(a.href);
       a.remove();
-    }, 800);
+    }, 1500);
+  }
+
+  function downloadCopy(panel, kind) {
+    kind = kind || "html";
+    if (!panel || !panel._result) return false;
+    var opts = panel._opts || {};
+    var toggles = panel._toggles || {};
+    var images = panel._images || [];
+    var name = safeDownloadName(opts.documentName);
+    if (kind === "html") {
+      if (needsEncrypt(toggles)) {
+        var pass = panel.querySelector("#pg-pass");
+        if (!pass || !pass.value) return false;
+      }
+      var html = buildHtmlFile(panel._result, images, toggles);
+      downloadBlob(name + "-sanitized.html", new Blob([html], { type: "text/html" }));
+      if (needsEncrypt(toggles)) {
+        var vault = {
+          note: "Values were encrypted in the browser. Use the passphrase you typed. They are not in the HTML file.",
+          types: Object.keys(toggles).filter(function (k) { return toggles[k] === "encrypt"; })
+        };
+        downloadBlob(name + "-vault-meta.json", new Blob([JSON.stringify(vault, null, 2)], { type: "application/json" }));
+      }
+      return true;
+    }
+    if (kind === "txt") {
+      downloadBlob(name + "-sanitized.txt", new Blob([panel._result.text], { type: "text/plain" }));
+      return true;
+    }
+    if (kind === "json") {
+      downloadBlob(name + "-audit.json", new Blob([JSON.stringify({ toggles: toggles, audit: panel._result.audit }, null, 2)], { type: "application/json" }));
+      return true;
+    }
+    return false;
   }
 
   function buildHtmlFile(result, images, toggles) {
@@ -241,6 +282,8 @@
     var present = presentTypes(spans);
 
     el.classList.add("pg-export");
+    el._opts = opts;
+    el._images = images;
     el.innerHTML =
       "<p class=\"theme-kicker\">Your decision</p>" +
       "<p class=\"theme-title pgp-step-title\">Choose what may leave</p>" +
@@ -338,21 +381,13 @@
         fail("Type a passphrase before downloading encrypted fields.");
         return;
       }
-      var html = buildHtmlFile(el._result, images, toggles);
-      downloadBlob((opts.documentName || "privacy-gate") + "-sanitized.html", new Blob([html], { type: "text/html" }));
-      if (needsEncrypt(toggles)) {
-        var vault = {
-          note: "Values were encrypted in the browser. Use the passphrase you typed. They are not in the HTML file.",
-          types: Object.keys(toggles).filter(function (k) { return toggles[k] === "encrypt"; })
-        };
-        downloadBlob((opts.documentName || "privacy-gate") + "-vault-meta.json", new Blob([JSON.stringify(vault, null, 2)], { type: "application/json" }));
-      }
+      downloadCopy(el, "html");
     });
     el.querySelector("#pg-txt").addEventListener("click", function () {
-      downloadBlob((opts.documentName || "privacy-gate") + "-sanitized.txt", new Blob([el._result.text], { type: "text/plain" }));
+      downloadCopy(el, "txt");
     });
     el.querySelector("#pg-json").addEventListener("click", function () {
-      downloadBlob((opts.documentName || "privacy-gate") + "-audit.json", new Blob([JSON.stringify({ toggles: toggles, audit: el._result.audit }, null, 2)], { type: "application/json" }));
+      downloadCopy(el, "json");
     });
     el.querySelector("#pg-share").addEventListener("click", function () {
       clearFail();
@@ -375,13 +410,19 @@
     });
 
     paint();
-    return { getToggles: function () { return toggles; }, getResult: function () { return el._result; } };
+    return {
+      getToggles: function () { return toggles; },
+      getResult: function () { return el._result; },
+      download: function (kind) { return downloadCopy(el, kind || "html"); }
+    };
   }
 
   root.PrivacyExport = {
     FIELD_TYPES: FIELD_TYPES,
     defaultToggles: defaultToggles,
     apply: apply,
-    mount: mount
+    mount: mount,
+    downloadCopy: downloadCopy,
+    safeDownloadName: safeDownloadName
   };
 })(typeof window !== "undefined" ? window : this);

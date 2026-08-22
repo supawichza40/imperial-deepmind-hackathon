@@ -13,7 +13,10 @@ Serves the three static PWA entry points (ADR-013): /vault/,
 
 from __future__ import annotations
 
+import secrets
+import time
 from pathlib import Path
+from threading import Lock
 
 from dotenv import load_dotenv
 
@@ -36,6 +39,9 @@ from app.api.contracts import (
     ReasonRequest,
     SanitiseRequest,
     SanitiseResponse,
+    TransferGet,
+    TransferIn,
+    TransferOut,
 )
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -55,6 +61,18 @@ DEFAULT_MANIFEST = {
 }
 
 app = FastAPI(title="Privacy Gate API")
+
+_TRANSFERS: dict[str, dict] = {}
+_TRANSFER_LOCK = Lock()
+_TRANSFER_CAP = 32
+_TRANSFER_TEXT_MAX = 200_000
+_TRANSFER_PACKED_MAX = 400_000
+
+
+def _purge_transfers(now: float) -> None:
+    dead = [key for key, item in _TRANSFERS.items() if item["exp"] < now]
+    for key in dead:
+        del _TRANSFERS[key]
 
 
 @app.exception_handler(HTTPException)
@@ -142,6 +160,50 @@ def post_extract(req: ExtractRequest) -> ExtractResponse:
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     return ExtractResponse(text=text, pages=pages)
+
+
+@app.post("/api/transfer", response_model=TransferOut)
+def post_transfer(req: TransferIn) -> TransferOut:
+    perm = req.perm if req.perm in ("view", "download") else "download"
+    packed = (req.packed or "").strip()
+    text = req.text or ""
+    if packed:
+        if len(packed) > _TRANSFER_PACKED_MAX:
+            raise HTTPException(400, "That share is too large.")
+    elif len(text) > _TRANSFER_TEXT_MAX:
+        raise HTTPException(400, "That share is too large.")
+    ttl = min(max(int(req.ttl or 3600), 60), 86400)
+    now = time.time()
+    with _TRANSFER_LOCK:
+        _purge_transfers(now)
+        while len(_TRANSFERS) >= _TRANSFER_CAP:
+            oldest = min(_TRANSFERS, key=lambda key: _TRANSFERS[key]["exp"])
+            del _TRANSFERS[oldest]
+        tid = secrets.token_urlsafe(8)
+        _TRANSFERS[tid] = {
+            "name": (req.name or "document")[:200],
+            "text": text,
+            "perm": perm,
+            "packed": packed,
+            "exp": now + ttl,
+        }
+    return TransferOut(id=tid)
+
+
+@app.get("/api/transfer/{tid}", response_model=TransferGet)
+def get_transfer(tid: str) -> TransferGet:
+    now = time.time()
+    with _TRANSFER_LOCK:
+        _purge_transfers(now)
+        item = _TRANSFERS.get(tid)
+        if not item:
+            raise HTTPException(404, "This share has expired or is not on this server.")
+        return TransferGet(
+            name=item["name"],
+            text=item["text"],
+            perm=item["perm"],
+            packed=item["packed"],
+        )
 
 
 @app.post("/api/sanitise", response_model=SanitiseResponse)

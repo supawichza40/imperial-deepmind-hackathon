@@ -302,9 +302,68 @@
       return { name: name, text: (doc && doc.text) || "" };
     }
 
+    function safeName(name) {
+      if (root.PrivacyExport && root.PrivacyExport.safeDownloadName) {
+        return root.PrivacyExport.safeDownloadName(name);
+      }
+      var base = String(name || "privacy-gate").replace(/\.[^.\\/]+$/, "");
+      var cleaned = base.replace(/[^A-Za-z0-9._]+/g, "-").replace(/^-+|-+$/g, "");
+      return cleaned || "privacy-gate";
+    }
+
+    function saveBlob(filename, blob) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 1500);
+    }
+
+    function downloadSanitised() {
+      var panel = el.querySelector(".pg-export");
+      if (panel && root.PrivacyExport && root.PrivacyExport.downloadCopy) {
+        if (root.PrivacyExport.downloadCopy(panel, "html")) return true;
+        var toggles = panel._toggles || {};
+        var needsPass = Object.keys(toggles).some(function (k) { return toggles[k] === "encrypt"; });
+        if (needsPass) {
+          var err = panel.querySelector("#pg-err");
+          if (err) {
+            err.textContent = "Type a passphrase before downloading encrypted fields.";
+            err.classList.add("is-on");
+          }
+          var passWrap = panel.querySelector(".pg-pass");
+          if (passWrap) passWrap.classList.add("is-on");
+          return false;
+        }
+      }
+      var doc = (current && state.docs.find(function (d) { return d.folder === current.id; })) || state.docs[0];
+      var file = sanitisedFile(doc || { name: "document", text: "" });
+      if (!file.text) return false;
+      saveBlob(safeName(file.name) + "-sanitized.txt", new Blob([file.text], { type: "text/plain" }));
+      return true;
+    }
+
     if (hash.indexOf("t=") === 0) {
       try {
         guest = await unpackTransfer(hash.slice(2));
+      } catch (err) {
+        guest = { error: String(err.message || err) };
+      }
+    } else if (hash.indexOf("x=") === 0) {
+      try {
+        var tr = await fetch("/api/transfer/" + encodeURIComponent(hash.slice(2)));
+        if (!tr.ok) throw new Error("This share has expired or is not on this server.");
+        var body = await tr.json();
+        if (body.packed) {
+          guest = await unpackTransfer(body.packed);
+        } else {
+          guest = { perm: body.perm || "download", doc: { name: body.name, text: body.text }, transferred: true };
+        }
       } catch (err) {
         guest = { error: String(err.message || err) };
       }
@@ -367,10 +426,7 @@
         ));
         var tdl = el.querySelector("#g-dl");
         if (tdl) tdl.addEventListener("click", function () {
-          var a = document.createElement("a");
-          a.href = URL.createObjectURL(new Blob([opened.doc.text], { type: "text/plain" }));
-          a.download = (opened.doc.name || "privacy-gate") + "-sanitized.txt";
-          a.click();
+          saveBlob(safeName(opened.doc.name) + "-sanitized.txt", new Blob([opened.doc.text], { type: "text/plain" }));
         });
         return;
       }
@@ -389,7 +445,10 @@
       }
       var gdl = el.querySelector("#g-dl");
       if (gdl) gdl.addEventListener("click", function () {
-        el.querySelector("#pg-html") && el.querySelector("#pg-html").click();
+        var panel = el.querySelector(".pg-export");
+        if (root.PrivacyExport && root.PrivacyExport.downloadCopy && root.PrivacyExport.downloadCopy(panel, "html")) return;
+        var file = sanitisedFile(opened.doc);
+        if (file.text) saveBlob(safeName(file.name) + "-sanitized.txt", new Blob([file.text], { type: "text/plain" }));
       });
     }
 
@@ -526,8 +585,7 @@
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-del\" " + (can(current, state.email, "delete") ? "" : "disabled ") + ">Delete folder</button>" +
         "</div>";
       bar.querySelector("#btn-dl").addEventListener("click", function () {
-        var htmlBtn = document.getElementById("pg-html");
-        if (htmlBtn) htmlBtn.click();
+        downloadSanitised();
       });
       bar.querySelector("#btn-share").addEventListener("click", function () { shareModal(); });
       bar.querySelector("#btn-add-file").addEventListener("click", function () {
@@ -585,7 +643,10 @@
         "<div class=\"pg-qr\" id=\"share-qr\"></div>" +
         "<p class=\"theme-mute\" id=\"share-qr-note\">Scan to open the file.</p>" +
         "<p class=\"pg-link\" id=\"share-out\"></p>" +
+        "<div class=\"vault-bar\">" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"copy-link\">Copy link</button>" +
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"share-dl\">Download this copy</button>" +
+        "</div>" +
         "</div>",
         true
       );
@@ -613,6 +674,37 @@
         }
         var origin = await qrOrigin();
         var url = origin + "#t=" + payload;
+        var usedShort = false;
+        var mark = root.PrivacyQr ? root.PrivacyQr.svg(url) : "";
+        if (!mark) {
+          try {
+            var posted = await fetch("/api/transfer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(wantKey
+                ? { name: file.name, perm: perm, ttl: ttl, packed: payload }
+                : { name: file.name, text: file.text, perm: perm, ttl: ttl })
+            });
+            if (!posted.ok) throw new Error("Could not store a short share.");
+            var minted = await posted.json();
+            url = origin + "#x=" + minted.id;
+            usedShort = true;
+            mark = root.PrivacyQr ? root.PrivacyQr.svg(url) : "";
+          } catch (err) {
+            wrap.querySelector("#share-result").hidden = false;
+            wrap.querySelector("#share-out").textContent = origin + "#t=" + payload;
+            wrap.querySelector("#share-qr-note").textContent =
+              "This file is too large for a QR. Copy the link, or download the copy and send that file.";
+            wrap.querySelector("#share-qr").textContent = "";
+            wrap.querySelector("#copy-link").onclick = async function () {
+              try { await navigator.clipboard.writeText(origin + "#t=" + payload); } catch (e) {}
+            };
+            wrap.querySelector("#share-dl").onclick = function () {
+              saveBlob(safeName(file.name) + "-sanitized.txt", new Blob([file.text], { type: "text/plain" }));
+            };
+            return;
+          }
+        }
         wrap.querySelector("#share-result").hidden = false;
         wrap.querySelector("#share-out").textContent = url;
         var keyBox = wrap.querySelector("#share-key-box");
@@ -620,23 +712,27 @@
         wrap.querySelector("#share-key-code").textContent = wantKey ? creatorKey : "";
         var onLoopback = /127\.0\.0\.1|localhost/.test(url);
         wrap.querySelector("#share-qr-note").textContent = onLoopback
-          ? "This QR has the file in it. On a phone, 127.0.0.1 is the phone itself. Open the vault as your WiFi IP first, then share again."
-          : (wantKey
-            ? "Scan on a phone. The file is in the QR. They still type your key."
-            : "Scan on a phone. The file is in the QR.");
+          ? "This QR points at this computer. On a phone, 127.0.0.1 is the phone itself. Open the vault as your WiFi IP first, then share again."
+          : (usedShort
+            ? (wantKey
+              ? "Scan on a phone. The short link opens the file. They still type your key."
+              : "Scan on a phone. The short link opens the sanitised file.")
+            : (wantKey
+              ? "Scan on a phone. The file is in the QR. They still type your key."
+              : "Scan on a phone. The file is in the QR."));
         var qrHost = wrap.querySelector("#share-qr");
         qrHost.innerHTML = "";
-        if (root.PrivacyQr) {
-          var mark = root.PrivacyQr.svg(url);
-          if (mark) qrHost.innerHTML = mark;
-          else qrHost.textContent = "The file is packed. This QR encoder could not fit the URL. Copy the link instead.";
-        }
+        if (mark) qrHost.innerHTML = mark;
+        else qrHost.textContent = "This file is too large for a QR. Copy the link, or download the copy and send that file.";
         wrap.querySelector("#copy-link").onclick = async function () {
           try { await navigator.clipboard.writeText(url); } catch (e) {}
         };
         wrap.querySelector("#copy-key").onclick = async function () {
           if (!creatorKey) return;
           try { await navigator.clipboard.writeText(creatorKey); } catch (e) {}
+        };
+        wrap.querySelector("#share-dl").onclick = function () {
+          saveBlob(safeName(file.name) + "-sanitized.txt", new Blob([file.text], { type: "text/plain" }));
         };
       });
     }

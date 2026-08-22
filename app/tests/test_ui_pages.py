@@ -74,6 +74,8 @@ def test_share_button_opens_vault_when_off_vault():
     assert "pg-html" in src
     assert "pg-txt" in src
     assert "pg-json" in src
+    assert "function downloadCopy" in src
+    assert "document.body.appendChild" in src
 
 
 def test_lock_modal_rejects_empty_passphrase():
@@ -83,6 +85,9 @@ def test_lock_modal_rejects_empty_passphrase():
     assert "Type the folder passphrase." in src
     assert "btn-share" in src
     assert "btn-dl" in src
+    assert "function downloadSanitised" in src
+    assert 'hash.indexOf("x=") === 0' in src
+    assert "/api/transfer" in src
     assert "btn-lock" in src
     assert "btn-add-file" in src
 

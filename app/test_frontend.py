@@ -104,6 +104,17 @@ class ButtonIdTests(unittest.TestCase):
         src = (STATIC / "vault" / "vault.js").read_text(encoding="utf-8")
         for button_id in ("btn-dl", "btn-share", "btn-add-file", "btn-lock", "btn-del", "do-lk", "do-un", "mint", "lk-err"):
             self.assertIn(button_id, src)
+        self.assertIn("function downloadSanitised", src)
+        self.assertIn("function saveBlob", src)
+        self.assertIn('hash.indexOf("x=") === 0', src)
+        self.assertIn("/api/transfer", src)
+        self.assertNotIn("htmlBtn.click()", src)
+
+    def test_export_download_is_called_from_the_same_click(self):
+        src = (STATIC / "privacy-export" / "privacy-export.js").read_text(encoding="utf-8")
+        self.assertIn("function downloadCopy", src)
+        self.assertIn("document.body.appendChild", src)
+        self.assertIn("downloadCopy: downloadCopy", src)
 
 
 class MobileCssTests(unittest.TestCase):
@@ -116,7 +127,7 @@ class MobileCssTests(unittest.TestCase):
         self.assertIn("@media (max-width: 760px)", export_css)
         self.assertIn("safe-area-inset-top", components)
         sw = (STATIC / "service-worker.js").read_text(encoding="utf-8")
-        self.assertIn("privacy-gate-v6", sw)
+        self.assertIn("privacy-gate-v7", sw)
         self.assertNotIn("  '/',", sw)
 
 

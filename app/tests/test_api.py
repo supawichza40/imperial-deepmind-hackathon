@@ -277,3 +277,24 @@ def test_post_extract_pdf(api_client):
     )
     assert response.status_code == 200
     assert "Okafor" in response.json()["text"]
+
+
+def test_transfer_round_trip(api_client):
+    posted = api_client.post(
+        "/api/transfer",
+        json={"name": "July payslip", "text": "sanitised copy", "perm": "download", "ttl": 3600},
+    )
+    assert posted.status_code == 200
+    tid = posted.json()["id"]
+    assert tid
+    got = api_client.get("/api/transfer/" + tid)
+    assert got.status_code == 200
+    body = got.json()
+    assert body["name"] == "July payslip"
+    assert body["text"] == "sanitised copy"
+    assert body["perm"] == "download"
+
+
+def test_transfer_missing_is_404(api_client):
+    response = api_client.get("/api/transfer/not-a-real-id")
+    assert response.status_code == 404

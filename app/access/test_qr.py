@@ -42,12 +42,16 @@ if (!ctx.PrivacyQr || !ctx.qrcodegen) {
 }
 const svg = ctx.PrivacyQr.svg(url);
 const empty = ctx.PrivacyQr.svg("");
+const huge = ctx.PrivacyQr.svg("http://192.168.1.12:8000/vault/#t=" + "A".repeat(4000));
+const shortSvg = ctx.PrivacyQr.svg("http://192.168.1.12:8000/vault/#x=abc12345");
 const qr = ctx.qrcodegen.QrCode.encodeText(url, ctx.qrcodegen.QrCode.Ecc.LOW);
 const out = {
   ok: svg.indexOf("<svg") === 0 && svg.indexOf("</svg>") !== -1,
   hasLabel: svg.indexOf("QR code that carries the sanitised file") !== -1,
   hasInk: svg.indexOf("#111111") !== -1,
   emptyIsBlank: empty === "",
+  hugeIsBlank: huge === "",
+  shortOk: shortSvg.indexOf("<svg") === 0,
   rects: (svg.match(/<rect /g) || []).length,
   size: qr.size
 };
@@ -80,6 +84,8 @@ class QrEncodeTests(unittest.TestCase):
         self.assertGreater(data["rects"], 200)
         self.assertGreaterEqual(data["size"], 21)
         self.assertLessEqual(data["size"], 177)
+        self.assertTrue(data["hugeIsBlank"])
+        self.assertTrue(data["shortOk"])
 
     def test_encoder_files_are_present(self):
         self.assertTrue((VAULT / "qrcodegen.js").is_file())

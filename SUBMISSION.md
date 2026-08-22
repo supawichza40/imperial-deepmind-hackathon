@@ -18,7 +18,7 @@
 
 ## Track
 
-_TODO — 1, 2 or 3._
+**Track 3 — Best Hybrid AI & Human-Centric Utility.**
 
 ## Write-up
 

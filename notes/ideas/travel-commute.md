@@ -17,10 +17,21 @@ Foreign Menu Reality-Check (MenuPics/Menu Translator already bundle spice-level 
 tags with translation). A feasibility subagent stalled mid-task and never returned usable output
 after redirection, so feasibility below (file lists, API surface, throttle/wifi fallback, paid-API
 flags) was verified directly against the docs and starter kit myself rather than through that
-subagent — flagged here for honesty, not hidden. One surviving candidate (Delay-Board Reroute
-Assistant) needed a hard reframe: as originally scoped it required live transit/routing data we
-have no paid API for, so it's replaced below with a same-problem idea that needs zero external
-data — everything the answer needs is already in the photo.
+subagent — flagged here for honesty, not hidden. **Update:** the feasibility subagent's reply
+did eventually arrive, after this file was already written from my own read of the docs. It
+confirms rather than contradicts the analysis below, and settles one open question: the
+confirmed multimodal call shape for every Gemini-based idea here is
+`client.interactions.create(model="gemini-3.7-flash", input=[image, prompt], response_format={schema})`,
+matching `starter/04_structured_output.py`'s structured-output pattern — no script in the kit
+demonstrates the image part specifically, so that plumbing is still the riskiest 20 minutes on
+every Gemini-based idea below, exactly as flagged. It also independently confirms the reframe
+below was the right call: the only way to make the original live-rerouting version work in 3h
+would be hardcoding 2-3 canned board scenarios against a fake schedule file, which fails the
+brief's own "judge supplies live input" rule (canned flows read as rehearsed) — so the
+zero-external-data reframe stands as originally written, not reverted. One surviving candidate
+(Delay-Board Reroute Assistant) needed a hard reframe: as originally scoped it required live
+transit/routing data we have no paid API for, so it's replaced below with a same-problem idea
+that needs zero external data — everything the answer needs is already in the photo.
 
 Critical grounding fact used throughout: on-device Gemma 4 was **measured on this team's actual
 M1 laptop at 4.74 tokens/s** (not the 50-80 tok/s the vendor docs estimate), plus a 65-second cold

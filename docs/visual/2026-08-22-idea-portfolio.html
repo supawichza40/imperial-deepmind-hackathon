@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build This — idea portfolio</title>
+<style>
+:root{--bg:#f7f6f3;--panel:#fff;--ink:#16181d;--muted:#5d636e;--line:#e2e0da;--accent:#1a73e8;--ok:#188038;--warn:#b06000;--bad:#c5221f;--chip:#eef1f6;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a20;--ink:#e8eaed;--muted:#9aa1ac;--line:#272b33;--accent:#8ab4f8;--ok:#81c995;--warn:#fdd663;--bad:#f28b82;--chip:#20242c}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a20;--ink:#e8eaed;--muted:#9aa1ac;--line:#272b33;--accent:#8ab4f8;--ok:#81c995;--warn:#fdd663;--bad:#f28b82;--chip:#20242c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+h1{font-size:30px;margin:0 0 4px;letter-spacing:-.02em}
+h2{font-size:20px;margin:34px 0 10px;letter-spacing:-.01em}
+h3{font-size:12px;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+p{margin:8px 0}
+.sub{color:var(--muted);margin:0 0 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.grid{display:grid;gap:12px}
+@media(min-width:780px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--muted);font-family:var(--mono)}
+.t1{background:#e8f0fe;color:#174ea6}.t2{background:#e6f4ea;color:#0d652d}.t3{background:#fef7e0;color:#8a5300}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t1{background:#1c3050;color:#a8c7fa}:root:not([data-theme="light"]) .t2{background:#16311f;color:#a1d9b0}:root:not([data-theme="light"]) .t3{background:#3a2e10;color:#f5d97a}}
+.big{border:2px solid var(--accent);border-radius:14px;padding:18px 20px;background:var(--panel);margin:14px 0}
+.big h2{margin-top:0}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:860px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--panel);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n{font-family:var(--mono);white-space:nowrap;color:var(--muted)}
+.sc{font-family:var(--mono);font-weight:600}
+.s5{color:var(--ok)}.s4{color:var(--accent)}.s3{color:var(--warn)}.s2,.s1{color:var(--bad)}
+code{font-family:var(--mono);font-size:12.5px;background:var(--chip);padding:1px 5px;border-radius:4px}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;font-family:var(--mono);font-size:12.5px}
+.beat{display:grid;grid-template-columns:78px 1fr;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.beat:last-child{border:0}
+.beat b{font-family:var(--mono);color:var(--muted);font-weight:500;font-size:12.5px}
+ul{margin:8px 0;padding-left:20px}li{margin:5px 0}
+.warnbox{border-left:3px solid var(--warn);padding-left:12px}
+.badbox{border-left:3px solid var(--bad);padding-left:12px}
+.okbox{border-left:3px solid var(--ok);padding-left:12px}
+.prov{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.chk{list-style:none;padding:0}.chk li{padding-left:26px;position:relative}
+.chk li::before{content:"\2610";position:absolute;left:0;font-family:var(--mono);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Build this</h1>
+<p class="sub">Idea portfolio from 30 agents across 8 life domains and 3 models · written 13:32 BST, 22 Aug 2026 · deadline <b>17:30 sharp</b></p>
+
+<div class="big">
+<h2>The decision, in one paragraph</h2>
+<p>At <b>14:30 spend twenty minutes and nothing more</b> proving one thing: that <code>gemma4:e4b</code> in Ollama will accept an image and return a short structured answer on this laptop. Everything else follows from that single result. <b>If it works</b>, build <b>Blind-Spot Wayfinder</b> on <b>Track 2 (Best Use of Gemma)</b> — photograph a posted map, ask which exit, answered with the network off. Its novelty is verified clean, offline is the premise rather than a fallback, and it runs the Ollama path. <b>If it fails</b>, drop it without argument and build <b>Spot the Gap</b> on <b>Track 1</b> — pure text, the one proven starter pattern, no image risk anywhere. Do not attempt both. Do not spend the afternoon rescuing the spike.</p>
+</div>
+
+<div class="panel badbox">
+<h3>Revised at 13:38 — the novelty judge killed the original pick</h3>
+<p>This page first recommended <b>Overshare Check</b>, with <b>Second Look</b> as the fallback. Both were downgraded within minutes of publishing, and the honest version of the page keeps the record rather than quietly rewriting it.</p>
+<ul>
+<li><b>Second Look — KILLED, novelty 2.</b> <a href="https://underpricedai.com/">Underpriced AI</a> already ships photos or screenshots from any marketplace into sold comps, a deal score and red flags; <a href="https://chromewebstore.google.com/detail/spottable-facebook-market/dbgjphnanjmmfjacahfhliahblokmpgh">Spottable</a> does the same for Marketplace. The buyer-versus-reseller framing was the only unshipped sliver, and a judge will not credit it.</li>
+<li><b>Overshare Check — survives at novelty 3, demoted.</b> <a href="https://apps.apple.com/in/app/lookr-ai-photo-privacy/id6761846110">Lookr</a> already detects and blurs private classes in photos. The genuinely new move is the inference chain — "what a stranger could <i>do</i> with this" — not the detection. The category is warm, not cold.</li>
+<li><b>A second, separate problem with it:</b> Overshare Check runs Gemma 4 in-browser through MediaPipe and WebGPU, not through Ollama. The measured numbers and the correction below apply to the Ollama path only. The in-browser stack is unverified end to end, and so are ContextCrop and Which Button, which share it.</li>
+</ul>
+<p><b>The pattern behind all of this:</b> four of eight domain scouts had their own top pick killed on prior art they claimed to have checked — Bottle Cam, Is This Real?, Notification Declutter Coach and Second Look. Self-verified novelty was unreliable across the board. Whatever you build, re-check it yourself first.</p>
+</div>
+
+<div class="panel badbox">
+<h3>Two corrections that changed this ranking</h3>
+<p><b>There is no public-URL requirement.</b> The brief every scouting agent worked from said "a localhost demo scores as broken." That was inferred from other Google events and it is wrong for this one. Actual submission: public GitHub repo with README, architecture diagram and MIT/Apache licence · a 2-minute demo video on Loom or YouTube · a 2–3 paragraph write-up. <span class="tag">docs/10-tracks-rules-rubric.md</span></p>
+<p><b>This rescues the on-device ideas.</b> A recorded video means you control the take: pre-warm the model, cut the cold load, retry until clean. The measured 4.74 tok/s and 65-second cold load stop being stage-killers and become production constraints. Ideas my own demo judge downgraded for live-failure risk move back up.</p>
+<p><b>Real rubric:</b> 30% technical execution and model leverage · 25% innovation and originality · 25% real-world impact and UX · 20% presentation, with <i>demo reliability</i> named explicitly. Deep use of one feature scores above shallow use of several.</p>
+</div>
+
+<h2>The twenty-minute spike that decides everything</h2>
+<div class="panel">
+<p>Nothing in this repo proves a local image call works. <code>starter/07_local_gemma.py</code> is text-only over Ollama; the <code>images=[...]</code> parameter is demonstrated nowhere. The capability is real — <code>docs/05-gemma-4-on-device.md:51</code> lists E2B and E4B as Text, Image, Audio with a ~150M-parameter vision encoder — but the <b>call shape and the speed are unproven on this hardware</b>. That is the risk, not whether the model can see.</p>
+<pre>ollama run gemma4:e4b ""          # pre-warm, kills the 65s cold load
+# then: one image + "list what is readable in this photo, max 4 short items"
+# pass/fail in 20 minutes. No extensions.</pre>
+<p><b>Pass condition:</b> a short structured answer about a real photo, in under 12 seconds, warm. <b>Anything else is a fail</b> — including "it worked but took 40 seconds."</p>
+</div>
+
+<h2>The portfolio</h2>
+<p class="sub">What survived 56 candidates and three independent judges. <b>N</b> novelty (Fable 5, prior art re-searched from scratch) · <b>B</b> buildability in the time left (Sonnet engineer, against 3h20m) · <b>W</b> stage impact (Opus demo judge). An idea needs a decent score on all three — the top of any single list is a trap.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Idea</th><th>Track</th><th class="n">N</th><th class="n">B</th><th class="n">W</th><th>What it does</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr>
+<td><b>Blind-Spot Wayfinder</b><br><span class="prov">travel-commute</span></td><td><span class="tag t2">Track 2</span></td><td class="sc s4">4</td><td class="sc s3">3</td><td class="sc s3">3</td>
+<td>Photograph the posted station map in airplane mode, ask "which exit for X", answered on-device in seconds with no signal.</td>
+<td><b>BUILD THIS if the spike passes.</b> Novelty verified unshipped — Citymapper's offline mode is pre-digitised data for ~40 cities, a different mechanism. Ollama path. Offline is the premise, not a fallback.</td>
+</tr>
+<tr>
+<td><b>Spot the Gap</b><br><span class="prov">work-learning</span></td><td><span class="tag t1">Track 1</span></td><td class="sc s4">4</td><td class="sc s5">5</td><td class="sc s3">3</td>
+<td>Paste a real instruction you sent someone; the agent simulates the recipient executing it and flags the 2–3 points they would have to guess at.</td>
+<td><b>BUILD THIS if the spike fails.</b> Nothing consumer-shipped — closest are prompt-checkers and a patent. Safest build in the corpus; demos on judge-supplied text.</td>
+</tr>
+<tr>
+<td><b>CareThread</b><br><span class="prov">care-relationships</span></td><td><span class="tag t3">Track 3</span></td><td class="sc s3">3</td><td class="sc s3">3</td><td class="sc s3">3</td>
+<td>A sibling's spoken or photographed update about an ageing parent becomes a shared private timeline that flags patterns — "third dizziness mention this week".</td>
+<td>Viable only if descoped to <b>one</b> input modality. It currently stacks two untested on-device integrations, image and voice, in a single call.</td>
+</tr>
+<tr>
+<td><b>Overshare Check</b><br><span class="prov">xmodel-fable</span></td><td><span class="tag t2">Track 2</span></td><td class="sc s3">3</td><td class="sc s2">2</td><td class="sc s5">5</td>
+<td>Photograph anything, offline; it names what a stranger would learn — badge, screen behind you, whiteboard — then blurs each region.</td>
+<td><b>Demoted.</b> Best staging in the corpus, but Lookr ships the detect-and-blur half, and it rides the unverified in-browser WebGPU stack. <b>Steal the inference-chain narration.</b></td>
+</tr>
+<tr>
+<td><b>Watchword</b><br><span class="prov">xmodel-gpt</span></td><td><span class="tag t2">Track 2</span></td><td class="sc s4">4</td><td class="sc s1">1</td><td class="sc s5">5</td>
+<td>"Ring when the red cup moves behind the blue one" — the viewer invents the trigger and performs it themselves.</td>
+<td><b>Do not build.</b> A 1 fps local VLM loop at 4.74 tok/s cannot catch a short transition. <b>Steal the shape:</b> let the viewer set the win condition.</td>
+</tr>
+<tr>
+<td><s>Second Look</s><br><span class="prov">xmodel-fable</span></td><td><span class="tag t1">Track 1</span></td><td class="sc s2">2</td><td class="sc s4">4</td><td class="sc s4">4</td>
+<td>Screenshot a secondhand listing; identify → sold comps → known faults → verdict.</td>
+<td><b>KILLED.</b> Underpriced AI and Spottable both ship this today. Was this page's original fallback.</td>
+</tr>
+<tr>
+<td><s>Is This Real?</s><br><span class="prov">inbox-comms</span></td><td><span class="tag t3">Track 3</span></td><td class="sc s2">2</td><td class="sc s4">4</td><td class="sc s4">4</td>
+<td>Paste a scam text, get a verdict, then re-run it on-device with the network untouched.</td>
+<td><b>KILLED.</b> Saturated category, and Gemma Guard did the on-device version at an actual Gemma hackathon.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>The ninety seconds — staging you should copy</h2>
+<div class="panel warnbox">
+<p style="margin-top:0"><b>This was written for Overshare Check, which is now demoted.</b> It stays because the staging is the best in the corpus and transfers directly to <b>Blind-Spot Wayfinder</b>: airplane mode switched on in shot, the viewer chooses what to photograph, the airplane icon stays on screen throughout, findings appear one at a time as chains rather than labels, and the closing line points at the network that never came back on. Swap "what a stranger would learn from this photo" for "which exit you need", and the beats hold.</p>
+</div>
+<div class="panel">
+<p class="sub">Opening line: <i>"Put your phone in airplane mode and take a photo of wherever you're standing — I want to show you what a stranger would learn from it."</i></p>
+<div class="beat"><b>0:00–0:08</b><span>Airplane mode switched on <b>on camera</b>, phone held up so the icon is visible. Opening line.</span></div>
+<div class="beat"><b>0:08–0:15</b><span>One photo — the table, a badge, a whiteboard, whatever is there.</span></div>
+<div class="beat"><b>0:15–0:28</b><span>Screen reads "Reading locally. No network." The airplane icon stays visible throughout.</span></div>
+<div class="beat"><b>0:28–0:50</b><span>Four findings appear one at a time, each as a chain rather than a label: "Badge, bottom left → your full name and employer." "Whiteboard → the venue wifi password." "Screen behind you → an open inbox, three sender names readable."</span></div>
+<div class="beat"><b>0:50–1:00</b><span>One tap blurs all four regions. Before/after toggle, twice.</span></div>
+<div class="beat"><b>1:00–1:12</b><span>"The wifi never came back on. Nothing you just photographed left this phone."</span></div>
+<div class="beat"><b>1:12–1:30</b><span>The number, then one line on what ships next.</span></div>
+<p style="margin-top:12px"><b>The quotable number:</b> a photo you would have posted without thinking → four things a stranger could learn about you, caught before you post, with the network off. <b>Measure the real seconds at 16:00 and use the true figure.</b> Do not say "8 seconds" until a stopwatch says so.</p>
+<p><b>Never claim it catches everything.</b> Say "here's what I can see so far" — that turns a miss into a stated limit instead of a failure.</p>
+</div>
+
+<h2>Ideas worth stealing from, but not building</h2>
+<div class="grid g2">
+<div class="panel"><h3>The evidence thread</h3><p>From <b>Packet Cross-Exam</b>: a line drawn from a claim to the exact piece of evidence that supports or contradicts it. The best "make the reasoning visible" device anyone proposed, and it fits whatever you build. Model leverage is 30% of the score and this is how you <i>show</i> it.</p></div>
+<div class="panel"><h3>Let the judge set the win condition</h3><p>From <b>Watchword</b>: the viewer invents the trigger, performs it themselves, and the payoff is binary — it fires or it does not. Unfakeable. The idea itself is unbuildable at 4.74 tok/s; the shape is free.</p></div>
+<div class="panel warnbox"><h3>Bottle Cam — the trap</h3><p>Near-perfect judge-supplied moment attached to the thinnest product here. Against a rubric weighting model leverage at 30% and innovation at 25%, "Gemini reads an image" scores almost nothing. A great party trick that loses on the scorecard.</p></div>
+<div class="panel warnbox"><h3>Big Font — check for a printer</h3><p>Its whole payoff is handing someone a printed A4 sheet. There is unlikely to be a printer at Imperial. Without the print it is a nicely typeset page on a screen, a full grade lower.</p></div>
+</div>
+
+<h2>Track map</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Track</th><th>Field</th><th>Build this</th><th>Reasoning</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t2">Track 2 — Best Use of Gemma</span></td><td><b>Softest</b></td><td>Blind-Spot Wayfinder</td><td>Fewest entries and the most failures, because on-device is genuinely hard and most teams will discover the speed problem at 16:00. You already know about it, which is the whole advantage. Its one-line JSON output and pre-warm are exactly the mitigations the measured numbers demand.</td></tr>
+<tr><td><span class="tag t1">Track 1 — Gemini 3.7 Flash</span></td><td>Most crowded</td><td>Spot the Gap</td><td>The default track, so being merely finished is not enough. Spot the Gap earns its place on interaction rather than plumbing: simulating the recipient of your own message is a genuinely fresh move, and it runs on judge-supplied text with no image risk at all.</td></tr>
+<tr><td><span class="tag t3">Track 3 — Hybrid</span></td><td>Middle</td><td>CareThread, descoped</td><td>Cloud digest plus a local private capture is a clean hybrid story, but only with one input modality. Both original Track 3 candidates lost their novelty score, so this track is the weakest of the three for you today.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Submission — four artefacts, 17:30 sharp</h2>
+<div class="panel okbox">
+<ul class="chk">
+<li><b>Public GitHub repo</b> — README, setup instructions, <b>architecture diagram</b>, <b>MIT or Apache licence</b>. The diagram and the licence are the two most commonly forgotten and they cost nothing.</li>
+<li><b>Proof of model integration</b> — the code must explicitly call Gemini 3.7 Flash through the Google GenAI SDK, or Gemma 4 through a local runtime.</li>
+<li><b>2-minute demo video</b> — Loom or YouTube. Working prototype, the core flow, what it actually does. <b>Shoot a rough one at 16:00, not 17:15.</b></li>
+<li><b>Write-up, 2–3 paragraphs</b> — the problem, the architecture choices, why Gemini or Gemma specifically, and what comes next.</li>
+</ul>
+</div>
+
+<h2>What the clock allows</h2>
+<div class="panel">
+<div class="beat"><b>14:30–14:50</b><span>The spike. One local image call, pass or fail. No extensions.</span></div>
+<div class="beat"><b>14:50–16:00</b><span>Build the single golden path. One feature. Nothing else.</span></div>
+<div class="beat"><b>16:00–16:20</b><span>Shoot a rough demo video while there is still time to fix what it exposes.</span></div>
+<div class="beat"><b>16:20–17:00</b><span>Polish the one path. Architecture diagram. Licence. README.</span></div>
+<div class="beat"><b>17:00–17:20</b><span>Final video take. Write-up. Push.</span></div>
+<div class="beat"><b>17:20–17:30</b><span>Buffer. Something will be wrong.</span></div>
+</div>
+
+<p class="prov">Sources — ideas: notes/ideas/*.md, 8 domain scouts plus independent Fable 5 and GPT-5.6 runs. Scores: _judge-wow.md (Opus), _judge-buildable.md (Sonnet). Event facts: docs/10-tracks-rules-rubric.md (organiser, announced 12:30). On-device numbers: notes/MEASURED-on-device-reality.md, real run 12:19 today. Novelty judge was still running when this page was written; its verdict is not yet reflected. Working tree, uncommitted.</p>
+
+</div>
+</body>
+</html>

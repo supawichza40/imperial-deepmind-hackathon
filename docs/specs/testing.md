@@ -434,6 +434,16 @@ def test_reason_never_receives_original_text():
 
 ---
 
+## 5a. Chat tests (`test_reasoner.py`, STRETCH)
+
+Only write these if F5 is being built.
+
+- `test_chat_never_receives_original_text`. Call `chat()` with a payload containing `[REDACTED]` markers; assert the outbound prompt contains no fixture original values. This is the privacy test and it matters more than the others.
+- `test_chat_refuses_redacted_field`. Ask about a redacted account number with a stubbed model reply; assert `refused_field_types == ["account_number"]` and that `reply` contains no digits.
+- `test_chat_cites_visible_fields`. Ask about net pay; assert `cited_fields` is non-empty.
+- `test_chat_history_round_trip`. Two turns; assert prior turns appear in the outbound prompt in order.
+- `test_chat_falls_back_on_api_failure`. Stub the client to raise; assert a `ChatResult` is returned with an explanatory `reply` and empty lists, no exception.
+
 ## 6. Audit tests (`test_audit.py`)
 
 ```python

@@ -38,22 +38,17 @@
   background: var(--theme-paper);
   border: 0;
   border-radius: var(--theme-radius-card);
-  padding: 40px 32px;
+  padding: clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px);
   box-shadow: var(--theme-shadow);
 }
 
 .pg-card + .pg-card {
   background: var(--theme-paper);
-  padding: 40px 32px;
-}
-
-@media (max-width: 760px) {
-  .pg-card + .pg-card { padding: 32px; }
 }
 
 .pg-row {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
   padding: 18px 0;
@@ -67,6 +62,7 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  min-width: 0;
 }
 
 .pg-row .hint {
@@ -196,6 +192,35 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+@media (max-width: 760px) {
+  .pg-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .pg-row .pg-seg {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .pg-seg {
+    display: flex;
+    width: 100%;
+  }
+
+  .pg-seg button {
+    flex: 1;
+    letter-spacing: 0.04em;
+    padding: 10px 8px;
+  }
+
+  .pg-export button.pg-dl {
+    letter-spacing: 0.06em;
+    padding: 0 14px;
+    font-size: 10px;
+  }
 }
 
 .pg-export button.pg-dl.ghost {

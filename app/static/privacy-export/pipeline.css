@@ -79,3 +79,26 @@
   font-size: 11px;
   font-weight: 600;
 }
+
+.pgp-audit-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+}
+
+.pgp-audit-wrap .pgp-audit-table {
+  margin-top: 0;
+  min-width: 480px;
+}
+
+#pgp-send:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+
+@media (max-width: 760px) {
+  .pgp-doc-btn {
+    flex: 1 1 140px;
+    letter-spacing: 0.06em;
+  }
+}

@@ -344,14 +344,22 @@
     });
     el.querySelector("#pg-share").addEventListener("click", function () {
       clearFail();
-      if (window.location.pathname.indexOf("/vault/") === -1) {
-        var vaultUrl = new URL("../vault/index.html", window.location.href).href;
-        fail("Open the vault to make a signed share link. " + vaultUrl);
-        passWrap.classList.add("is-on");
+      if (window.location.pathname.indexOf("/vault") === -1) {
+        window.location.href = "/vault/";
         return;
       }
       var shareBtn = document.getElementById("btn-share");
-      if (shareBtn) shareBtn.click();
+      if (!shareBtn) {
+        fail("Share is not available on this screen.");
+        passWrap.classList.add("is-on");
+        return;
+      }
+      if (shareBtn.disabled) {
+        fail("Unlock this folder, or ask for share access, then try again.");
+        passWrap.classList.add("is-on");
+        return;
+      }
+      shareBtn.click();
     });
 
     paint();

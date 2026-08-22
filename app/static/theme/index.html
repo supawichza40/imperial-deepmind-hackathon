@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="components.css">
   <style>
-    .wrap { max-width: var(--theme-page); margin: 0 auto; padding: 64px 24px 96px; }
     .swatches { display: flex; flex-wrap: wrap; gap: 16px; margin: 32px 0 64px; }
     .swatch { width: 140px; }
     .chip { height: 72px; border-radius: 16px; }
@@ -19,8 +18,12 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="pg-page">
     <p class="theme-kicker">Privacy Gate</p>
+    <nav class="pg-nav" aria-label="Privacy Gate">
+      <a class="pg-nav-link" href="/vault/">Vault</a>
+      <a class="pg-nav-link" href="/privacy-export/">Privacy</a>
+    </nav>
     <h1>Theme</h1>
     <p class="theme-title" style="font-size:28px;margin:8px 0 12px">White stadium cards on cream</p>
     <p class="theme-mute" style="max-width:36rem">Ink type, pill actions, 28px card corners like the pods. Wood is encrypt. Clay is only a colour dot.</p>

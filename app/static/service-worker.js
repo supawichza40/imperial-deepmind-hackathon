@@ -9,7 +9,7 @@
  * Path: /service-worker.js (at root, not /static/)
  */
 
-const CACHE_NAME = 'privacy-gate-v2';
+const CACHE_NAME = 'privacy-gate-v3';
 const STATIC_PATHS = [
   '/',
   '/manifest.json',

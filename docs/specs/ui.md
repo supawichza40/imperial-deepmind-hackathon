@@ -149,7 +149,7 @@ Buttons the vault already clicks by id:
 | `#pg-html` | Download sanitised HTML. If any type is encrypt, also require passphrase and download `*-vault-meta.json`. |
 | `#pg-txt` | Download sanitised `.txt` |
 | `#pg-json` | Download `{ toggles, audit }` |
-| `#pg-share` | If not on `/vault/`, tell the user to open the vault. If on vault, clicks `#btn-share`. |
+| `#pg-share` | If not on `/vault/`, send the browser to `/vault/`. If on vault, clicks `#btn-share`. If that button is disabled, show an error. |
 | `#pg-pass` | Passphrase. Shown only when a type is encrypt. Never written into the HTML. |
 
 ### 5.2 `PrivacyVault.mount(el, { email })`

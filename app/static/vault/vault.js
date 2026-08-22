@@ -636,6 +636,10 @@
         );
         wrap.querySelector("#do-un").addEventListener("click", async function () {
           var pass = wrap.querySelector("#un-pass").value;
+          if (!pass.trim()) {
+            wrap.querySelector("#un-err").textContent = "Type the folder passphrase.";
+            return;
+          }
           var salt = unb64url(current.lockSalt);
           var got = await hashLock(pass, salt);
           var ok = b64url(got) === current.lockHash;
@@ -654,6 +658,7 @@
         "<h3>Lock " + esc(current.name) + "</h3>" +
         "<p>Contents stay on this machine. A share link will not open while the folder is locked.</p>" +
         "<label for=\"lk-pass\">Passphrase</label><input id=\"lk-pass\" type=\"password\">" +
+        "<p class=\"pg-toast\" id=\"lk-err\"></p>" +
         "<div class=\"vault-bar\" style=\"margin-top:18px\">" +
         "<button type=\"button\" class=\"theme-btn\" id=\"do-lk\">Lock folder</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" data-close>Close</button></div>"
@@ -661,7 +666,10 @@
       wrap.querySelector("#do-lk").addEventListener("click", async function () {
         if (!can(current, state.email, "lock")) return;
         var pass = wrap.querySelector("#lk-pass").value;
-        if (!pass.trim()) return;
+        if (!pass.trim()) {
+          wrap.querySelector("#lk-err").textContent = "Type a passphrase to lock this folder.";
+          return;
+        }
         var salt = crypto.getRandomValues(new Uint8Array(16));
         current.lockSalt = b64url(salt);
         current.lockHash = b64url(await hashLock(pass, salt));

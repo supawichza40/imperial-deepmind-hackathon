@@ -1,0 +1,14 @@
+MERIDIAN BANK
+Current Account Statement
+Account holder: Priya Desai
+Sort code: 20-31-45   Account number: 88452201
+Statement period: 1 July 2026 to 31 July 2026
+
+Date          Description                        Amount      Balance
+01 Jul 2026   SALARY - NORTHBRIDGE RETAIL LTD     +2,400.00   3,912.44
+04 Jul 2026   RENT - LEEDS LETTINGS LTD             -950.00   2,962.44
+09 Jul 2026   SUPERMARKET - GREENGATE FOODS         -84.16    2,878.28
+15 Jul 2026   COUNCIL TAX - LEEDS CITY COUNCIL      -142.50   2,735.78
+22 Jul 2026   ENERGY - NORTHERN POWER LTD            -76.90   2,658.88
+
+Closing balance: £2,658.88

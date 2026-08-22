@@ -23,26 +23,69 @@
 ## Write-up
 
 ### The problem
-_TODO: who has this problem, what it costs them, why now._
+
+People routinely need help with documents they cannot hand to a cloud model: payslips,
+bank statements, medical letters, immigration paperwork. Today the choice is binary. Paste
+the whole thing in and hope, or get no help at all. Most people take the first option
+without ever seeing what they disclosed. The document is the unit of sharing, so consent
+is all or nothing, and the sensitive parts travel with the useful parts.
 
 ### Architecture choices
-_TODO: what runs where and why. Name the specific Gemini features used (streaming,
-tool use, structured output, grounding, MCP) rather than saying "we used Gemini"._
 
-### Why Gemini and/or Gemma
-_TODO: the honest engineering reason for the split. If a step is local, say what
-never leaves the device and why that matters to the user._
+Privacy Gate splits the work at the point where the data would otherwise leave. Gemma 4
+runs on the machine through Ollama's native generate route and returns a span map, matched
+substrings plus a type, which Python resolves to character offsets. A deterministic
+pattern matcher sits underneath it for account numbers, postcodes, national insurance
+numbers and emails, so detection degrades to something useful rather than to nothing if
+the model is unavailable. The user then approves each kind of information, and only the
+approved subset is composed into a new document and sent to Gemini 3.7 Flash through the
+Interactions API for cross document reasoning. An audit trail records what stayed and what
+went. Measured on the build machine, an M1 with 16GB: detection returns 8 spans in roughly
+4.5 seconds, every offset verified against the source text.
+
+The consent step, not the redaction step, is what we think is defensible. Local redaction
+followed by a cloud answer is a published pattern. Asking the person what each field would
+let a stranger do, and letting them decide field type by field type, is not something we
+found shipping anywhere.
+
+### Why Gemini and Gemma specifically
+
+Gemma 4 is used because it is open weights and runs locally, which is the only way the
+guarantee holds. If redaction ran in the cloud, the original document would already have
+left before consent existed, and the product would be a promise rather than a mechanism.
+We deliberately kept the E2B variant on device rather than switching to a faster hosted
+Gemma tag, because the hosted tag would have quietly broken exactly that claim.
+
+Gemini 3.7 Flash handles what comes after the gate: reading several documents at once,
+finding the inconsistency between them, and drafting a response. That work benefits from a
+frontier model and carries no privacy cost once the identifying fields are gone.
+
+The interface shows each field as a consequence rather than a label. Not "account number"
+but "lets someone set up a direct debit in your name". Same detection, but the decision
+becomes a judgement about risk instead of a labelling exercise.
+
+### What we would not claim
+
+This is assisted redaction with human approval, not guaranteed anonymisation. It can miss
+things, which is precisely why a person approves every field type before anything is sent,
+and why the audit trail exists.
 
 ### Future roadmap
-_TODO: the next three things, in order._
+
+1. Images and PDFs. Detection is text only today, and most people photograph a payslip
+   rather than export it.
+2. A learned consequence model, so the risk explanation is specific to the document rather
+   than drawn from a fixed table.
+3. Batch handling for a folder of documents, with the same per field consent applied once
+   and reused, so the gate scales to a real filing cabinet.
 
 ## Links
 
 | Item | Link |
 |---|---|
-| Repo | _TODO_ |
-| Demo video | _TODO_ |
-| Live deployment (optional) | _TODO_ |
+| Repo | https://github.com/supawichza40/imperial-deepmind-hackathon |
+| Demo video | _paste the Loom or YouTube link here the moment it uploads_ |
+| Live deployment (optional) | runs locally: `.venv/bin/python3 app/server.py 8000` |
 
 ## Timing
 

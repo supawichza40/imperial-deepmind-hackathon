@@ -4,10 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy Gate</title>
-<link rel="icon" href="/favicon.ico" type="image/png">
-<link rel="stylesheet" href="../theme/tokens.css">
-<link rel="stylesheet" href="../theme/components.css">
-<link rel="stylesheet" href="gate.css">
+<link rel="stylesheet" href="/static/theme/tokens.css">
+<link rel="stylesheet" href="/static/theme/components.css">
+<link rel="stylesheet" href="/static/gate/gate.css">
 </head>
 <body>
 <div class="app">
@@ -28,9 +27,9 @@
           <label class="drop" id="drop" for="filepick">
             <div class="ic">&#9723;</div>
             <div class="drop-title">Drop a payslip, statement or letter</div>
-            <div class="drop-sub">Text or PDF. If a scan has no selectable text, paste a copy.</div>
+            <div class="drop-sub">or browse your files</div>
           </label>
-          <input type="file" id="filepick" hidden accept=".txt,.md,.pdf,text/plain,application/pdf">
+          <input type="file" id="filepick" hidden accept=".txt,.md,text/plain">
           <div class="row">
             <button class="b gh sm" type="button" data-sample="payslip">Sample payslip</button>
             <button class="b gh sm" type="button" data-sample="statement">Sample statement</button>
@@ -148,6 +147,6 @@
     </div>
   </main>
 </div>
-<script src="gate.js"></script>
+<script src="/static/gate/gate.js"></script>
 </body>
 </html>

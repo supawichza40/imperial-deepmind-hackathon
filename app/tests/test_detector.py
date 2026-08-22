@@ -59,6 +59,28 @@ def test_regex_finds_phone():
     assert any(s["type"] == "phone" for s in spans)
 
 
+def test_regex_finds_labelled_employee_name(payslip_text):
+    spans = _detect_regex(payslip_text)
+    names = [s for s in spans if s["type"] == "name"]
+    okafor = next(s for s in names if s["value"] == "A. Okafor")
+    assert payslip_text[okafor["start"]:okafor["end"]] == "A. Okafor"
+
+
+def test_regex_finds_all_caps_cv_header_name():
+    text = "REECE\nEDUCATION\nJain University\nPhone: 07700 900123\n"
+    spans = _detect_regex(text)
+    names = [s for s in spans if s["type"] == "name"]
+    assert any(s["value"] == "REECE" for s in names)
+    phones = [s for s in spans if s["type"] == "phone"]
+    assert len(phones) == 1
+
+
+def test_regex_skips_document_title_as_name():
+    text = "PAYSLIP: July 2026\nNet Pay: 100\n"
+    spans = _detect_regex(text)
+    assert [s for s in spans if s["type"] == "name"] == []
+
+
 def test_regex_spans_have_valid_offsets():
     """FR-7: span start/end map to correct text slice."""
     text = "NI: QQ123456C done"
@@ -105,6 +127,18 @@ def test_gemma_drops_unmapped_date_type(payslip_text, mock_ollama_success):
         spans, _, _ = _detect_gemma(payslip_text)
     assert all(s["type"] != "date" for s in spans)
     assert any(s["type"] == "name" for s in spans)
+
+
+def test_gemma_case_insensitive_offset():
+    text = "Candidate REECE on the first line."
+    mock_response = {"response": '[{"text": "Reece", "type": "name"}]'}
+    with patch("app.detector.urllib.request.urlopen") as mock:
+        mock.return_value = MagicMock()
+        mock.return_value.read.return_value = json.dumps(mock_response).encode()
+        spans, fallback, _ = _detect_gemma(text)
+    assert fallback is False
+    assert spans[0]["value"] == "REECE"
+    assert text[spans[0]["start"]:spans[0]["end"]] == "REECE"
 
 
 def test_gemma_strips_json_code_fences(payslip_text):

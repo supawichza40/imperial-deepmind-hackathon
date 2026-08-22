@@ -17,11 +17,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "starter"))
 
 from utils import DEFAULT_MODEL, get_client, with_retry  # noqa: E402
 
-# Cloud tag, not a locally-pulled model. gemma4:e2b was never actually
-# pulled on the build machine and the pull was too slow for the deadline
-# (~44 min ETA); gemma4:31b-cloud runs through the same native Ollama route
-# with no code change, just the model name. See SKILL.md "The local model".
-LOCAL_MODEL = os.environ.get("LOCAL_MODEL", "gemma4:31b-cloud")
+# Local Gemma 4 on this machine. A -cloud tag would leave before the gate.
+LOCAL_MODEL = os.environ.get("LOCAL_MODEL", "gemma4:e2b")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 

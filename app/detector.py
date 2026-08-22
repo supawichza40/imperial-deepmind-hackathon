@@ -24,6 +24,7 @@ resolution keeping the longer span (ADR-002 / ADR-007).
 from __future__ import annotations
 
 import json
+import os
 import re
 import urllib.error
 import urllib.request
@@ -31,9 +32,10 @@ from typing import Any
 
 from app.types import DetectionResult, Span
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "gemma4:31b-cloud"
-TIMEOUT_SECONDS = 3
+_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+OLLAMA_URL = f"{_OLLAMA_HOST}/api/generate"
+MODEL = os.environ.get("LOCAL_MODEL", "gemma4:e2b")
+TIMEOUT_SECONDS = int(os.environ.get("LOCAL_TIMEOUT", "12"))
 NUM_PREDICT = 200
 
 # Spec §9.1 system prompt, verbatim except for the substitution marker.
@@ -66,10 +68,99 @@ _CANONICAL_TYPES = frozenset(
 _NI_RE = re.compile(r"\b[A-Za-z]{2}\d{6}[A-Za-z]\b")
 _POSTCODE_RE = re.compile(r"\b[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}\b")
 _EMAIL_RE = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
-_PHONE_RE = re.compile(r"\b07\d{3}\s?\d{6}\b")
+_PHONE_RE = re.compile(r"\b(?:\+44[\s\-]*|0)7\d{3}[\s\-]?\d{6}\b")
 # Context-aware: only digits after an "Account"/"Account number" label (D-11).
 # Excludes bare amounts/dates like "Amount: 12345678".
 _ACCOUNT_RE = re.compile(r"(?i)\baccount(?:\s+number)?\s*[:#-]?\s*(\d{3,})\b")
+_NAME_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:employee|patient|account\s+holder|name|applicant|candidate|full\s+name)\s*:\s*(.+?)\s*$"
+)
+_SKIP_HEADINGS = frozenset(
+    {
+        "payslip",
+        "invoice",
+        "statement",
+        "bank statement",
+        "clinic letter",
+        "education",
+        "experience",
+        "professional experience",
+        "professional",
+        "skills",
+        "projects",
+        "summary",
+        "objective",
+        "contact",
+        "profile",
+        "references",
+        "employment",
+        "qualifications",
+        "awards",
+        "interests",
+        "languages",
+        "certifications",
+        "work history",
+        "personal details",
+        "curriculum vitae",
+        "resume",
+        "cv",
+        "confidential",
+    }
+)
+
+
+def _looks_like_person_name(value: str) -> bool:
+    value = value.strip()
+    if not value or len(value) > 48:
+        return False
+    if any(ch.isdigit() for ch in value):
+        return False
+    if "@" in value or "http" in value.lower():
+        return False
+    heading = value.lower().rstrip(":.")
+    if heading in _SKIP_HEADINGS:
+        return False
+    words = re.findall(r"[A-Za-z][A-Za-z'.\-]*", value)
+    if not (1 <= len(words) <= 4):
+        return False
+    leftover = re.sub(r"[A-Za-z'.\-]+", "", value)
+    leftover = leftover.replace(" ", "").replace(".", "")
+    if leftover:
+        return False
+    if value.isupper():
+        return True
+    return all(w[0].isupper() for w in words)
+
+
+def _name_span(text: str, start: int, end: int) -> dict[str, Any]:
+    return {"type": "name", "start": start, "end": end, "value": text[start:end]}
+
+
+def _detect_names(text: str) -> list[dict[str, Any]]:
+    spans: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for m in _NAME_LABEL_RE.finditer(text):
+        value = m.group(1).strip()
+        if not _looks_like_person_name(value):
+            continue
+        start, end = m.start(1), m.start(1) + len(value)
+        spans.append(_name_span(text, start, end))
+        seen.add(value.lower())
+    for line in text.splitlines()[:12]:
+        raw = line.strip()
+        if not raw or raw.lower() in seen:
+            continue
+        heading = raw.lower().rstrip(":")
+        if heading in _SKIP_HEADINGS or ":" in raw:
+            continue
+        if not _looks_like_person_name(raw):
+            continue
+        idx = text.find(raw)
+        if idx == -1:
+            continue
+        spans.append(_name_span(text, idx, idx + len(raw)))
+        break
+    return spans
 
 
 def _detect_regex(text: str) -> list[dict[str, Any]]:
@@ -98,6 +189,7 @@ def _detect_regex(text: str) -> list[dict[str, Any]]:
             }
         )
 
+    spans.extend(_detect_names(text))
     return spans
 
 
@@ -169,18 +261,48 @@ def _parse_gemma_response(raw: str) -> list[Any] | None:
     return None
 
 
+def _overlaps_claimed(idx: int, end: int, claimed: list[tuple[int, int]]) -> bool:
+    return any(idx < c_end and end > c_start for c_start, c_end in claimed)
+
+
 def _find_unclaimed(text: str, needle: str, claimed: list[tuple[int, int]]) -> tuple[int, int] | None:
-    """ADR-008: first occurrence of `needle` whose interval isn't already claimed."""
+    """ADR-008: first occurrence of `needle` whose interval isn't already claimed.
+
+    Exact match first, then case-insensitive, then flexible whitespace so a
+    CV name split across lines still resolves.
+    """
+    if not needle:
+        return None
     search_from = 0
     while True:
         idx = text.find(needle, search_from)
         if idx == -1:
-            return None
+            break
         end = idx + len(needle)
-        overlaps_claimed = any(idx < c_end and end > c_start for c_start, c_end in claimed)
-        if not overlaps_claimed:
+        if not _overlaps_claimed(idx, end, claimed):
             return idx, end
         search_from = idx + 1
+
+    lower = text.lower()
+    needle_l = needle.lower()
+    search_from = 0
+    while True:
+        idx = lower.find(needle_l, search_from)
+        if idx == -1:
+            break
+        end = idx + len(needle)
+        if not _overlaps_claimed(idx, end, claimed):
+            return idx, end
+        search_from = idx + 1
+
+    parts = [re.escape(p) for p in needle.split() if p]
+    if len(parts) < 2:
+        return None
+    pattern = re.compile(r"\s+".join(parts), re.IGNORECASE)
+    for match in pattern.finditer(text):
+        if not _overlaps_claimed(match.start(), match.end(), claimed):
+            return match.start(), match.end()
+    return None
 
 
 def _resolve_gemma_spans(text: str, items: list[Any]) -> list[dict[str, Any]]:
@@ -200,7 +322,7 @@ def _resolve_gemma_spans(text: str, items: list[Any]) -> list[dict[str, Any]]:
             continue
         start, end = pos
         claimed.append((start, end))
-        spans.append({"type": raw_type, "start": start, "end": end, "value": value})
+        spans.append({"type": raw_type, "start": start, "end": end, "value": text[start:end]})
     return spans
 
 
@@ -210,7 +332,7 @@ def _detect_gemma(text: str) -> tuple[list[dict[str, Any]], bool, str]:
 
     try:
         raw = _call_ollama(prompt)
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
         return [], True, "Local model unavailable, used regex-only detection."
 
     items = _parse_gemma_response(raw)

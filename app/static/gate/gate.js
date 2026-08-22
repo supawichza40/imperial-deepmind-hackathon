@@ -229,10 +229,16 @@
 
   function normalizeDemo(payload) {
     payload = payload || {};
-    var file = payload.file || { name: (payload.documentName || "demo-document") + ".txt", text: payload.text || "" };
-    var detect = payload.detect || { spans: payload.spans || [], model: payload.model || "demo", elapsed_ms: payload.elapsed_ms || 0 };
-    var reason = payload.reason || { finding: payload.finding, explanation: payload.explanation, draft: payload.draft, model: payload.model || "demo" };
-    return { file: file, detect: detect, reason: reason };
+    // Real seed shape (confirmed 22 Aug against app/static/gate/seed/demo-payload.json):
+    // { document: {name, text}, spans: [...], findings: {finding, explanation, draft} }.
+    // Also accepts the {file, detect, reason} shape and a flat fallback, in that order.
+    var doc = payload.document || payload.file || { name: (payload.documentName || "demo-document") + ".txt", text: payload.text || "" };
+    var spans = payload.spans || (payload.detect && payload.detect.spans) || [];
+    var findings = payload.findings || payload.reason ||
+      { finding: payload.finding, explanation: payload.explanation, draft: payload.draft, model: payload.model || "demo" };
+    var file = { name: doc.name, text: doc.text };
+    var detect = { spans: spans, model: payload.model || "demo", elapsed_ms: 0 };
+    return { file: file, detect: detect, reason: findings };
   }
 
   var INLINE_DEMO_FALLBACK = {

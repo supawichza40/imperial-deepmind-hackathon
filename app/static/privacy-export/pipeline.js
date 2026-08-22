@@ -13,6 +13,8 @@
 
   var MAX_BYTES = 200 * 1024;
   var TEXT_EXT = /\.(txt|md|csv|json|html|htm|text|log)$/i;
+  var detectInflight = {};
+  var docsPromise = null;
 
   function esc(s) {
     return String(s)
@@ -119,8 +121,10 @@
   }
 
   function detectAndPublish(doc, onStatus) {
+    var key = String(doc && doc.id) + ":" + String((doc && doc.text) || "").length;
+    if (detectInflight[key]) return detectInflight[key];
     if (onStatus) onStatus("reading", "Reading locally. Nothing has left this machine yet.");
-    return api("/api/detect", { documents: [{ id: doc.id, text: doc.text }] })
+    detectInflight[key] = api("/api/detect", { documents: [{ id: doc.id, text: doc.text }] })
       .then(function (resp) {
         var result = (resp.results && resp.results[doc.id]) || {};
         var live = {
@@ -144,7 +148,12 @@
           onStatus("error", "Could not reach the detector, showing the saved example instead.");
         }
         return root.PRIVACY_EXPORT_DEMO;
+      })
+      .then(function (live) {
+        delete detectInflight[key];
+        return live;
       });
+    return detectInflight[key];
   }
 
   function setStatus(statusEl, state, message) {
@@ -175,6 +184,10 @@
   }
 
   function attachPicker(el, onPick) {
+    if (el.getAttribute("data-pgp") === "on") {
+      return el.querySelector("#pgp-status");
+    }
+    el.setAttribute("data-pgp", "on");
     var documents = [];
     el.innerHTML = "";
     var box = document.createElement("div");
@@ -407,13 +420,15 @@
   }
 
   function loadDocuments() {
-    return api("/api/documents").then(function (resp) {
+    if (docsPromise) return docsPromise;
+    docsPromise = api("/api/documents").then(function (resp) {
       var documents = resp.documents || [];
       if (!documents.length) throw new Error("no documents");
       return documents;
     }).catch(function () {
       return fallbackDocs();
     });
+    return docsPromise;
   }
 
   function initExport(rootEl) {
@@ -472,6 +487,8 @@
 
   function init(rootEl) {
     if (!rootEl) return;
+    if (rootEl.getAttribute("data-pgp-init") === "on") return;
+    rootEl.setAttribute("data-pgp-init", "on");
     if (rootEl.querySelector("#vault")) {
       initVaultPage(rootEl);
       return;

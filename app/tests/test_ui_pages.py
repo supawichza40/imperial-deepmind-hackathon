@@ -23,6 +23,8 @@ def test_page_has_viewport_and_shared_nav(path):
     assert 'class="pg-nav"' in html
     assert 'href="/vault/"' in html
     assert 'href="/privacy-export/"' in html
+    assert 'rel="icon"' in html
+    assert 'href="/favicon.ico"' in html
 
 
 def test_vault_page_starts_pipeline_after_scripts():
@@ -59,6 +61,8 @@ def test_pipeline_js_wires_send_and_fr26():
     assert 'id="pgp-paste"' in src
     assert "readLocalFile" in src
     assert "pgp-leaving" in src
+    assert "detectInflight" in src
+    assert 'data-pgp-init' in src
 
 
 def test_share_button_opens_vault_when_off_vault():

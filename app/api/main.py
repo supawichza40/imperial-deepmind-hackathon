@@ -16,7 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.contracts import (
@@ -179,6 +179,14 @@ def post_audit(req: AuditRequest) -> AuditResponse:
 @app.get("/")
 def root() -> RedirectResponse:
     return RedirectResponse(url="/vault/")
+
+
+@app.get("/favicon.ico")
+def favicon():
+    icon = STATIC_DIR / "icons" / "icon-192.png"
+    if icon.is_file():
+        return FileResponse(icon, media_type="image/png")
+    raise HTTPException(404, "favicon missing")
 
 
 @app.get("/manifest.json")

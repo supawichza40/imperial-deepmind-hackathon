@@ -111,7 +111,9 @@ class MobileCssTests(unittest.TestCase):
         self.assertIn("@media (max-width: 760px)", components)
         self.assertIn("@media (max-width: 760px)", export_css)
         self.assertIn("safe-area-inset-top", components)
-        self.assertIn("privacy-gate-v5", (STATIC / "service-worker.js").read_text(encoding="utf-8"))
+        sw = (STATIC / "service-worker.js").read_text(encoding="utf-8")
+        self.assertIn("privacy-gate-v6", sw)
+        self.assertNotIn("  '/',", sw)
 
 
 if __name__ == "__main__":

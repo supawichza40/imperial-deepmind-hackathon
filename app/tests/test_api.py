@@ -257,3 +257,9 @@ def test_get_manifest_json(api_client):
     data = response.json()
     assert data["name"] == "Privacy Gate"
     assert "icons" in data
+
+
+def test_get_favicon(api_client):
+    response = api_client.get("/favicon.ico")
+    assert response.status_code == 200
+    assert "image" in response.headers.get("content-type", "")

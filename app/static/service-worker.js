@@ -9,10 +9,10 @@
  * Path: /service-worker.js (at root, not /static/)
  */
 
-const CACHE_NAME = 'privacy-gate-v5';
+const CACHE_NAME = 'privacy-gate-v6';
 const STATIC_PATHS = [
-  '/',
   '/manifest.json',
+  '/favicon.ico',
   '/vault/',
   '/vault/index.html',
   '/vault/vault.js',
@@ -75,20 +75,28 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Do NOT cache API calls — they require the local server
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache-first strategy for static assets
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(function () {
+        return caches.match(event.request).then(function (cached) {
+          return cached || new Response('Offline', { status: 503 });
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
         return response;
       }
       return fetch(event.request).then((response) => {
-        // Cache successful responses for future offline access
         if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -98,9 +106,8 @@ self.addEventListener('fetch', (event) => {
         return response;
       });
     }).catch(() => {
-      // If both cache and network fail, return a fallback
       console.log('[ServiceWorker] failed to fetch:', url.pathname);
-      return new Response('Offline — unable to reach network', {
+      return new Response('Offline, unable to reach network', {
         status: 503,
         statusText: 'Service Unavailable',
       });

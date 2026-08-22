@@ -133,15 +133,16 @@ If no inconsistency is found, `inconsistency_detected` is `false` and `analysis`
 {
   "field_type": "name",
   "decision": "kept_local",
-  "approved_by": "user"
+  "approved_by": "user",
+  "details": ""
 }
 ```
-One entry per field type. `decision` is `kept_local` or `shared`.
+One entry per field type. `decision` is `kept_local`, `shared`, or `fallback` (for detector fallback warnings). `approved_by` is `user` for consent decisions, `system` for fallback entries. `details` carries the warning text for fallback entries, empty otherwise.
 
 ### 3.9 Function signatures (for parallel agent work)
 ```python
-# Detector — local, pure function
-def detect(text: str) -> list[Span]: ...
+# Detector — local, pure function. Returns DetectionResult with spans + fallback metadata.
+def detect(text: str) -> DetectionResult: ...
 
 # Sanitiser — deterministic, pure function
 def sanitise(text: str, spans: list[Span], blocked_types: list[str]) -> str: ...
@@ -150,11 +151,14 @@ def sanitise(text: str, spans: list[Span], blocked_types: list[str]) -> str: ...
 def get_consent(spans: list[Span]) -> ConsentDecision: ...
 
 # Cloud reasoner — calls Gemini
-def reason(payload: str) -> dict: ...
+def reason(payload: str) -> GeminiResult: ...
 
-# Audit — produces the log
-def build_audit(spans: list[Span], decision: ConsentDecision) -> list[AuditEntry]: ...
+# Audit — produces the log. Takes per-doc spans + per-doc detection results.
+def build_audit(all_spans: dict[str, list[Span]], decision: ConsentDecision,
+                detection_results: dict[str, DetectionResult] | None = None) -> list[AuditEntry]: ...
 ```
+
+`DetectionResult` is `{"spans": list[Span], "fallback_triggered": bool, "warning": str}`. See design doc §3.1.
 
 ---
 

@@ -3,11 +3,14 @@
 Open `app/static/vault/index.html` (serve the `app/static` folder over http so share links copy cleanly).
 
 What you get
-- Download and Share link buttons
+- Download and Share file buttons
+- A share QR, plus an optional creator key that is not in the QR
 - Folders with inherited access
 - Folder lock with a passphrase
 - Roles. owner, admin, editor, downloader, viewer
 - Delete needs the folder name typed exactly, plus a 6 digit authenticator code
+
+Turn on Ask for my key when you share. You see a one time key. The other person scans the QR or opens the link, then types that key. The encrypt passphrase is never in the link.
 
 This is assisted access control for the demo. It is not a production identity provider. Share links never include the encrypt passphrase.
 

@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
 from app.access import Vault, totp, verify_totp
 from app.access.acl import Acl, inherit
 from app.access.share import mint as mint_share
+from app.access.share import mint_with_key
 from app.access.share import open_token as open_share
 
 
@@ -118,6 +119,32 @@ class ShareTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             open_share(b"k" * 32, f"{payload}.{sig}")
 
+    def test_creator_key_is_required_when_toggled(self):
+        token, key = mint_with_key(
+            b"k" * 32, folder_id="f", doc_id="d", perm="view", actor="o@x",
+            require_key=True,
+        )
+        self.assertIsNotNone(key)
+        self.assertIn("-", key)
+        with self.assertRaises(ValueError) as ctx:
+            open_share(b"k" * 32, token)
+        self.assertIn("creator key required", str(ctx.exception))
+        with self.assertRaises(ValueError) as ctx:
+            open_share(b"k" * 32, token, creator_key="NOPE-NOPE")
+        self.assertIn("does not match", str(ctx.exception))
+        claim = open_share(b"k" * 32, token, creator_key=key)
+        self.assertEqual(claim["doc_id"], "d")
+        self.assertTrue(claim["needs_key"])
+
+    def test_creator_key_ignores_dashes_and_case(self):
+        token, key = mint_with_key(
+            b"k" * 32, folder_id="f", doc_id="d", perm="download", actor="o@x",
+            require_key=True,
+        )
+        compact = key.replace("-", "").lower()
+        claim = open_share(b"k" * 32, token, creator_key=compact)
+        self.assertEqual(claim["perm"], "download")
+
 
 class VaultTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -206,6 +233,18 @@ class VaultTests(unittest.TestCase):
         token = self.v.share_link("owner@local", doc.id, perm="download")
         perm, opened = self.v.open_share(token)
         self.assertEqual(perm, "download")
+        self.assertEqual(opened.text, "ok")
+
+    def test_open_share_with_key_on_the_vault(self):
+        folder = self.v.add_folder("owner@local", "Inbox")
+        doc = self.v.add_doc("owner@local", folder.id, "payslip.txt", "ok")
+        token, key = self.v.share_with_key(
+            "owner@local", doc.id, perm="view", require_key=True,
+        )
+        with self.assertRaises(ValueError):
+            self.v.open_share(token)
+        perm, opened = self.v.open_share(token, creator_key=key)
+        self.assertEqual(perm, "view")
         self.assertEqual(opened.text, "ok")
 
     def test_view_share_still_returns_the_file(self):

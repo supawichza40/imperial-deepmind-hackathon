@@ -294,7 +294,7 @@
     actions.className = "pg-actions";
     actions.innerHTML =
       "<button type=\"button\" class=\"pg-dl\" id=\"pg-html\">Download copy</button>" +
-      "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-share\">Share link</button>" +
+      "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-share\">Share file</button>" +
       "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-txt\">Download text</button>" +
       "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-json\">Download audit</button>";
     box.appendChild(actions);
@@ -346,7 +346,7 @@
       clearFail();
       if (window.location.pathname.indexOf("/vault/") === -1) {
         var vaultUrl = new URL("../vault/index.html", window.location.href).href;
-        fail("Open the vault to mint a signed share link with access control. " + vaultUrl);
+        fail("Open the vault to make a signed share link. " + vaultUrl);
         passWrap.classList.add("is-on");
         return;
       }

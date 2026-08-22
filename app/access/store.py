@@ -9,7 +9,7 @@ import secrets
 from dataclasses import dataclass
 
 from .acl import Acl, inherit
-from .share import mint, open_token
+from .share import mint_with_key, open_token
 from .totp import new_secret, verify_totp
 
 
@@ -124,22 +124,37 @@ class Vault:
         doc_id: str,
         perm: str = "download",
         ttl_seconds: int = 3600,
+        require_key: bool = False,
     ) -> str:
+        token, _key = self.share_with_key(
+            actor, doc_id, perm=perm, ttl_seconds=ttl_seconds, require_key=require_key,
+        )
+        return token
+
+    def share_with_key(
+        self,
+        actor: str,
+        doc_id: str,
+        perm: str = "download",
+        ttl_seconds: int = 3600,
+        require_key: bool = False,
+    ) -> tuple[str, str | None]:
         doc = self._doc(doc_id)
         folder = self._folder(doc.folder_id)
         self._need(folder, actor, "share")
         self._need_unlocked(folder)
-        return mint(
+        return mint_with_key(
             self.hmac_secret,
             folder_id=folder.id,
             doc_id=doc.id,
             perm=perm,
             actor=actor,
             ttl_seconds=ttl_seconds,
+            require_key=require_key,
         )
 
-    def open_share(self, token: str) -> tuple[str, Document]:
-        claim = open_token(self.hmac_secret, token)
+    def open_share(self, token: str, creator_key: str | None = None) -> tuple[str, Document]:
+        claim = open_token(self.hmac_secret, token, creator_key=creator_key)
         doc = self._doc(claim["doc_id"])
         if doc.folder_id != claim["folder_id"]:
             raise PermissionError("share link does not match this file")

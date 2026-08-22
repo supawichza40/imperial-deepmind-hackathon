@@ -139,7 +139,8 @@
         folder: inbox.id,
         name: "July payslip",
         kind: "payslip"
-      }]
+      }],
+      shares: {}
     };
   }
 
@@ -167,15 +168,35 @@
       }
     }
 
-    async function openShare(st, token) {
+    function normalizeKey(key) {
+      return String(key || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+
+    function newCreatorKey() {
+      var alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      var raw = "";
+      var bytes = crypto.getRandomValues(new Uint8Array(8));
+      for (var i = 0; i < 8; i++) raw += alphabet[bytes[i] % alphabet.length];
+      return raw.slice(0, 4) + "-" + raw.slice(4);
+    }
+
+    async function openShare(st, raw, creatorKey) {
+      var token = raw;
+      if (st.shares && st.shares[raw] && st.shares[raw].token) token = st.shares[raw].token;
       var parts = token.split(".");
-      if (parts.length !== 2) throw new Error("bad share link");
+      if (parts.length !== 2) throw new Error("This share link is broken.");
       var sig = b64url(await hmacSha(unb64url(st.hmac), parts[0], "SHA-256"));
-      if (sig !== parts[1]) throw new Error("share link was altered");
+      if (sig !== parts[1]) throw new Error("This share link was altered.");
       var body = JSON.parse(new TextDecoder().decode(unb64url(parts[0])));
-      if (body.exp < Date.now() / 1000) throw new Error("share link expired");
+      if (body.exp < Date.now() / 1000) throw new Error("This share link has expired.");
+      if (body.kh) {
+        var typed = normalizeKey(creatorKey);
+        if (!typed) return { needsKey: true, token: raw };
+        var mac = b64url(await hmacSha(unb64url(st.hmac), "pg-key:" + typed, "SHA-256")).slice(0, 22);
+        if (mac !== body.kh) throw new Error("That key does not match.");
+      }
       var doc = st.docs.find(function (d) { return d.id === body.d; });
-      if (!doc) throw new Error("file is gone");
+      if (!doc) throw new Error("That file is gone from this vault.");
       return { perm: body.p, doc: doc, by: body.by };
     }
 
@@ -190,17 +211,19 @@
 
     el.innerHTML = "";
     if (guest && guest.error) {
-      el.appendChild($("<div class=\"vault-main\"><h2>Share link</h2><p>" + esc(guest.error) + "</p></div>"));
+      el.appendChild($("<div class=\"vault-main\"><h2>Shared file</h2><p>" + esc(guest.error) + "</p></div>"));
       return;
     }
-    if (guest && guest.doc) {
+
+    function renderGuest(opened) {
+      el.innerHTML = "";
       el.appendChild($(
         "<div class=\"vault-main\">" +
-        "<p class=\"theme-kicker\">Shared with you · " + esc(guest.perm) + "</p>" +
-        "<h1>" + esc(guest.doc.name) + "</h1>" +
-        "<p class=\"theme-mute\">Encrypt passphrase is not in this link. You only get the sanitised copy.</p>" +
+        "<p class=\"theme-kicker\">Shared with you · " + esc(opened.perm) + "</p>" +
+        "<h1>" + esc(opened.doc.name) + "</h1>" +
+        "<p class=\"theme-mute\">You only get the sanitised copy. The encrypt passphrase is not in this link.</p>" +
         "<div class=\"vault-bar\">" +
-        (guest.perm === "download" ? "<button type=\"button\" class=\"theme-btn\" id=\"g-dl\">Download copy</button>" : "") +
+        (opened.perm === "download" ? "<button type=\"button\" class=\"theme-btn\" id=\"g-dl\">Download copy</button>" : "") +
         "<a class=\"theme-btn ghost\" href=\"./index.html\">Open your vault</a>" +
         "</div><div id=\"export-slot\"></div></div>"
       ));
@@ -208,7 +231,42 @@
         root.PrivacyExport.mount(el.querySelector("#export-slot"), root.PRIVACY_EXPORT_DEMO);
       }
       var gdl = el.querySelector("#g-dl");
-      if (gdl) gdl.addEventListener("click", function () { el.querySelector("#pg-html") && el.querySelector("#pg-html").click(); });
+      if (gdl) gdl.addEventListener("click", function () {
+        el.querySelector("#pg-html") && el.querySelector("#pg-html").click();
+      });
+    }
+
+    if (guest && guest.needsKey) {
+      el.appendChild($(
+        "<div class=\"vault-main\">" +
+        "<p class=\"theme-kicker\">Shared file</p>" +
+        "<h1>This file needs the creator's key</h1>" +
+        "<p class=\"theme-mute\">The QR and the link do not contain the key. Ask the person who sent this.</p>" +
+        "<form id=\"key-form\">" +
+        "<label for=\"creator-key\">Creator key</label>" +
+        "<input id=\"creator-key\" name=\"key\" autocomplete=\"off\" spellcheck=\"false\" required>" +
+        "<p class=\"pg-toast\" id=\"key-err\"></p>" +
+        "<div class=\"vault-bar\" style=\"margin-top:18px\">" +
+        "<button type=\"submit\" class=\"theme-btn\">Open file</button>" +
+        "<a class=\"theme-btn ghost\" href=\"./index.html\">Open your vault</a>" +
+        "</div></form></div>"
+      ));
+      var keyInput = el.querySelector("#creator-key");
+      if (keyInput) keyInput.focus();
+      el.querySelector("#key-form").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        try {
+          var opened = await openShare(state, guest.token, keyInput.value);
+          if (opened.needsKey) return;
+          renderGuest(opened);
+        } catch (err) {
+          el.querySelector("#key-err").textContent = String(err.message || err);
+        }
+      });
+      return;
+    }
+    if (guest && guest.doc) {
+      renderGuest(guest);
       return;
     }
 
@@ -292,7 +350,7 @@
       bar.innerHTML =
         "<h1 style=\"flex:1 1 100%;margin:0 0 8px\">" + esc(current.name) + "</h1>" +
         "<button type=\"button\" class=\"theme-btn\" id=\"btn-dl\" " + (can(current, state.email, "download") && !lockedOut ? "" : "disabled ") + ">Download</button>" +
-        "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-share\" " + (can(current, state.email, "share") && !lockedOut ? "" : "disabled ") + ">Share link</button>" +
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-share\" " + (can(current, state.email, "share") && !lockedOut ? "" : "disabled ") + ">Share file</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-lock\">" + (current.locked && !current.unlocked ? "Unlock folder" : "Lock folder") + "</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-del\" " + (can(current, state.email, "delete") ? "" : "disabled ") + ">Delete folder</button>";
       bar.querySelector("#btn-dl").addEventListener("click", function () {
@@ -304,15 +362,21 @@
       bar.querySelector("#btn-del").addEventListener("click", function () { deleteModal(); });
     }
 
-    function modal(html) {
+    function modal(html, wide) {
       var wrap = $("<div class=\"pg-overlay\" role=\"dialog\" aria-modal=\"true\"></div>");
-      wrap.innerHTML = "<div class=\"pg-modal\">" + html + "</div>";
+      wrap.innerHTML = "<div class=\"pg-modal" + (wide ? " is-wide" : "") + "\">" + html + "</div>";
       document.body.appendChild(wrap);
       wrap.addEventListener("click", function (ev) {
-        if (ev.target === wrap) wrap.remove();
+        if (ev.target === wrap) close();
       });
+      function close() { wrap.remove(); document.removeEventListener("keydown", onEsc); }
+      function onEsc(ev) {
+        if (ev.key === "Escape") close();
+      }
+      document.addEventListener("keydown", onEsc);
       var cancel = wrap.querySelector("[data-close]");
-      if (cancel) cancel.addEventListener("click", function () { wrap.remove(); });
+      if (cancel) cancel.addEventListener("click", close);
+      wrap._close = close;
       return wrap;
     }
 
@@ -321,28 +385,84 @@
       var doc = state.docs.find(function (d) { return d.folder === current.id; }) || state.docs[0];
       if (!doc) return;
       var wrap = modal(
-        "<h3>Share a link</h3>" +
-        "<p>Anyone with the link gets only the sanitised copy. The encrypt passphrase is not included.</p>" +
+        "<h3>Share this file</h3>" +
+        "<p>The other person only gets the sanitised copy. Your encrypt passphrase stays with you.</p>" +
         "<label for=\"share-perm\">Access</label>" +
-        "<select id=\"share-perm\"><option value=\"view\">view</option><option value=\"download\" selected>download</option></select>" +
+        "<select id=\"share-perm\"><option value=\"view\">View</option><option value=\"download\" selected>Download</option></select>" +
         "<label for=\"share-ttl\">Expires</label>" +
         "<select id=\"share-ttl\"><option value=\"3600\">1 hour</option><option value=\"86400\">24 hours</option></select>" +
+        "<div class=\"vault-toggle\">" +
+        "<input class=\"theme-switch\" type=\"checkbox\" id=\"share-key\">" +
+        "<label for=\"share-key\">Ask for my key</label>" +
+        "</div>" +
+        "<p class=\"theme-mute\" id=\"share-key-hint\">Anyone with the link or the QR can open it.</p>" +
         "<div class=\"vault-bar\" style=\"margin-top:18px\">" +
-        "<button type=\"button\" class=\"theme-btn\" id=\"mint\">Copy link</button>" +
+        "<button type=\"button\" class=\"theme-btn\" id=\"mint\">Make link and QR</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" data-close>Close</button></div>" +
-        "<p class=\"pg-link\" id=\"share-out\" hidden></p>"
+        "<div id=\"share-result\" hidden>" +
+        "<div id=\"share-key-box\" hidden>" +
+        "<p class=\"theme-kicker\">Your key</p>" +
+        "<p class=\"pg-code\" id=\"share-key-code\"></p>" +
+        "<p class=\"theme-mute\">Only you see this. It is not in the QR. Tell it to the person you trust.</p>" +
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"copy-key\">Copy key</button>" +
+        "</div>" +
+        "<div class=\"pg-qr\" id=\"share-qr\"></div>" +
+        "<p class=\"theme-mute\" id=\"share-qr-note\">Scan to open the file.</p>" +
+        "<p class=\"pg-link\" id=\"share-out\"></p>" +
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"copy-link\">Copy link</button>" +
+        "</div>",
+        true
       );
+      var hint = wrap.querySelector("#share-key-hint");
+      wrap.querySelector("#share-key").addEventListener("change", function (ev) {
+        hint.textContent = ev.target.checked
+          ? "The link and QR stay shut until they type your key. You are the only person who sees that key."
+          : "Anyone with the link or the QR can open it.";
+      });
       wrap.querySelector("#mint").addEventListener("click", async function () {
         var perm = wrap.querySelector("#share-perm").value;
         var ttl = parseInt(wrap.querySelector("#share-ttl").value, 10);
-        var body = b64url(enc.encode(JSON.stringify({
-          f: current.id, d: doc.id, p: perm, by: state.email, exp: Math.floor(Date.now() / 1000) + ttl
-        })));
+        var wantKey = wrap.querySelector("#share-key").checked;
+        var creatorKey = wantKey ? newCreatorKey() : "";
+        var claim = {
+          f: current.id,
+          d: doc.id,
+          p: perm,
+          by: state.email,
+          exp: Math.floor(Date.now() / 1000) + ttl
+        };
+        if (wantKey) {
+          claim.kh = b64url(await hmacSha(unb64url(state.hmac), "pg-key:" + normalizeKey(creatorKey), "SHA-256")).slice(0, 22);
+        }
+        var body = b64url(enc.encode(JSON.stringify(claim)));
         var sig = b64url(await hmacSha(unb64url(state.hmac), body, "SHA-256"));
-        var url = location.origin + location.pathname + "#s=" + body + "." + sig;
-        wrap.querySelector("#share-out").hidden = false;
+        var shortId = hexId();
+        if (!state.shares) state.shares = {};
+        state.shares[shortId] = { token: body + "." + sig, exp: claim.exp };
+        save(state);
+        var url = location.origin + location.pathname + "#s=" + shortId;
+        wrap.querySelector("#share-result").hidden = false;
         wrap.querySelector("#share-out").textContent = url;
-        try { await navigator.clipboard.writeText(url); } catch (e) {}
+        var keyBox = wrap.querySelector("#share-key-box");
+        keyBox.hidden = !wantKey;
+        wrap.querySelector("#share-key-code").textContent = wantKey ? creatorKey : "";
+        wrap.querySelector("#share-qr-note").textContent = wantKey
+          ? "Scan to reach the file. They still need your key."
+          : "Scan to open the file.";
+        var qrHost = wrap.querySelector("#share-qr");
+        qrHost.innerHTML = "";
+        if (root.PrivacyQr) {
+          var mark = root.PrivacyQr.svg(url);
+          if (mark) qrHost.innerHTML = mark;
+          else qrHost.textContent = "QR skipped. The link is long. Copy it instead.";
+        }
+        wrap.querySelector("#copy-link").onclick = async function () {
+          try { await navigator.clipboard.writeText(url); } catch (e) {}
+        };
+        wrap.querySelector("#copy-key").onclick = async function () {
+          if (!creatorKey) return;
+          try { await navigator.clipboard.writeText(creatorKey); } catch (e) {}
+        };
       });
     }
 

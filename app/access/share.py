@@ -6,7 +6,10 @@ import base64
 import hashlib
 import hmac
 import json
+import secrets
 import time
+
+KEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
 def _b64(data: bytes) -> str:
@@ -18,6 +21,20 @@ def _unb64(text: str) -> bytes:
     return base64.urlsafe_b64decode(text + pad)
 
 
+def normalize_key(key: str) -> str:
+    return "".join(ch for ch in (key or "").upper() if ch.isalnum())
+
+
+def new_creator_key() -> str:
+    raw = "".join(secrets.choice(KEY_ALPHABET) for _ in range(8))
+    return f"{raw[:4]}-{raw[4:]}"
+
+
+def key_mac(secret: bytes, key: str) -> str:
+    body = normalize_key(key).encode("ascii")
+    return _b64(hmac.new(secret, b"pg-key:" + body, hashlib.sha256).digest()[:16])
+
+
 def mint(
     secret: bytes,
     *,
@@ -27,10 +44,36 @@ def mint(
     actor: str,
     ttl_seconds: int = 3600,
     now: float | None = None,
+    require_key: bool = False,
 ) -> str:
+    token, _key = mint_with_key(
+        secret,
+        folder_id=folder_id,
+        doc_id=doc_id,
+        perm=perm,
+        actor=actor,
+        ttl_seconds=ttl_seconds,
+        now=now,
+        require_key=require_key,
+    )
+    return token
+
+
+def mint_with_key(
+    secret: bytes,
+    *,
+    folder_id: str,
+    doc_id: str,
+    perm: str,
+    actor: str,
+    ttl_seconds: int = 3600,
+    now: float | None = None,
+    require_key: bool = False,
+) -> tuple[str, str | None]:
     if perm not in ("view", "download"):
         raise ValueError("share perm must be view or download")
     clock = time.time() if now is None else now
+    creator_key = new_creator_key() if require_key else None
     body = {
         "f": folder_id,
         "d": doc_id,
@@ -38,12 +81,19 @@ def mint(
         "by": actor,
         "exp": int(clock) + ttl_seconds,
     }
+    if creator_key:
+        body["kh"] = key_mac(secret, creator_key)
     payload = _b64(json.dumps(body, separators=(",", ":")).encode("utf-8"))
     sig = _b64(hmac.new(secret, payload.encode("ascii"), hashlib.sha256).digest())
-    return f"{payload}.{sig}"
+    return f"{payload}.{sig}", creator_key
 
 
-def open_token(secret: bytes, token: str, now: float | None = None) -> dict:
+def open_token(
+    secret: bytes,
+    token: str,
+    now: float | None = None,
+    creator_key: str | None = None,
+) -> dict:
     try:
         payload, sig = token.split(".", 1)
     except ValueError as e:
@@ -64,10 +114,18 @@ def open_token(secret: bytes, token: str, now: float | None = None) -> dict:
         raise ValueError("share link expired")
     if perm not in ("view", "download"):
         raise ValueError("share link has no permission")
+    needed = body.get("kh")
+    if needed:
+        if not normalize_key(creator_key or ""):
+            raise ValueError("creator key required")
+        got = key_mac(secret, creator_key or "")
+        if not hmac.compare_digest(got, needed):
+            raise ValueError("creator key does not match")
     return {
         "folder_id": folder_id,
         "doc_id": doc_id,
         "perm": perm,
         "actor": body.get("by") or "guest",
         "exp": exp,
+        "needs_key": bool(needed),
     }

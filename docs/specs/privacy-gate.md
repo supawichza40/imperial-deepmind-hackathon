@@ -57,14 +57,6 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 - **FR-20 (MUST):** Gemini performs one reasoning task: find an inconsistency between the documents (or within one document if only one is provided). Explain it in plain language. Response schema in §3.7.
 - **FR-21 (SHOULD):** Gemini also drafts a response/explanation letter (field `draft_letter` in the response schema).
 
-### 2.4a Conversation (STRETCH, cut first)
-- **FR-40 (STRETCH):** After sanitisation, the user may open a chat about the sanitised payload and ask free-form questions. Same payload, same privacy boundary as FR-17 and FR-18.
-- **FR-41 (STRETCH):** The chat carries turn history. Each request sends the sanitised payload plus prior turns. The original text is never part of the history.
-- **FR-42 (STRETCH):** When a question can only be answered from redacted material, the reply must say it cannot see that field and name the field type. It must never guess. This is the demo's proof that the gate is real.
-- **FR-43 (STRETCH):** Each answer cites which visible fields it used, so the user can check the reasoning against what they approved.
-
-Why this is worth building last and showing first: a judge who watches the model refuse to answer a question about a hidden field has seen the privacy claim tested live, rather than described.
-
 ### 2.5 Audit log
 - **FR-22 (MUST):** Record, per field type: whether it was kept local or shared, and that the user approved.
 - **FR-23 (MUST):** Display the audit log showing what stayed local and what was shared.

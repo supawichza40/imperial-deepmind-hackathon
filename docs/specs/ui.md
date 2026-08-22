@@ -75,7 +75,6 @@ Target product flow is in `docs/visual/2026-08-22-privacy-gate-screens.html`. Bu
 | S6 | Thinking | not built | Cloud wait. Keep the sanitised payload on screen. | `POST /api/reason` with sanitised text only. |
 | S7 | What it found | not built | One concrete mismatch (net pay £2,427.40 vs deposit £2,480.00). | Gemini JSON in §6.5. |
 | S8 | The receipt | partial | Export already writes `audit.json`. Vault does not yet show a cloud receipt. | `POST /api/audit` plus display. Never cut this from the demo. |
-| S9 | Chat about it | not built, STRETCH | Free-form conversation over the sanitised copy. Asking about a hidden field gets a plain refusal naming the field. | `POST /api/chat`. Reply, cited fields, refused field types. See [api.md](api.md) §2.6. |
 | Vault | Folders + share | **live** | Grant roles, lock, delete, mint QR. | Optional persist. Python `app.access.Vault` already matches the rules. |
 | Guest | Open QR | **live** | Phone shows sanitised text. Optional creator key. | `unpack_file` if you verify payloads server-side. Not required for the QR path. |
 | E1 | Local model down | not built | Regex fallback + warning. | Detector returns `fallback_triggered`. |

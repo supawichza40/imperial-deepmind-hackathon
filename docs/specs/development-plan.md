@@ -245,8 +245,6 @@ A feature is done when:
 
 If the team is behind schedule, cut in this order:
 
-0. **F5 Chat (STRETCH)**. Never on the critical path. Build it only if the whole pipeline is green and there is time left before the demo. It is the strongest thing to show and the first thing to drop.
-
 1. **F3.4 Service worker** — high risk of caching stale assets during demo, low payoff. PWA install still works without it (manifest is enough for "Add to Home Screen"). Cut first.
 2. **F4.1 E2E test** — manual demo covers the same flow. 15 min saved.
 3. **F1.2 Gemma detector** — trigger at T=70 if A is behind. Ship regex-only detection. The audit log's fallback entry tells the "local model" story. 30 min saved.

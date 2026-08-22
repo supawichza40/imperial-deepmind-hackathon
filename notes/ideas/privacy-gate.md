@@ -95,3 +95,72 @@ Minimum viable version that still lands the wow moment:
 5. The audit log. This is cheap to build and it is the thing judges remember.
 
 Cut before anything else: live screen capture, multi-document comparison, tool actions.
+
+## Upgrades decided 14:05, 22 Aug 2026
+
+Source: a 30-agent idea sweep across 8 life domains and 3 independent models, three
+judges, and an adversarial verifier that executed the calls rather than reasoning about
+them. Full record in `docs/visual/2026-08-22-idea-portfolio.html`, scorecards and the
+verifier's findings in `notes/ideas/_judge-*.md` and `notes/ideas/_VERDICT.md`.
+
+**The sweep did not change what we build.** Privacy Gate was already 40 minutes into
+implementation when the portfolio landed, and no candidate justified restarting. What
+follows are four changes to this build.
+
+### 1. Pin the local model to `gemma4:e2b`, and pre-warm it
+
+`ollama list` shows `gemma4:e4b` and `gemma4:latest` are the **same 9.6 GB model**,
+identical ID `c6eb396dbd59`. Measured on this hardware today:
+
+| Model | Warm image call | Notes |
+|---|---|---|
+| `gemma4:e4b` / `:latest` | 14.2s | fails a 12s stage budget |
+| `gemma4:e2b` | **7.5s, 10.86 tok/s** | correct 4-item structured output |
+| cold start, either | +16.6s | measured directly, unprompted |
+
+The working call shape is `POST /api/generate` with `images:[base64]` — this is now
+proven, not assumed. `starter/07_local_gemma.py` is text-only and demonstrates
+`images=[...]` nowhere, so do not use it as the reference for the vision path.
+
+**Pre-warm at process start.** A cold load inside a recording costs more than every
+other latency problem combined.
+
+### 2. Lead with per-field approval, never with "we redact locally"
+
+This corrects the Innovation claim in "Why it scores" above. Local-redaction-then-cloud-
+answer is a published tutorial pattern and a shipped product category; a judge who knows
+that hears "wrapper" no matter how the architecture is drawn. The **per-field consent
+gate and the audit trail** are the defensible sliver, and they are what should open the
+pitch, the README and the write-up.
+
+Independent support for how thin the surrounding whitespace is: of eight domain scouts,
+four had their own top pick killed by an independent prior-art search they believed they
+had already done — Bottle Cam, Is This Real?, Notification Declutter Coach, Second Look.
+Self-verified novelty was unreliable across the entire sweep. Assume ours is too, and
+lead with the part nothing else ships.
+
+### 3. Show the inference chain, not the redaction label
+
+The single best interaction device the sweep produced, from an idea we are not building
+(Overshare Check, `notes/ideas/xmodel-fable.md`). Do not render "account number
+redacted". Render what that field would let a stranger **do**:
+
+```
+Sort code + account number  → set up a direct debit in your name
+Full name + date of birth   → pass a phone-banking identity check
+Employer + salary           → a convincing payroll-change phishing email
+```
+
+Same detection work, same latency, materially better answer to the 25% Real-World Impact
+and UX criterion — and it makes the consent decision meaningful instead of mechanical,
+because the user is approving a consequence rather than a field name.
+
+### 4. Rehearse live; the video does not retire the risk
+
+`docs/00-ground-truth.md:33,37` records a top 3–5 being selected for live demos, and the
+20% bucket in `docs/10-tracks-rules-rubric.md` is "Presentation & **Live Demo**",
+explicitly including the ability to defend technical choices in Q&A. The recording
+controls the take; it does not remove the possibility of standing in front of a judge.
+Rehearse the click path live, and have an answer ready for the obvious probe — "how do
+you know it caught everything?" The honest answer is the strong one: it does not
+guarantee that, which is exactly why a human approves every field before it leaves.

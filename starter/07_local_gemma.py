@@ -8,7 +8,8 @@ internet once the model is pulled.
 Setup (once, before the demo, while you still have wifi):
     brew install ollama
     ollama serve &          # or just open the Ollama app
-    ollama pull gemma3:4b   # ~3GB download; pick a size that fits your RAM
+    ollama pull gemma4:e2b   # 7.2GB. Measured 10.8 tok/s on M1/16GB;
+    #                         e4b is 9.6GB and 2x slower — see notes/MEASURED-on-device-reality.md
 
 Run:
     python 07_local_gemma.py
@@ -17,7 +18,7 @@ import sys
 
 from openai import OpenAI
 
-MODEL = "gemma3:4b"
+MODEL = "gemma4:e2b"
 BASE_URL = "http://localhost:11434/v1"
 
 

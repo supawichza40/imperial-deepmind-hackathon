@@ -1,69 +1,118 @@
-# UK AI Agent Lab: Gemini Edition — war room
+# PROJECT_NAME
 
-Google DeepMind × UK AI Agent Lab · London · **Saturday 22 August 2026**
-Build window **12:30 → 17:30** (hard deadline). Winners announced by Mon 24 Aug.
+> **TODO before 17:30 — replace `PROJECT_NAME` and this line with a one-sentence description
+> of what this does. Under 20 words. This is the first thing a judge reads.**
 
-Everything in this repo exists to save minutes during those five hours.
+**UK AI Agent Lab: Gemini Edition** · Imperial College London · 22 August 2026
+**Track:** _TODO — 1 (Gemini 3.7 Flash) / 2 (Gemma 4 local) / 3 (Hybrid)_
 
-## Read in this order
+## The problem
 
-| # | File | What it's for | When |
-|---|---|---|---|
-| 00 | [docs/00-ground-truth.md](docs/00-ground-truth.md) | Organiser's own words: schedule, speakers, prizes. The authority. | Now |
-| **10** | **[docs/10-tracks-rules-rubric.md](docs/10-tracks-rules-rubric.md)** | **ANNOUNCED: 3 tracks, rubric weights, 4 required submission artefacts. Authoritative.** | **Now** |
-| 01 | [docs/01-event-brief.md](docs/01-event-brief.md) | Event/organiser recon, tracks, rules, prior editions | Now |
-| 02 | [docs/02-speakers-and-mentors.md](docs/02-speakers-and-mentors.md) | Who to talk to, what to ask, mentor-hour protocol | Before 11:05 |
-| 08 | [docs/08-judging-and-win-strategy.md](docs/08-judging-and-win-strategy.md) | Rubric, what wins, 15 sized ideas, minute-by-minute plan | **12:15–12:30** |
-| 07 | [docs/07-setup-keys-quotas-cost.md](docs/07-setup-keys-quotas-cost.md) | Key, SDK, quotas, 429 survival | 12:30 |
-| 03 | [docs/03-gemini-3.7-flash.md](docs/03-gemini-3.7-flash.md) | Model IDs, limits, pricing, what's new | 12:30 |
-| 04 | [docs/04-gemini-agent-api.md](docs/04-gemini-agent-api.md) | Tool use, grounding, Live API, structured output — with code | While building |
-| 05 | [docs/05-gemma-4-on-device.md](docs/05-gemma-4-on-device.md) | Gemma 4 local: Ollama/MLX/LiteRT, M1 reality check, fine-tune | While building |
-| 06 | [docs/06-agent-frameworks-adk-a2a-mcp.md](docs/06-agent-frameworks-adk-a2a-mcp.md) | ADK, A2A, MCP, Gemini CLI — pick a stack | 12:30 |
-| — | [starter/](starter/) | `git clone` → working agent in 10 min | 12:30 |
-| 09 | [docs/09-submission-and-demo.md](docs/09-submission-and-demo.md) | Submission templates, video, run-sheet, panic protocol | **15:00 onward** |
+_TODO — two sentences. Who has this problem, and what does it cost them today?_
 
-## Rubric (announced) — 100 points
+## What it does
 
-Technical Execution & Model Leverage **30%** · Innovation & Originality **25%** ·
-Real-World Impact & UX **25%** · Presentation & Live Demo **20%**
+_TODO — the core user flow, in three bullets. What the user does, what the system does,
+what they get back._
 
-Three tracks, each with an identical prize (£400 + US$300 credits + swag): Track 1
-Gemini 3.7 Flash · Track 2 Gemma 4 local · Track 3 hybrid. Track choice is a
-competitive decision — see [docs/10](docs/10-tracks-rules-rubric.md).
+- 
+- 
+- 
 
-**Required by 17:30:** public GitHub repo (README, setup, architecture diagram,
-MIT/Apache licence) · proof of model integration · 2-min Loom/YouTube video ·
-2–3 paragraph write-up.
+## Architecture
 
-## The two pillars (from the keynotes)
+```mermaid
+flowchart LR
+    U[User input<br/>photo / voice / text] --> R{Router}
 
-1. **Gemini 3.7 Flash** — frontier agent behaviour in the cloud. Amit Vadi, 11:05.
-2. **Gemma 4 on-device** — LiteRT, offline, private, specialised medical/multimodal weights. Ian Ballantyne, 11:20.
+    R -->|private or short<br/>stays on device| G4[Gemma 4 E2B<br/>local via Ollama]
+    R -->|reasoning, multimodal,<br/>tool use| GF[Gemini 3.7 Flash<br/>Interactions API]
 
-A project that uses both — cloud brain plus a local private path — is aimed at this room.
+    G4 -->|structured label<br/>no network| M[Merge]
+    GF -->|grounded response<br/>+ tool calls| M
 
-## Hard checkpoints
+    GF -.->|tools| T1[Custom functions]
+    GF -.->|tools| T2[Google Search grounding]
+    GF -.->|tools| T3[Remote MCP server]
 
-| Time | Must be true |
-|---|---|
-| 12:30 | Tracks known, idea locked, roles assigned |
-| 13:00 | Repo up, keys working, hello-world call succeeded |
-| 14:00 | End-to-end skeleton runs — ugly but complete |
-| 15:00 | **Draft submission created** (empty is fine — claim the slot) |
-| 16:00 | Feature freeze. Polish only after this. |
-| 16:45 | Demo video recorded. Mentors gone at 16:45. |
-| 17:10 | **Submitted.** 20 minutes of buffer, not zero. |
-| 17:30 | Deadline. Nothing lands after this. |
+    M --> O[Output to user]
 
-## Rules of the day
+    style G4 fill:#1a4d2e,stroke:#4ade80,color:#fff
+    style GF fill:#1e3a5f,stroke:#60a5fa,color:#fff
+```
 
-- Submit a draft at 15:00. A late submission scores zero regardless of the code.
-- Never put a live API call on the critical path of the demo without a cached fallback.
-- Record the fallback video before you need it.
-- Talk to a DeepMind mentor before 15:30, not at 16:40.
+**Why this split:** _TODO — one paragraph. The honest engineering reason each model is
+where it is. This is a scored write-up field, not decoration._
 
-## Provenance
+## Model integration
 
-`docs/00` is organiser-supplied ground truth. Every other doc was researched live on
-22 Aug 2026 by parallel agents and carries inline source URLs; unverifiable claims are
-marked `UNVERIFIED`. Trust 00 over everything else.
+Submission rules require explicit proof of model use. Point at the real lines:
+
+| Model | Where | What it does |
+|---|---|---|
+| **Gemini 3.7 Flash** | `app/pipeline.py` → `gemini_step()` | _TODO_ |
+| **Gemma 4 (E2B, local)** | `app/pipeline.py` → `local_step()` | _TODO_ |
+
+Gemini is called through the Google GenAI SDK (`google-genai`) using the **Interactions
+API**, which has been GA and recommended since June 2026. Gemma 4 runs locally through
+Ollama, so that path works with the network off.
+
+## Quickstart
+
+```bash
+git clone <THIS_REPO_URL>
+cd imperial-deepmind-hackathon
+
+python3 -m venv .venv
+.venv/bin/pip install -r starter/requirements.txt
+
+cp starter/.env.example .env        # then paste your key into .env
+# get a key at https://aistudio.google.com/apikey
+
+# local model (needed for the Gemma path)
+ollama pull gemma4:e2b
+
+.venv/bin/python app/main.py "your input here"
+```
+
+Verify the setup before building on it:
+
+```bash
+.venv/bin/python starter/01_hello_gemini.py     # cloud path
+.venv/bin/python starter/07_local_gemma.py      # local path, works offline
+```
+
+## Measured performance
+
+Benchmarked on the build machine (Apple M1, 16 GB), thinking disabled:
+
+| Model | Rate | Cold load |
+|---|---|---|
+| `gemma4:e2b` | 10.8 tok/s | 21 s |
+| `gemma4:e4b` / `:latest` | 4.7 tok/s | 108 s |
+
+Use **E2B** locally, keep it warm before any demo, and keep local outputs short. Full
+detail in [`notes/MEASURED-on-device-reality.md`](notes/MEASURED-on-device-reality.md).
+
+## Repo layout
+
+```
+app/          the project itself
+starter/      9 verified reference scripts for both models
+docs/         event ground truth, model references, strategy  (see docs/README-warroom.md)
+notes/        working notes, measurements, idea shortlists
+SUBMISSION.md the required write-up + video link
+```
+
+## Limitations
+
+_TODO — state these honestly. Judges ask, and an honest answer defends better than a
+vague one. What doesn't work yet, what's stubbed, what you'd fix first._
+
+## Team
+
+_TODO — names and GitHub handles._
+
+## Licence
+
+Apache-2.0. See [LICENSE](LICENSE).

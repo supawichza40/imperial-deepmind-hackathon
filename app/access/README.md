@@ -22,4 +22,4 @@ vault = Vault()
 vault.register("you@local")
 ```
 
-Run tests with `.venv/Scripts/python.exe app/access/test_access.py`.
+Run tests with `.venv/Scripts/python.exe -m unittest discover -s app -p "test_*.py"`.

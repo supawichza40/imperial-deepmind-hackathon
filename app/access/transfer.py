@@ -74,9 +74,17 @@ def unpack_file(
             "text": inner["t"],
             "needs_key": True,
         }
+    try:
+        name = obj["n"]
+        perm = obj["p"]
+        text = obj["t"]
+    except KeyError as e:
+        raise ValueError("bad transfer payload") from e
+    if perm not in ("view", "download"):
+        raise ValueError("share perm must be view or download")
     return {
-        "name": obj["n"],
-        "perm": obj["p"],
-        "text": obj["t"],
+        "name": name,
+        "perm": perm,
+        "text": text,
         "needs_key": False,
     }

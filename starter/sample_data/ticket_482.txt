@@ -1,0 +1,3 @@
+Support ticket #482
+Customer account ACC-1009 was double-charged for their conference ticket.
+Support has approved a refund of 45.50 to be added back to their balance.

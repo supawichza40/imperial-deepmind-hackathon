@@ -1,11 +1,12 @@
 /* Privacy Gate theme. Load this before any screen CSS.
-   Source still: app/static/theme/reference.png
-   JSON twin: app/static/theme/tokens.json
+   Stills: reference.png, reference-stories.png, reference-pods.png, reference-mobile.png
+   Shot: https://dribbble.com/shots/25105532-Framery-Modern-Professional-Office-Pods-Website-Product-Detail
 */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
+  --theme-mist: #f7f5f2;
   --theme-paper: #ffffff;
   --theme-sand: #f4f1ea;
   --theme-ink: #111111;
@@ -13,6 +14,7 @@
   --theme-line: #e6e1d8;
   --theme-wood: #c4a574;
   --theme-wood-deep: #8c6a3c;
+  --theme-clay: #c47b6a;
   --theme-blacklabel: #111111;
   --theme-encrypt: #c4a574;
   --theme-keep: #111111;
@@ -31,15 +33,17 @@
   --theme-page: 1120px;
 
   --theme-radius-none: 0;
+  --theme-radius-input: 16px;
+  --theme-radius-card: 28px;
+  --theme-radius-image: 32px;
   --theme-radius-pill: 999px;
   --theme-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
   --theme-fast: 160ms ease;
 
   --theme-track-kicker: 0.18em;
-  --theme-track-heading: 0.16em;
+  --theme-track-heading: 0.12em;
 
-  /* Aliases used by older panel CSS */
-  --bg: var(--theme-sand);
+  --bg: var(--theme-mist);
   --panel: var(--theme-paper);
   --ink: var(--theme-ink);
   --muted: var(--theme-mute);
@@ -58,7 +62,7 @@
 }
 
 html, body {
-  background: var(--theme-paper);
+  background: var(--theme-mist);
   color: var(--theme-ink);
   font-family: var(--theme-sans);
   font-size: 15px;
@@ -73,6 +77,13 @@ h1, h2, h3, .theme-heading {
   letter-spacing: var(--theme-track-heading);
   text-transform: uppercase;
   line-height: 1.2;
+}
+
+.theme-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  line-height: 1.15;
 }
 
 .theme-kicker {
@@ -93,6 +104,7 @@ h1, h2, h3, .theme-heading {
 .theme-mute { color: var(--theme-mute); }
 .theme-sand { background: var(--theme-sand); }
 .theme-paper { background: var(--theme-paper); }
+.theme-mist { background: var(--theme-mist); }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --theme-fast: 0ms; }

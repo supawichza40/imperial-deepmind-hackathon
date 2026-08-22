@@ -10,10 +10,11 @@
     .wrap { max-width: var(--theme-page); margin: 0 auto; padding: 64px 24px 96px; }
     .swatches { display: flex; flex-wrap: wrap; gap: 16px; margin: 32px 0 64px; }
     .swatch { width: 140px; }
-    .chip { height: 72px; }
+    .chip { height: 72px; border-radius: 16px; }
     .swatch p { margin: 8px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
     .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 24px 0 48px; }
-    img.ref { width: min(100%, 420px); height: auto; box-shadow: var(--theme-shadow); }
+    .refs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    img.ref { width: 100%; height: auto; border-radius: var(--theme-radius-image); box-shadow: var(--theme-shadow); }
     hr { border: 0; border-top: 1px solid var(--theme-line); margin: 48px 0; }
   </style>
 </head>
@@ -21,14 +22,16 @@
   <div class="wrap">
     <p class="theme-kicker">Privacy Gate</p>
     <h1>Theme</h1>
-    <p class="theme-mute" style="max-width:36rem">White paper, sand blocks, ink type, pill actions. Wood from the oak pod is the encrypt colour. Use only these files.</p>
+    <p class="theme-title" style="font-size:28px;margin:8px 0 12px">White stadium cards on cream</p>
+    <p class="theme-mute" style="max-width:36rem">Ink type, pill actions, 28px card corners like the pods. Wood is encrypt. Clay is only a colour dot.</p>
 
     <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#f7f5f2;border:1px solid #e6e1d8"></div><p>mist</p></div>
       <div class="swatch"><div class="chip" style="background:#fff;border:1px solid #e6e1d8"></div><p>paper</p></div>
-      <div class="swatch"><div class="chip" style="background:#f4f1ea"></div><p>sand</p></div>
       <div class="swatch"><div class="chip" style="background:#111"></div><p>ink</p></div>
       <div class="swatch"><div class="chip" style="background:#666"></div><p>mute</p></div>
       <div class="swatch"><div class="chip" style="background:#c4a574"></div><p>wood</p></div>
+      <div class="swatch"><div class="chip" style="background:#c47b6a"></div><p>clay</p></div>
     </div>
 
     <p class="theme-kicker">Type</p>
@@ -45,16 +48,26 @@
         <button type="button" aria-pressed="true">Blacklabel</button>
         <button type="button" aria-pressed="false">Encrypt</button>
       </div>
+      <button type="button" class="theme-dot is-on" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" class="theme-dot" aria-label="Slide 2"></button>
+      <button type="button" class="theme-swatch clay" aria-label="Clay"></button>
+      <button type="button" class="theme-swatch wood" aria-label="Wood"></button>
+      <button type="button" class="theme-swatch ink" aria-label="Ink"></button>
     </div>
 
-    <div class="theme-panel">
-      <p class="theme-kicker">Sand panel</p>
-      <p style="margin:8px 0 0">Put privacy toggles on sand, not on a bordered card.</p>
+    <div class="theme-card">
+      <p class="theme-kicker">Paper card</p>
+      <p style="margin:8px 0 0">Put privacy toggles in a white stadium card on the mist page, not a sharp sand slab.</p>
     </div>
 
     <hr>
-    <p class="theme-kicker">Reference still</p>
-    <p><img class="ref" src="reference.png" alt="Source look. White, sand, black, tracked uppercase type."></p>
+    <p class="theme-kicker">Reference stills</p>
+    <div class="refs">
+      <p><img class="ref" src="reference.png" alt="Product detail. White, cream, black, tracked type."></p>
+      <p><img class="ref" src="reference-stories.png" alt="Stories page. Full bleed photo, pill quote button."></p>
+      <p><img class="ref" src="reference-pods.png" alt="Pod grid. Rounded product cards on cream."></p>
+      <p><img class="ref" src="reference-mobile.png" alt="Mobile screens. Hamburger, pills, colour dots."></p>
+    </div>
   </div>
 </body>
 </html>

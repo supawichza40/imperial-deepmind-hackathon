@@ -26,7 +26,7 @@
 
 .pg-grid {
   display: grid;
-  gap: 0;
+  gap: 24px;
   grid-template-columns: minmax(280px, 380px) 1fr;
 }
 
@@ -35,19 +35,20 @@
 }
 
 .pg-card {
-  background: var(--theme-sand);
+  background: var(--theme-paper);
   border: 0;
-  border-radius: 0;
+  border-radius: var(--theme-radius-card);
   padding: 40px 32px;
+  box-shadow: var(--theme-shadow);
 }
 
 .pg-card + .pg-card {
   background: var(--theme-paper);
-  padding: 40px 8px 40px 48px;
+  padding: 40px 32px;
 }
 
 @media (max-width: 760px) {
-  .pg-card + .pg-card { padding: 32px 0 0; }
+  .pg-card + .pg-card { padding: 32px; }
 }
 
 .pg-row {
@@ -163,9 +164,9 @@
 .pg-pass input {
   width: 100%;
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border: 1px solid var(--theme-line);
-  border-radius: 0;
+  border-radius: var(--theme-radius-input);
   background: var(--theme-paper);
   color: var(--theme-ink);
   font-family: var(--theme-sans);
@@ -253,6 +254,8 @@ mark.encrypt {
   width: 220px;
   border: 0;
   background: var(--theme-sand);
+  border-radius: var(--theme-radius-image);
+  overflow: hidden;
   box-shadow: var(--theme-shadow);
 }
 

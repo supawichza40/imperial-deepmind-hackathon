@@ -1,4 +1,6 @@
-/* Shared controls. Depends on tokens.css */
+/* Shared controls. Depends on tokens.css
+   Shape language is the pod: stadium pills, 28px cards, 32px images.
+*/
 
 .theme-btn {
   display: inline-flex;
@@ -30,7 +32,8 @@
 
 .theme-btn:focus-visible,
 .theme-switch:focus-visible,
-.theme-seg button:focus-visible {
+.theme-seg button:focus-visible,
+.theme-dot:focus-visible {
   outline: 2px solid var(--theme-focus);
   outline-offset: 3px;
 }
@@ -100,20 +103,73 @@
   color: var(--theme-paper);
 }
 
+.theme-card,
 .theme-panel {
-  background: var(--theme-sand);
-  border-radius: var(--theme-radius-none);
+  background: var(--theme-paper);
+  border-radius: var(--theme-radius-card);
   padding: var(--theme-space-4);
+  box-shadow: var(--theme-shadow);
+}
+
+.theme-panel {
+  background: var(--theme-paper);
 }
 
 .theme-input {
   width: 100%;
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border: 1px solid var(--theme-line);
-  border-radius: var(--theme-radius-none);
+  border-radius: var(--theme-radius-input);
   background: var(--theme-paper);
   color: var(--theme-ink);
   font-family: var(--theme-sans);
   font-size: 15px;
+}
+
+.theme-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 1px solid var(--theme-ink);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.theme-dot[aria-current="true"],
+.theme-dot.is-on {
+  background: var(--theme-ink);
+}
+
+.theme-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--theme-line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.theme-swatch.ink { background: var(--theme-ink); }
+.theme-swatch.wood { background: var(--theme-wood); }
+.theme-swatch.clay { background: var(--theme-clay); }
+.theme-swatch.paper { background: var(--theme-paper); }
+
+.theme-media {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--theme-radius-image);
+  object-fit: cover;
+}
+
+.theme-icon {
+  width: 22px;
+  height: 22px;
+  stroke: var(--theme-ink);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

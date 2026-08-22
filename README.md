@@ -3,8 +3,10 @@
 A consent-aware document agent: a local model redacts sensitive material on-device, you
 approve exactly what may leave, and only the approved subset reaches the cloud.
 
-> **Working direction as of 13:30 — not final.** Full write-up and scope in
-> [`notes/ideas/privacy-gate.md`](notes/ideas/privacy-gate.md).
+> **Working direction as of 13:30 — not final.**
+> **Start here:** [visual explainer](docs/visual/2026-08-22-privacy-gate.html) — diagrams,
+> worked example, who-builds-what (open it in a browser).
+> Full write-up and scope: [`notes/ideas/privacy-gate.md`](notes/ideas/privacy-gate.md).
 
 **UK AI Agent Lab: Gemini Edition** · Imperial College London · 22 August 2026
 **Track:** 3 — Best Hybrid AI & Human-Centric Utility

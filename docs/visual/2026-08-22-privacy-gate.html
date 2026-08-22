@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Gate — how it works</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --ink:#16171a; --muted:#5d6068; --line:#e3e3df;
+  --local:#1a7f4b; --local-bg:#e8f6ee; --local-line:#9fd8b8;
+  --cloud:#2563c7; --cloud-bg:#e8f0fc; --cloud-line:#a6c4ee;
+  --danger:#b4242a; --danger-bg:#fdeceb;
+  --warn:#8a5a00; --warn-bg:#fdf3e0;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+ :root{
+  --bg:#111214; --panel:#181a1d; --ink:#e9e9e6; --muted:#9a9ea6; --line:#2a2d32;
+  --local:#5fd39a; --local-bg:#11291d; --local-line:#2c6244;
+  --cloud:#7db1f5; --cloud-bg:#111f33; --cloud-line:#2b4c7a;
+  --danger:#ff8a84; --danger-bg:#2c1514;
+  --warn:#ffc46b; --warn-bg:#2b2110;
+ }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+     line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px 96px}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px;letter-spacing:-.02em}
+.sub{font-size:clamp(15px,2.2vw,18px);color:var(--muted);margin:0 0 14px}
+h2{font-size:clamp(20px,3vw,26px);margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:16px;margin:22px 0 6px}
+p{margin:10px 0}
+.meta{font-size:12.5px;color:var(--muted);font-family:var(--mono);margin-top:10px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
+.tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+     padding:3px 8px;border-radius:3px;border:1px solid var(--line);color:var(--muted)}
+.tag.proposed{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.tag.observed{background:var(--local-bg);border-color:var(--local);color:var(--local)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:16px 0}
+.lede{font-size:clamp(17px,2.6vw,21px);line-height:1.5}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+svg{display:block;max-width:100%;height:auto}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:12px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+code{font-family:var(--mono);font-size:.88em;background:var(--bg);padding:1px 5px;
+     border-radius:3px;border:1px solid var(--line)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card.local{border-left:4px solid var(--local)}
+.card.cloud{border-left:4px solid var(--cloud)}
+.card h3{margin-top:0}
+.chip{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:2px 7px;border-radius:20px;
+      background:var(--local-bg);color:var(--local);border:1px solid var(--local-line)}
+.chip.cloud{background:var(--cloud-bg);color:var(--cloud);border-color:var(--cloud-line)}
+.chip.no{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.doc{font-family:var(--mono);font-size:13px;background:var(--panel);border:1px solid var(--line);
+     border-radius:8px;padding:14px 16px;white-space:pre-wrap;line-height:1.9}
+.red{background:var(--danger);color:#fff;border-radius:3px;padding:1px 6px}
+.keep{background:var(--local-bg);color:var(--local);border-radius:3px;padding:1px 6px;
+      border:1px solid var(--local-line)}
+.note{border-left:3px solid var(--warn);background:var(--warn-bg);padding:12px 14px;
+      border-radius:0 8px 8px 0;margin:14px 0;font-size:14.5px}
+.note strong{color:var(--warn)}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:14px 0}
+ol.steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px solid var(--line)}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:11px;width:28px;height:28px;
+  border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;
+  font-family:var(--mono);font-size:13px;font-weight:700}
+ol.steps li:last-child{border-bottom:0}
+.wow{background:var(--local-bg);border:1px solid var(--local-line)}
+label.pick{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);
+  border-radius:8px;margin:7px 0;cursor:pointer;background:var(--panel)}
+label.pick:hover{border-color:var(--ink)}
+label.pick input{margin-top:4px;flex:none}
+.out{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5px;padding:12px;
+  border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}
+button{font:inherit;font-size:14px;padding:9px 16px;border-radius:7px;border:1px solid var(--ink);
+  background:var(--ink);color:var(--bg);cursor:pointer}
+button:hover{opacity:.88}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+@media(max-width:520px){ .wrap{padding:20px 14px 72px} th,td{padding:7px 6px;font-size:13.5px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Privacy Gate</h1>
+  <p class="sub">A model on your own machine strips the private parts <em>before</em> anything
+     reaches the cloud. You approve exactly what leaves.</p>
+  <div class="tags">
+    <span class="tag proposed">proposed — not built yet</span>
+    <span class="tag">Track 3 · Hybrid</span>
+    <span class="tag">UK AI Agent Lab · 22 Aug 2026</span>
+  </div>
+  <p class="meta">For: XreeceX, Elvin-Arrow</p>
+</header>
+
+<div class="panel">
+  <p class="lede" style="margin:0">
+    You have a bank statement you need help with. Today you either paste the whole thing into a
+    cloud model and hope, or you get no help at all. <strong>Privacy Gate is the third
+    option:</strong> a model running on your own laptop finds the sensitive bits, you tick what
+    may be shared, and only that sanitised version is sent up.
+  </p>
+</div>
+
+<h2>Why anyone would want this</h2>
+<p>
+  People constantly need help with documents they cannot hand over — payslips, medical letters,
+  contracts, immigration paperwork, bank statements. The moment a document is sensitive, the
+  useful tool becomes unusable. Most people either overshare without really knowing what they
+  sent, or give up and do it by hand.
+</p>
+<p>
+  The interesting part is not the redaction. It is that <strong>the boundary itself is the
+  product</strong>: the local model exists to make the cloud model safe to use.
+</p>
+
+<h2>How it works</h2>
+<p>Two models, one hard boundary. Nothing crosses the dashed line until you say so.</p>
+
+<div class="panel scroll">
+<svg viewBox="0 0 900 320" role="img" aria-label="A document enters a local zone where Gemma finds sensitive fields and the user approves each field type. Only the redacted version crosses the gate to Gemini in the cloud. Originals never leave the machine.">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <rect x="14" y="44" width="470" height="252" rx="14" fill="var(--local-bg)"
+        stroke="var(--local)" stroke-width="2"/>
+  <text x="34" y="70" font-family="var(--mono)" font-size="12.5" font-weight="700"
+        fill="var(--local)">ON YOUR MACHINE — works with wifi off</text>
+
+  <rect x="36" y="92" width="116" height="80" rx="8" fill="var(--panel)" stroke="var(--local-line)" stroke-width="1.5"/>
+  <text x="94" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Your</text>
+  <text x="94" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">document</text>
+  <text x="94" y="158" text-anchor="middle" font-size="10.5" fill="var(--muted)">payslip · letter</text>
+
+  <rect x="186" y="88" width="126" height="88" rx="8" fill="var(--local)"/>
+  <text x="249" y="117" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Gemma 4</text>
+  <text x="249" y="135" text-anchor="middle" font-size="11" fill="#dff3e7">E2B · local</text>
+  <text x="249" y="156" text-anchor="middle" font-size="10.5" fill="#dff3e7">finds sensitive fields</text>
+
+  <rect x="346" y="88" width="118" height="88" rx="8" fill="var(--panel)" stroke="var(--local)" stroke-width="2"/>
+  <text x="405" y="117" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">You approve</text>
+  <text x="405" y="140" text-anchor="middle" font-size="10.5" fill="var(--muted)">tick per field type</text>
+  <text x="405" y="157" text-anchor="middle" font-size="10.5" fill="var(--muted)">before anything sends</text>
+
+  <rect x="36" y="206" width="276" height="60" rx="8" fill="var(--panel)"
+        stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="174" y="231" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--danger)">Originals never leave</text>
+  <text x="174" y="251" text-anchor="middle" font-size="11" fill="var(--muted)">name · address · account number</text>
+
+  <line x1="500" y1="34" x2="500" y2="306" stroke="var(--muted)" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="500" y="24" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">THE GATE</text>
+
+  <rect x="516" y="44" width="370" height="252" rx="14" fill="var(--cloud-bg)"
+        stroke="var(--cloud)" stroke-width="2"/>
+  <text x="536" y="70" font-family="var(--mono)" font-size="12.5" font-weight="700"
+        fill="var(--cloud)">CLOUD — sees only what you approved</text>
+
+  <rect x="552" y="88" width="136" height="88" rx="8" fill="var(--cloud)"/>
+  <text x="620" y="117" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Gemini 3.7</text>
+  <text x="620" y="135" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Flash</text>
+  <text x="620" y="157" text-anchor="middle" font-size="10.5" fill="#dbe8fb">reasons over the safe copy</text>
+
+  <rect x="722" y="88" width="142" height="88" rx="8" fill="var(--panel)" stroke="var(--cloud-line)" stroke-width="1.5"/>
+  <text x="793" y="112" text-anchor="middle" font-size="11.5" fill="var(--ink)">compares documents</text>
+  <text x="793" y="132" text-anchor="middle" font-size="11.5" fill="var(--ink)">finds inconsistencies</text>
+  <text x="793" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink)">explains · drafts a reply</text>
+
+  <rect x="552" y="206" width="312" height="60" rx="8" fill="var(--panel)" stroke="var(--cloud-line)" stroke-width="1.5"/>
+  <text x="708" y="231" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Audit log</text>
+  <text x="708" y="251" text-anchor="middle" font-size="11" fill="var(--muted)">what stayed local · what was shared</text>
+
+  <g color="var(--ink)" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <line x1="154" y1="132" x2="182" y2="132"/>
+    <line x1="314" y1="132" x2="342" y2="132"/>
+    <line x1="466" y1="132" x2="548" y2="132"/>
+    <line x1="690" y1="132" x2="718" y2="132"/>
+  </g>
+  <text x="507" y="122" text-anchor="middle" font-size="10" font-family="var(--mono)" fill="var(--local)">redacted only</text>
+
+  <g color="var(--muted)" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="4 4" marker-end="url(#ar)">
+    <path d="M249 180 L249 206"/>
+    <path d="M620 180 L620 206"/>
+  </g>
+</svg>
+</div>
+
+<h2>What that looks like on a real document</h2>
+<p>
+  A payslip goes in. Gemma marks what it finds. You decide what survives the gate.
+  <span class="tag proposed" style="vertical-align:middle">proposed</span>
+  <span style="color:var(--muted);font-size:13.5px">— all values below are invented</span>
+</p>
+
+<div class="grid">
+  <div class="card local">
+    <h3><span class="chip">1 · on device</span></h3>
+    <p style="margin:8px 0 6px;font-size:13.5px;color:var(--muted)">Gemma finds these:</p>
+    <div class="doc">Employee: <span class="red">A. Okafor</span>
+NI number: <span class="red">QQ123456C</span>
+Address: <span class="red">14 Pelham St, SW7</span>
+Account: <span class="red">•••• 4417</span>
+Gross pay: <span class="keep">£2,840.00</span>
+Tax paid: <span class="keep">£412.60</span>
+Period: <span class="keep">July 2026</span></div>
+  </div>
+
+  <div class="card local">
+    <h3><span class="chip">2 · you choose</span></h3>
+    <p style="margin:8px 0 10px;font-size:13.5px;color:var(--muted)">One tick per <em>type</em>, not per word:</p>
+    <p style="margin:6px 0"><span class="chip no">blocked</span> name · address · NI · account</p>
+    <p style="margin:6px 0"><span class="chip">shared</span> pay figures · dates · employer type</p>
+    <p style="font-size:14px;color:var(--muted);margin-top:12px">
+      In plain words: <em>"share my income, hide who I am."</em></p>
+  </div>
+
+  <div class="card cloud">
+    <h3><span class="chip cloud">3 · what Gemini gets</span></h3>
+    <div class="doc">Employee: <span class="red">[REDACTED]</span>
+NI number: <span class="red">[REDACTED]</span>
+Address: <span class="red">[REDACTED]</span>
+Account: <span class="red">[REDACTED]</span>
+Gross pay: <span class="keep">£2,840.00</span>
+Tax paid: <span class="keep">£412.60</span>
+Period: <span class="keep">July 2026</span></div>
+    <p style="font-size:13.5px;color:var(--muted);margin-top:10px">
+      Enough to reason with. Not enough to identify anyone.</p>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Say this carefully.</strong> It is <em>assisted redaction with human approval</em>, never
+  "guaranteed anonymisation". A judge may well push on this, and the honest framing is also the one
+  that holds up: the user approves every field type before anything leaves.
+</div>
+
+<h2>Who builds what</h2>
+<p>Three parts, and they barely touch each other — so we can work in parallel from the start.</p>
+
+<table>
+<thead><tr><th>Part</th><th>What it is</th><th>Talks to</th><th>Hardest bit</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Detector</strong><br><span class="chip">local</span></td>
+  <td>Regex baseline for the obvious things (account numbers, postcodes, NI numbers, emails),
+      plus Gemma for names in context and free-text disclosure. Returns a list of
+      <code>{type, start, end}</code>.</td>
+  <td>Nothing. Pure function.</td>
+  <td>Keeping Gemma's output short — a span map, never prose.</td>
+</tr>
+<tr>
+  <td><strong>Consent UI</strong></td>
+  <td>Shows the document with spans highlighted. A checkbox per field <em>type</em>. Produces the
+      redacted text and the audit entries.</td>
+  <td>Takes spans, emits clean text.</td>
+  <td>Making the redaction visibly happen on screen. This is the wow moment.</td>
+</tr>
+<tr>
+  <td><strong>Reasoner</strong><br><span class="chip cloud">cloud</span></td>
+  <td>Sends approved text to Gemini 3.7 Flash. Finds the inconsistency, explains it, drafts the
+      reply.</td>
+  <td>Takes clean text, returns findings.</td>
+  <td>Not much — <code>starter/</code> already has working examples.</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size:14px;color:var(--muted)">
+  Agree the shape of the span list in the first ten minutes and all three parts can be written
+  without anyone waiting on anyone.
+</p>
+
+<h2>The two-minute demo</h2>
+<div class="panel wow">
+<ol class="steps">
+  <li>Drop in a payslip and a bank statement. <span style="color:var(--muted)">Pre-loaded, invented data.</span></li>
+  <li>Gemma highlights the sensitive fields on screen, locally.</li>
+  <li>Tick: <em>share income, hide identity and account details.</em></li>
+  <li><strong>Show the sanitised payload that is about to be sent.</strong> This is the moment the
+      audience understands the whole product.</li>
+  <li>Gemini compares the two documents and finds the income figures do not match.</li>
+  <li>It drafts the explanation letter.</li>
+  <li>Open the audit log: what stayed local, what was shared.</li>
+</ol>
+</div>
+<p style="font-size:14px;color:var(--muted)">Step 4 is the pitch. Everything else is setup for it.</p>
+
+<h2>Two things we already know</h2>
+<div class="grid">
+  <div class="card">
+    <h3>The local model is slow on the lead's laptop</h3>
+    <p style="margin:6px 0"><span class="tag observed">observed</span></p>
+    <p style="font-size:14.5px">
+      Measured on an M1 with 16GB: <strong>10.8 tokens/sec</strong> on <code>gemma4:e2b</code>, and
+      4.7 tokens/sec on <code>e4b</code> which also takes 108 seconds just to load. It makes that
+      machine sluggish while it is resident in memory.
+    </p>
+    <p style="font-size:14.5px"><strong>So:</strong> run the local half on whichever machine is
+      fastest, keep the model warm before demoing, and ask it for spans — never paragraphs.</p>
+  </div>
+  <div class="card">
+    <h3>What to cut if we run out of time</h3>
+    <p style="margin:6px 0"><span class="tag proposed">proposed</span></p>
+    <p style="font-size:14.5px"><strong>Keep:</strong> one document type, span detection, the
+      consent tick-boxes, one Gemini task, the audit log.</p>
+    <p style="font-size:14.5px"><strong>Cut in this order:</strong> live screen capture →
+      multi-document comparison → tool actions.</p>
+    <p style="font-size:14.5px;color:var(--muted)">The audit log is cheap to build and it is the
+      thing judges remember. Do not cut it.</p>
+  </div>
+</div>
+
+<h2>Why it should score</h2>
+<table>
+<thead><tr><th>Criterion</th><th></th><th>Why this fits</th></tr></thead>
+<tbody>
+<tr><td>Technical execution &amp; model leverage</td><td><strong>30%</strong></td>
+    <td>A real local–cloud split with a reason for the boundary. Multimodal input, structured
+        output, tool use.</td></tr>
+<tr><td>Innovation &amp; originality</td><td><strong>25%</strong></td>
+    <td>The local model is a privacy firewall, not a smaller chatbot. That is an architecture,
+        not a wrapper.</td></tr>
+<tr><td>Real-world impact &amp; UX</td><td><strong>25%</strong></td>
+    <td>Healthcare, finance, legal, immigration. The organisers explicitly named
+        privacy-preserving clinical and sensitive enterprise tools.</td></tr>
+<tr><td>Presentation &amp; live demo</td><td><strong>20%</strong></td>
+    <td>Consent and redaction are visible on screen. A judge gets it without an explanation.</td></tr>
+</tbody>
+</table>
+<p style="font-size:14.5px">
+  One quiet advantage: the submission form asks <em>why you chose Gemini and/or Gemma</em>. Here
+  that answer writes itself, because the split <em>is</em> the product.
+</p>
+
+<h2>Pick what you're taking</h2>
+<p style="font-size:14.5px">Tick your part, hit copy, paste it into the group chat.</p>
+<div class="panel">
+  <label class="pick"><input type="checkbox" data-x="Detector (local): regex baseline + Gemma span detection, returns {type,start,end}">
+    <span><strong>Detector</strong> — local. Regex plus Gemma, returns the span list.</span></label>
+  <label class="pick"><input type="checkbox" data-x="Consent UI: highlight spans, checkbox per field type, emit redacted text + audit entries">
+    <span><strong>Consent UI</strong> — highlights, tick-boxes, redacted output, audit entries.</span></label>
+  <label class="pick"><input type="checkbox" data-x="Reasoner (cloud): Gemini 3.7 Flash over approved text, inconsistency check + draft">
+    <span><strong>Reasoner</strong> — cloud. Gemini over the approved text.</span></label>
+  <label class="pick"><input type="checkbox" data-x="Demo + submission owner: video by 16:45, submitted by 17:10, README and write-up">
+    <span><strong>Demo &amp; submission</strong> — video by 16:45, submitted by 17:10.
+      <em style="color:var(--muted)">Someone must own this and not be coding at 17:00.</em></span></label>
+  <p style="margin:14px 0 8px"><button id="copy">Copy for the group chat</button></p>
+  <textarea class="out" id="out" readonly aria-label="Copy-out block"></textarea>
+</div>
+
+<footer>
+  Snapshot · 22 Aug 2026 · docs/visual/2026-08-22-privacy-gate.html<br>
+  Derived from notes/ideas/privacy-gate.md, notes/MEASURED-on-device-reality.md and
+  docs/10-tracks-rules-rubric.md — working tree, uncommitted, 22 Aug 2026.<br>
+  Every document value on this page is invented. Nothing here is real personal data.
+</footer>
+
+</div>
+<script>
+(function(){
+  var boxes=[].slice.call(document.querySelectorAll('.pick input'));
+  var out=document.getElementById('out');
+  function render(){
+    var taken=boxes.filter(function(b){return b.checked})
+                   .map(function(b){return '- '+b.dataset.x});
+    var free=boxes.filter(function(b){return !b.checked})
+                  .map(function(b){return '- '+b.dataset.x.split(':')[0]});
+    var s='## Privacy Gate — who has what\n\n';
+    s+= taken.length ? '**Taken**\n'+taken.join('\n')+'\n' : '_Nobody has picked anything yet._\n';
+    if(free.length) s+='\n**Still unowned**\n'+free.join('\n')+'\n';
+    s+='\nGates: draft submission 15:00 · feature freeze 16:00 · video 16:45 · submit 17:10\n';
+    out.value=s;
+  }
+  boxes.forEach(function(b){b.addEventListener('change',render)});
+  document.getElementById('copy').addEventListener('click',function(){
+    out.select();
+    try{
+      document.execCommand('copy');
+      var t=this; t.textContent='Copied';
+      setTimeout(function(){t.textContent='Copy for the group chat'},1400);
+    }catch(e){}
+  });
+  render();
+})();
+</script>
+</body>
+</html>

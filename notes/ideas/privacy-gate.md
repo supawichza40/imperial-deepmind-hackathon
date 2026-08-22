@@ -2,6 +2,10 @@
 
 **Track 3 (Hybrid).** Status: leading candidate as of 13:30, 22 Aug 2026.
 
+> **Visual explainer for teammates:**
+> [`docs/visual/2026-08-22-privacy-gate.html`](../../docs/visual/2026-08-22-privacy-gate.html)
+> — architecture diagram, worked payslip example, build split. Open in a browser.
+
 ## One line
 A local model acts as a privacy firewall: it redacts sensitive material on-device, the
 user approves exactly what may leave, and only the approved subset reaches Gemini.

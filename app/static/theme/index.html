@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Gate theme</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <style>
+    .wrap { max-width: var(--theme-page); margin: 0 auto; padding: 64px 24px 96px; }
+    .swatches { display: flex; flex-wrap: wrap; gap: 16px; margin: 32px 0 64px; }
+    .swatch { width: 140px; }
+    .chip { height: 72px; }
+    .swatch p { margin: 8px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 24px 0 48px; }
+    img.ref { width: min(100%, 420px); height: auto; box-shadow: var(--theme-shadow); }
+    hr { border: 0; border-top: 1px solid var(--theme-line); margin: 48px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="theme-kicker">Privacy Gate</p>
+    <h1>Theme</h1>
+    <p class="theme-mute" style="max-width:36rem">White paper, sand blocks, ink type, pill actions. Wood from the oak pod is the encrypt colour. Use only these files.</p>
+
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#fff;border:1px solid #e6e1d8"></div><p>paper</p></div>
+      <div class="swatch"><div class="chip" style="background:#f4f1ea"></div><p>sand</p></div>
+      <div class="swatch"><div class="chip" style="background:#111"></div><p>ink</p></div>
+      <div class="swatch"><div class="chip" style="background:#666"></div><p>mute</p></div>
+      <div class="swatch"><div class="chip" style="background:#c4a574"></div><p>wood</p></div>
+    </div>
+
+    <p class="theme-kicker">Type</p>
+    <p class="theme-metric">36</p>
+    <p class="theme-mute">A large number with a quiet line under it, same as the product specs.</p>
+
+    <p class="theme-kicker" style="margin-top:48px">Actions</p>
+    <div class="row">
+      <button type="button" class="theme-btn">Download copy</button>
+      <button type="button" class="theme-btn ghost">Download text</button>
+      <input class="theme-switch" type="checkbox" checked aria-label="Protect field">
+      <input class="theme-switch" type="checkbox" aria-label="Protect field off">
+      <div class="theme-seg" role="group">
+        <button type="button" aria-pressed="true">Blacklabel</button>
+        <button type="button" aria-pressed="false">Encrypt</button>
+      </div>
+    </div>
+
+    <div class="theme-panel">
+      <p class="theme-kicker">Sand panel</p>
+      <p style="margin:8px 0 0">Put privacy toggles on sand, not on a bordered card.</p>
+    </div>
+
+    <hr>
+    <p class="theme-kicker">Reference still</p>
+    <p><img class="ref" src="reference.png" alt="Source look. White, sand, black, tracked uppercase type."></p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+/* Privacy Gate theme. Load this before any screen CSS.
+   Source still: app/static/theme/reference.png
+   JSON twin: app/static/theme/tokens.json
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --theme-paper: #ffffff;
+  --theme-sand: #f4f1ea;
+  --theme-ink: #111111;
+  --theme-mute: #666666;
+  --theme-line: #e6e1d8;
+  --theme-wood: #c4a574;
+  --theme-wood-deep: #8c6a3c;
+  --theme-blacklabel: #111111;
+  --theme-encrypt: #c4a574;
+  --theme-keep: #111111;
+  --theme-danger: #8a2a22;
+  --theme-focus: #111111;
+
+  --theme-sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --theme-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --theme-space-1: 8px;
+  --theme-space-2: 16px;
+  --theme-space-3: 24px;
+  --theme-space-4: 40px;
+  --theme-space-5: 64px;
+  --theme-space-6: 80px;
+  --theme-page: 1120px;
+
+  --theme-radius-none: 0;
+  --theme-radius-pill: 999px;
+  --theme-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
+  --theme-fast: 160ms ease;
+
+  --theme-track-kicker: 0.18em;
+  --theme-track-heading: 0.16em;
+
+  /* Aliases used by older panel CSS */
+  --bg: var(--theme-sand);
+  --panel: var(--theme-paper);
+  --ink: var(--theme-ink);
+  --muted: var(--theme-mute);
+  --line: var(--theme-line);
+  --local: var(--theme-ink);
+  --local-bg: var(--theme-sand);
+  --local-line: var(--theme-line);
+  --cloud: var(--theme-ink);
+  --cloud-bg: var(--theme-sand);
+  --danger: var(--theme-danger);
+  --danger-bg: #f3e8e4;
+  --warn: var(--theme-wood-deep);
+  --warn-bg: var(--theme-sand);
+  --mono: var(--theme-mono);
+  --sans: var(--theme-sans);
+}
+
+html, body {
+  background: var(--theme-paper);
+  color: var(--theme-ink);
+  font-family: var(--theme-sans);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .theme-heading {
+  font-family: var(--theme-sans);
+  font-weight: 600;
+  letter-spacing: var(--theme-track-heading);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.theme-kicker {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--theme-track-kicker);
+  text-transform: uppercase;
+  color: var(--theme-mute);
+}
+
+.theme-metric {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.theme-mute { color: var(--theme-mute); }
+.theme-sand { background: var(--theme-sand); }
+.theme-paper { background: var(--theme-paper); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --theme-fast: 0ms; }
+}

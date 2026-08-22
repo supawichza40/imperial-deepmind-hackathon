@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Gate download</title>
+  <link rel="stylesheet" href="../theme/tokens.css">
+  <link rel="stylesheet" href="../theme/components.css">
+  <link rel="stylesheet" href="privacy-export.css">
+  <style>
+    body { margin: 0; background: var(--theme-paper); }
+    .wrap { max-width: var(--theme-page); margin: 0 auto; padding: 64px 24px 96px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="theme-kicker">Privacy Gate · Track 3</p>
+    <div id="slot"></div>
+  </div>
+  <script src="../theme/tokens.js"></script>
+  <script src="privacy-export.js"></script>
+  <script src="demo-payload.js"></script>
+  <script>
+    PrivacyExport.mount(document.getElementById("slot"), window.PRIVACY_EXPORT_DEMO);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+"""Privacy Gate application package."""

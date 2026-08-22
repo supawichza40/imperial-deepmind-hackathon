@@ -8,3 +8,5 @@ __pycache__/
 node_modules/
 .DS_Store
 notes/playground/
+privacy-gate-export.zip
+privacy-gate-*.zip

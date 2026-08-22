@@ -1,0 +1,104 @@
+{
+  "document": {
+    "name": "payslip-july.txt",
+    "text": "NORTHBRIDGE RETAIL LTD\nPAYSLIP\nPay period: July 2026\n\nEmployee: Priya Desai\nNational Insurance number: QQ778899C\nAddress: 42 Bellfield Road, Leeds, LS6 3PW\nEmail: priya.desai@northbridgeretail.example\nPhone: 07911 223344\nBank details: sort code 20-31-45, account 88452201\nDate of birth: 09 Feb 1994\n\nGross pay: £2,840.00\nTax paid: £398.20\nNational Insurance: £226.40\nNet pay: £2,215.40\n\nSigned: Priya Desai\n"
+  },
+  "spans": [
+    {
+      "type": "name",
+      "label": "Name",
+      "consequence": "lets someone address you by name and sound convincing in any message that follows",
+      "start": 64,
+      "end": 75,
+      "value": "Priya Desai"
+    },
+    {
+      "type": "ni_number",
+      "label": "National Insurance number",
+      "consequence": "links straight to your tax record with HMRC",
+      "start": 103,
+      "end": 112,
+      "value": "QQ778899C"
+    },
+    {
+      "type": "address",
+      "label": "Address",
+      "consequence": "places you at a specific door someone could visit or send mail to",
+      "start": 122,
+      "end": 155,
+      "value": "42 Bellfield Road, Leeds, LS6 3PW"
+    },
+    {
+      "type": "email",
+      "label": "Email",
+      "consequence": "lets someone contact you directly while pretending to be your employer or bank",
+      "start": 163,
+      "end": 200,
+      "value": "priya.desai@northbridgeretail.example"
+    },
+    {
+      "type": "phone",
+      "label": "Phone",
+      "consequence": "lets someone call or text you while pretending to be your bank or employer",
+      "start": 208,
+      "end": 220,
+      "value": "07911 223344"
+    },
+    {
+      "type": "account_number",
+      "label": "Sort code and account number",
+      "consequence": "lets someone set up a direct debit in your name",
+      "start": 235,
+      "end": 271,
+      "value": "sort code 20-31-45, account 88452201"
+    },
+    {
+      "type": "date_of_birth",
+      "label": "Date of birth",
+      "consequence": "combined with your name, lets someone pass a phone banking identity check pretending to be you",
+      "start": 287,
+      "end": 298,
+      "value": "09 Feb 1994"
+    },
+    {
+      "type": "signature",
+      "label": "Signature",
+      "consequence": "gives someone a real signature to copy onto other documents",
+      "start": 395,
+      "end": 406,
+      "value": "Priya Desai"
+    }
+  ],
+  "redacted": "NORTHBRIDGE RETAIL LTD\nPAYSLIP\nPay period: July 2026\n\nEmployee: [name removed]\nNational Insurance number: [NI number removed]\nAddress: [address removed]\nEmail: [email removed]\nPhone: [phone removed]\nBank details: [account details removed]\nDate of birth: [date of birth removed]\n\nGross pay: £2,840.00\nTax paid: £398.20\nNational Insurance: £226.40\nNet pay: £2,215.40\n\nSigned: [signature removed]\n",
+  "findings": {
+    "finding": "Your payslip and your bank statement do not agree on your income.",
+    "explanation": "This payslip shows gross pay of £2,840.00 from Northbridge Retail Ltd for July 2026, but the salary credited to the linked bank statement for the same month is only £2,400.00. Lenders and letting agents often query or refuse an application when the payslip and the bank statement do not agree, so this is worth resolving before the application goes any further.",
+    "draft": "Hi, I wanted to flag a difference between my payslip and my bank statement for July 2026. My payslip shows gross pay of £2,840.00, but the amount credited to my account that month was £2,400.00. This may be a mid month pay date or a one off deduction. Let me know if you need anything from me to confirm the correct figure."
+  },
+  "audit": [
+    {
+      "actor": "device",
+      "text": "Scanned payslip-july.txt and found 8 sensitive fields"
+    },
+    {
+      "actor": "device",
+      "text": "Kept name, NI number, address, email, phone, account details, date of birth and signature on this device"
+    },
+    {
+      "actor": "you",
+      "text": "Approved gross pay, tax paid and the pay period to be shared"
+    },
+    {
+      "actor": "cloud",
+      "text": "Sent 3 fields to Gemini 3.7 Flash: gross pay, tax paid, pay period. 0 identifiers"
+    },
+    {
+      "actor": "cloud",
+      "text": "Compared payslip-july.txt against your bank statement"
+    },
+    {
+      "actor": "device",
+      "text": "The original document never left this machine"
+    }
+  ]
+}

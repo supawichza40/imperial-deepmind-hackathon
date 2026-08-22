@@ -1,0 +1,18 @@
+NORTHBRIDGE RETAIL LTD
+PAYSLIP
+Pay period: July 2026
+
+Employee: Priya Desai
+National Insurance number: QQ778899C
+Address: 42 Bellfield Road, Leeds, LS6 3PW
+Email: priya.desai@northbridgeretail.example
+Phone: 07911 223344
+Bank details: sort code 20-31-45, account 88452201
+Date of birth: 09 Feb 1994
+
+Gross pay: £2,840.00
+Tax paid: £398.20
+National Insurance: £226.40
+Net pay: £2,215.40
+
+Signed: Priya Desai

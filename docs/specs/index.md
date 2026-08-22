@@ -1,6 +1,6 @@
 # Specs index
 
-Current project truth: what the system is and what it must do.
+Current project truth: what the system is, what it must do, and how to build it.
 
 | Spec | Status | What it covers |
 |---|---|---|
@@ -9,3 +9,4 @@ Current project truth: what the system is and what it must do.
 | [architecture.md](architecture.md) | active | System architecture: FastAPI + PWA frontend, process model, directory structure, security boundaries |
 | [api.md](api.md) | active | REST API endpoint definitions, request/response schemas, error shapes |
 | [testing.md](testing.md) | active | TDD strategy, test definitions per module, fixtures, test priorities |
+| [development-plan.md](development-plan.md) | active | Feature breakdown, TDD task sequence, 3-person team assignment, timeline, risks |

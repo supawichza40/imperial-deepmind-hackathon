@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy Gate — how it works</title>
+<title>Privacy Gate, how it works</title>
 <style>
 :root{
   --bg:#f7f7f5; --panel:#ffffff; --ink:#16171a; --muted:#5d6068; --line:#e3e3df;
@@ -94,7 +94,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
   <p class="sub">A model on your own machine strips the private parts <em>before</em> anything
      reaches the cloud. You approve exactly what leaves.</p>
   <div class="tags">
-    <span class="tag proposed">proposed — not built yet</span>
+    <span class="tag proposed">proposed, not built yet</span>
     <span class="tag">Track 3 · Hybrid</span>
     <span class="tag">UK AI Agent Lab · 22 Aug 2026</span>
   </div>
@@ -112,7 +112,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
 
 <h2>Why anyone would want this</h2>
 <p>
-  People constantly need help with documents they cannot hand over — payslips, medical letters,
+  People constantly need help with documents they cannot hand over, payslips, medical letters,
   contracts, immigration paperwork, bank statements. The moment a document is sensitive, the
   useful tool becomes unusable. Most people either overshare without really knowing what they
   sent, or give up and do it by hand.
@@ -136,7 +136,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
   <rect x="14" y="44" width="470" height="252" rx="14" fill="var(--local-bg)"
         stroke="var(--local)" stroke-width="2"/>
   <text x="34" y="70" font-family="var(--mono)" font-size="12.5" font-weight="700"
-        fill="var(--local)">ON YOUR MACHINE — works with wifi off</text>
+        fill="var(--local)">ON YOUR MACHINE, works with wifi off</text>
 
   <rect x="36" y="92" width="116" height="80" rx="8" fill="var(--panel)" stroke="var(--local-line)" stroke-width="1.5"/>
   <text x="94" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Your</text>
@@ -164,7 +164,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
   <rect x="516" y="44" width="370" height="252" rx="14" fill="var(--cloud-bg)"
         stroke="var(--cloud)" stroke-width="2"/>
   <text x="536" y="70" font-family="var(--mono)" font-size="12.5" font-weight="700"
-        fill="var(--cloud)">CLOUD — sees only what you approved</text>
+        fill="var(--cloud)">CLOUD, sees only what you approved</text>
 
   <rect x="552" y="88" width="136" height="88" rx="8" fill="var(--cloud)"/>
   <text x="620" y="117" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Gemini 3.7</text>
@@ -199,7 +199,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
 <p>
   A payslip goes in. Gemma marks what it finds. You decide what survives the gate.
   <span class="tag proposed" style="vertical-align:middle">proposed</span>
-  <span style="color:var(--muted);font-size:13.5px">— all values below are invented</span>
+  <span style="color:var(--muted);font-size:13.5px">, all values below are invented</span>
 </p>
 
 <div class="grid">
@@ -245,7 +245,7 @@ Period: <span class="keep">July 2026</span></div>
 </div>
 
 <h2>Who builds what</h2>
-<p>Three parts, and they barely touch each other — so we can work in parallel from the start.</p>
+<p>Three parts, and they barely touch each other, so we can work in parallel from the start.</p>
 
 <table>
 <thead><tr><th>Part</th><th>What it is</th><th>Talks to</th><th>Hardest bit</th></tr></thead>
@@ -256,7 +256,7 @@ Period: <span class="keep">July 2026</span></div>
       plus Gemma for names in context and free-text disclosure. Returns a list of
       <code>{type, start, end}</code>.</td>
   <td>Nothing. Pure function.</td>
-  <td>Keeping Gemma's output short — a span map, never prose.</td>
+  <td>Keeping Gemma's output short, a span map, never prose.</td>
 </tr>
 <tr>
   <td><strong>Consent UI</strong></td>
@@ -270,7 +270,7 @@ Period: <span class="keep">July 2026</span></div>
   <td>Sends approved text to Gemini 3.7 Flash. Finds the inconsistency, explains it, drafts the
       reply.</td>
   <td>Takes clean text, returns findings.</td>
-  <td>Not much — <code>starter/</code> already has working examples.</td>
+  <td>Not much, <code>starter/</code> already has working examples.</td>
 </tr>
 </tbody>
 </table>
@@ -306,7 +306,7 @@ Period: <span class="keep">July 2026</span></div>
       machine sluggish while it is resident in memory.
     </p>
     <p style="font-size:14.5px"><strong>So:</strong> run the local half on whichever machine is
-      fastest, keep the model warm before demoing, and ask it for spans — never paragraphs.</p>
+      fastest, keep the model warm before demoing, and ask it for spans, never paragraphs.</p>
   </div>
   <div class="card">
     <h3>What to cut if we run out of time</h3>
@@ -346,13 +346,13 @@ Period: <span class="keep">July 2026</span></div>
 <p style="font-size:14.5px">Tick your part, hit copy, paste it into the group chat.</p>
 <div class="panel">
   <label class="pick"><input type="checkbox" data-x="Detector (local): regex baseline + Gemma span detection, returns {type,start,end}">
-    <span><strong>Detector</strong> — local. Regex plus Gemma, returns the span list.</span></label>
+    <span><strong>Detector</strong>, local. Regex plus Gemma, returns the span list.</span></label>
   <label class="pick"><input type="checkbox" data-x="Consent UI: highlight spans, checkbox per field type, emit redacted text + audit entries">
-    <span><strong>Consent UI</strong> — highlights, tick-boxes, redacted output, audit entries.</span></label>
+    <span><strong>Consent UI</strong>, highlights, tick-boxes, redacted output, audit entries.</span></label>
   <label class="pick"><input type="checkbox" data-x="Reasoner (cloud): Gemini 3.7 Flash over approved text, inconsistency check + draft">
-    <span><strong>Reasoner</strong> — cloud. Gemini over the approved text.</span></label>
+    <span><strong>Reasoner</strong>, cloud. Gemini over the approved text.</span></label>
   <label class="pick"><input type="checkbox" data-x="Demo + submission owner: video by 16:45, submitted by 17:10, README and write-up">
-    <span><strong>Demo &amp; submission</strong> — video by 16:45, submitted by 17:10.
+    <span><strong>Demo &amp; submission</strong>, video by 16:45, submitted by 17:10.
       <em style="color:var(--muted)">Someone must own this and not be coding at 17:00.</em></span></label>
   <p style="margin:14px 0 8px"><button id="copy">Copy for the group chat</button></p>
   <textarea class="out" id="out" readonly aria-label="Copy-out block"></textarea>
@@ -361,7 +361,7 @@ Period: <span class="keep">July 2026</span></div>
 <footer>
   Snapshot · 22 Aug 2026 · docs/visual/2026-08-22-privacy-gate.html<br>
   Derived from notes/ideas/privacy-gate.md, notes/MEASURED-on-device-reality.md and
-  docs/10-tracks-rules-rubric.md — working tree, uncommitted, 22 Aug 2026.<br>
+  docs/10-tracks-rules-rubric.md, working tree, uncommitted, 22 Aug 2026.<br>
   Every document value on this page is invented. Nothing here is real personal data.
 </footer>
 
@@ -375,7 +375,7 @@ Period: <span class="keep">July 2026</span></div>
                    .map(function(b){return '- '+b.dataset.x});
     var free=boxes.filter(function(b){return !b.checked})
                   .map(function(b){return '- '+b.dataset.x.split(':')[0]});
-    var s='## Privacy Gate — who has what\n\n';
+    var s='## Privacy Gate, who has what\n\n';
     s+= taken.length ? '**Taken**\n'+taken.join('\n')+'\n' : '_Nobody has picked anything yet._\n';
     if(free.length) s+='\n**Still unowned**\n'+free.join('\n')+'\n';
     s+='\nGates: draft submission 15:00 · feature freeze 16:00 · video 16:45 · submit 17:10\n';

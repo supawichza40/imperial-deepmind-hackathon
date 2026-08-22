@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy Gate — screen flow</title>
+<title>Privacy Gate, screen flow</title>
 <link rel="stylesheet" href="../../app/static/theme/tokens.css">
 <link rel="stylesheet" href="../../app/static/theme/components.css">
 <style>
-/* Page chrome. Product tokens come from tokens.css — do not redefine colours here. */
+/* Page chrome. Product tokens come from tokens.css, do not redefine colours here. */
 *{box-sizing:border-box}
 body{margin:0;background:var(--theme-mist);color:var(--theme-ink);
      font-family:var(--theme-sans);-webkit-font-smoothing:antialiased}
@@ -196,7 +196,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
 <p class="kicker">Privacy Gate · web app · 22 August 2026</p>
 <h1>The whole journey,<br>screen by screen</h1>
 <p class="lede">Eight screens and three failure states. Click through them, or press play.
-  Every screen has an ID — use the IDs when you talk about the build so nobody is guessing
+  Every screen has an ID, use the IDs when you talk about the build so nobody is guessing
   which screen you mean.</p>
 
 <div class="rail" role="tablist" id="rail"></div>
@@ -243,7 +243,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
       <section data-s="S3">
         <p class="eyebrow">on device · gemma 4</p>
         <p class="big">Looking for anything private</p>
-        <p class="say">This runs locally. Turn the wifi off — it keeps working.</p>
+        <p class="say">This runs locally. Turn the wifi off, it keeps working.</p>
         <div class="prog wood"><i></i></div>
         <div class="docwrap scanline" id="scan">
           <div><span class="f">Employee</span> <span class="v found">A. Okafor</span></div>
@@ -257,7 +257,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
       <section data-s="S4">
         <p class="eyebrow">your decision</p>
         <p class="big">Choose what may be shared</p>
-        <p class="say">Seven things found. We tell you what each one would let someone do — then you decide. Not "account number redacted", but what it costs you.</p>
+        <p class="say">Seven things found. We tell you what each one would let someone do, then you decide. Not "account number redacted", but what it costs you.</p>
         <div class="docwrap" style="line-height:2.2;font-size:12.5px;margin-bottom:14px">
           <div><span class="f">Employee</span> <span class="v found">A. Okafor</span>
                &nbsp;<span class="f">NI</span> <span class="v found">QQ123456C</span></div>
@@ -277,7 +277,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
             <span class="why">links straight to your tax record</span></span></span><span class="sw"></span></div>
           <h4 style="margin-top:16px">Okay to share</h4>
           <div class="tog"><span class="n"><span><b>Income figures</b> <span class="cnt">×3</span>
-            <span class="why">a number on its own — cannot be traced back to you</span></span></span><span class="sw on"></span></div>
+            <span class="why">a number on its own, cannot be traced back to you</span></span></span><span class="sw on"></span></div>
           <div class="tog"><span class="n"><span><b>Dates</b> <span class="cnt">×2</span>
             <span class="why">needed to compare the two documents</span></span></span><span class="sw on"></span></div>
         </div>
@@ -351,7 +351,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
         <div class="fail">Gemma could not be reached.<br><br>
           Start it with <code>ollama serve</code> then <code>ollama pull gemma4:e2b</code></div>
         <p class="say" style="margin-top:14px">You can still continue. Pattern matching alone finds
-          account numbers, postcodes, NI numbers and emails — it just will not catch names in
+          account numbers, postcodes, NI numbers and emails, it just will not catch names in
           free text.</p>
         <div class="row"><button class="b gh">Try again</button>
           <button class="b">Continue without the model</button></div>
@@ -361,7 +361,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
       <section data-s="E2">
         <p class="eyebrow">nothing found</p>
         <p class="big">This looks clean</p>
-        <p class="say">No names, addresses or account numbers were detected. That might be right —
+        <p class="say">No names, addresses or account numbers were detected. That might be right ,
           or the detector missed something. You decide.</p>
         <div class="docwrap" style="color:var(--theme-mute);font-size:13px">
           Select any text yourself to mark it private.</div>
@@ -409,7 +409,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
 <tr><td>2nd</td><td>S3 · E1</td>
   <td>Swap fake spans for real Gemma plus the pattern-matching fallback.</td></tr>
 <tr><td>3rd</td><td>S6 → S7</td>
-  <td>Wire the cloud half. Easiest part — <code>starter/</code> has working examples.</td></tr>
+  <td>Wire the cloud half. Easiest part, <code>starter/</code> has working examples.</td></tr>
 <tr><td>4th</td><td>S8 · E3</td>
   <td>Receipt and the cached fallback. Both cheap, both protect the demo.</td></tr>
 <tr><td>if time</td><td>S2 · E2</td>
@@ -429,7 +429,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
 
 <footer>
   Snapshot · docs/visual/2026-08-22-privacy-gate-screens.html · 22 August 2026<br>
-  Styling from app/static/theme/tokens.css and components.css — the shared product theme.<br>
+  Styling from app/static/theme/tokens.css and components.css, the shared product theme.<br>
   Form factor decided: web app. Screens are proposed; nothing here is built yet.<br>
   Every value on this page is invented. No real personal data.
 </footer>
@@ -439,14 +439,14 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--theme-line);
 <script>
 (function(){
   var SCREENS=[
-    ['S1','Drop a document','The sample buttons are your demo insurance. Never drag a file on stage — click a sample.',['empty state'],'local'],
+    ['S1','Drop a document','The sample buttons are your demo insurance. Never drag a file on stage, click a sample.',['empty state'],'local'],
     ['S2','Reading it','That "nothing sent anywhere" line sets the frame before the user has to trust you.',['loading','under 1s'],'local'],
     ['S3','Finding private fields','Turn the wifi off here. The badge flips and it keeps working. Rehearse this beat.',['gemma 4','2–5s'],'off'],
     ['S4','Review and approve','Show the consequence, not the field name. "Sort code + account → set up a direct debit in your name" makes this a judgement about risk, not a labelling exercise. This is the screen that is hard to copy.',['main screen','the differentiator'],'off'],
-    ['S5','Exactly what leaves','Do not rush this in the demo. Let it sit for three seconds. Lead the pitch here and at S8 — per-field consent plus a receipt — never with "we redact locally", which is a published pattern a judge will recognise.',['the wow moment'],'off'],
+    ['S5','Exactly what leaves','Do not rush this in the demo. Let it sit for three seconds. Lead the pitch here and at S8, per-field consent plus a receipt, never with "we redact locally", which is a published pattern a judge will recognise.',['the wow moment'],'off'],
     ['S6','Thinking','Keep the sent payload on screen while it waits. It reminds people how little went up.',['cloud','2–6s'],'cloud'],
     ['S7','What it found','One concrete finding beats three vague ones. Seed the samples so the mismatch always appears.',['the payoff'],'cloud'],
-    ['S8','The receipt','Cheap to build, disproportionately memorable. End the demo here. Consent plus receipt is the pair nothing else ships — it is what makes this more than redact-then-ask.',['closing screen','differentiator'],'cloud'],
+    ['S8','The receipt','Cheap to build, disproportionately memorable. End the demo here. Consent plus receipt is the pair nothing else ships, it is what makes this more than redact-then-ask.',['closing screen','differentiator'],'cloud'],
     ['E1','Local model not running','The pattern-matching fallback saves the demo. Wire it early.',['failure'],'fail'],
     ['E2','Nothing found','Manual selection is also your honest answer to "what if it misses something?"',['empty result'],'off'],
     ['E3','Cloud call failed','"Show a saved example" is your stage insurance. Wire it before 16:00.',['failure','429'],'fail']

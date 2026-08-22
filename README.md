@@ -3,23 +3,23 @@
 A consent-aware document agent: a local model redacts sensitive material on-device, you
 approve exactly what may leave, and only the approved subset reaches the cloud.
 
-> **Working direction as of 13:30 — not final.**
-> **Start here:** [visual explainer](docs/visual/2026-08-22-privacy-gate.html) — diagrams,
+> **Working direction as of 13:30. Not final.**
+> **Start here:** [visual explainer](docs/visual/2026-08-22-privacy-gate.html) with diagrams,
 > worked example, who-builds-what (open it in a browser).
 > Full write-up and scope: [`notes/ideas/privacy-gate.md`](notes/ideas/privacy-gate.md).
 
 **UK AI Agent Lab: Gemini Edition** · Imperial College London · 22 August 2026
-**Track:** 3 — Best Hybrid AI & Human-Centric Utility
+**Track:** 3, Best Hybrid AI and Human-Centric Utility
 
 ## The problem
 
-_TODO — two sentences. Who has this problem, and what does it cost them today?_
+_TODO. Two sentences: who has this problem, and what does it cost them today?_
 
 ## What it does
 
 - **You drop in a sensitive document.** Gemma 4 runs locally and marks every name,
   address, account number and sensitive field it finds. Nothing has left the machine.
-- **You approve what may be shared**, field type by field type — "share income, hide
+- **You approve what may be shared**, field type by field type. "Share income, hide
   identity and account details".
 - **Gemini 3.7 Flash reasons over the approved subset only**: compares documents, finds
   inconsistencies, explains it plainly, drafts what you need.
@@ -31,7 +31,7 @@ _TODO — two sentences. Who has this problem, and what does it cost them today?
 flowchart LR
     D[Sensitive document<br/>statement / payslip / letter] --> L
 
-    subgraph LOCAL["ON DEVICE — no network"]
+    subgraph LOCAL["ON DEVICE, no network"]
         L[Gemma 4 E2B<br/>+ regex baseline] --> S[Redaction span map<br/>field type + offsets]
         S --> C[Consent UI<br/>user approves per field]
     end
@@ -49,7 +49,7 @@ flowchart LR
 ```
 
 **Why this split:** the boundary is the product. Redaction has to happen before the data
-leaves, so it must run locally — that is the whole guarantee. Everything downstream is
+leaves, so it must run locally. That is the whole guarantee. Everything downstream is
 cross-document reasoning over an already-sanitised payload, which is exactly what a fast
 frontier model is for and carries no privacy cost once the originals are gone. Gemma is
 asked for a structured span map rather than prose, which keeps its output short enough to
@@ -117,12 +117,12 @@ SUBMISSION.md the required write-up + video link
 
 ## Limitations
 
-_TODO — state these honestly. Judges ask, and an honest answer defends better than a
+_TODO. State these honestly. Judges ask, and an honest answer defends better than a
 vague one. What doesn't work yet, what's stubbed, what you'd fix first._
 
 ## Team
 
-_TODO — names and GitHub handles._
+_TODO. Names and GitHub handles._
 
 ## Licence
 

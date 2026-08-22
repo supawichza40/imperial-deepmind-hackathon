@@ -14,6 +14,7 @@ the UK AI Agent Lab: Gemini Edition hackathon (Google DeepMind, London).
 | `05_multi_agent.py` | Orchestrator + 2 specialist sub-agents, plain SDK calls (no framework). |
 | `06_live_voice_agent.py` | Live API realtime session skeleton (text by default, notes for audio). |
 | `07_local_gemma.py` | Offline fallback: local Gemma via Ollama, same call shape as OpenAI. |
+| `08_remote_mcp.py` | Native remote MCP tool — no local MCP client needed. |
 | `utils.py` | Shared client factory, retry-with-backoff, pretty tool-call printer. |
 | `demo_fallback.md` | Checklist for a demo that can't die on stage. |
 
@@ -52,6 +53,7 @@ python 04_structured_output.py   # typed JSON extraction
 python 05_multi_agent.py         # orchestrator + 2 specialists
 python 06_live_voice_agent.py    # realtime session skeleton (no mic needed)
 python 07_local_gemma.py         # OFFLINE fallback — needs Ollama, see file header
+python 08_remote_mcp.py          # remote MCP tool call, zero local MCP client
 ```
 
 ## Model
@@ -78,14 +80,39 @@ ollama pull gemma3:4b
 ## Notes on the SDK
 
 This kit uses `google-genai` (`from google import genai`), Google's current
-Python SDK — not the older, deprecated `google-generativeai` package. Two
-call shapes exist side by side right now, and you'll see both in Google's
-own docs depending on the page:
+Python SDK — not the older, deprecated `google-generativeai` package.
 
-- `client.models.generate_content(...)` — the original, most-documented call
-  shape. Used in `01`, `02`, `05`.
-- `client.interactions.create(...)` — Google's newer unified interface for
-  models and agents (GA since mid-2026), with cleaner grounding citations
-  and schema-based structured output. Used in `03`, `04`.
+Every script (`01`–`05`) defaults to the **Interactions API**
+(`client.interactions.create(...)`) — Google's current, recommended surface
+for models *and* agents, GA since June 2026. Straight from
+[ai.google.dev/gemini-api/docs/interactions](https://ai.google.dev/gemini-api/docs/interactions):
 
-Both are real, current, and supported.
+> "The Interactions API is the best way to build with Gemini models and
+> agents. As of June 2026, it is Generally Available and recommended for
+> all new projects. While it is now considered legacy, the original
+> `generateContent` API remains fully supported."
+
+Each script has a **commented legacy fallback block** at the bottom using
+`client.models.generate_content(...)` — uncomment it if the venue wifi's
+`pip install` pulls an older `google-genai` version that predates
+`client.interactions`. One real capability gap to know about: legacy
+`generateContent` supports *automatic* function calling (pass raw Python
+functions, the SDK loops for you); the Interactions API doesn't do that yet,
+so `02_tool_agent.py` drives its own function-call ↔ function-result loop
+by hand (see `run_agent()` in that file) — still fully automatic from the
+user's point of view, just a few more lines of code.
+
+`06_live_voice_agent.py` (Live API) and `07_local_gemma.py` (Ollama) are
+separate surfaces, unaffected by this choice.
+
+`08_remote_mcp.py` uses the Interactions API's native `mcp_server` tool —
+give it a URL (and optional auth headers), Gemini handles the whole MCP
+handshake server-side, no local MCP client needed. It defaults to
+[DeepWiki's public MCP server](https://mcp.deepwiki.com/mcp) (free, no auth)
+so it runs with zero extra setup.
+
+As of 21 Jul 2026, `temperature`/`top_p`/`top_k` are deprecated in favor of
+`thinking_level` (`"low"`/`"medium"`/`"high"`, default medium for
+`gemini-3.7-flash`; `"minimal"` isn't accepted on every model). None of
+these scripts set sampling params, so there's nothing to migrate — just
+don't reach for the old ones if you extend this kit.

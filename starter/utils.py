@@ -13,10 +13,12 @@ from google import genai
 
 load_dotenv()
 
-# Docs across ai.google.dev (quickstart, function-calling, structured-output,
-# grounding, url-context) all use this model name as of Aug 2026. Override
-# with GEMINI_MODEL if it's been retired by the time you read this — see
-# https://ai.google.dev/gemini-api/docs/models for the current list.
+# gemini-3.7-flash is the current GA model as of Aug 2026 — it supersedes
+# gemini-3-pro-preview and gemini-3.1-flash-lite-preview, both now shut down
+# per ai.google.dev/gemini-api/docs/models. Override with GEMINI_MODEL if
+# it's been retired by the time you read this — see that page for the
+# current list. Supports thinking_level "low"/"medium"/"high" (default
+# medium) if you want to trade latency for reasoning quality.
 DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
 
 # Verified against the Live API capabilities guide (docs/live-guide).
@@ -95,7 +97,8 @@ def print_tool_call(name: str, args: dict, result=None):
 
 
 def print_usage(usage_metadata):
-    """Print token usage from a classic generate_content response.usage_metadata."""
+    """Print token usage from a legacy generate_content response.usage_metadata.
+    Kept for the commented legacy fallback blocks in each script."""
     if usage_metadata is None:
         print("  (no usage metadata returned)")
         return
@@ -103,3 +106,26 @@ def print_usage(usage_metadata):
     output = getattr(usage_metadata, "candidates_token_count", None)
     total = getattr(usage_metadata, "total_token_count", None)
     print(f"  tokens -> prompt: {prompt} | output: {output} | total: {total}")
+
+
+def print_interaction_usage(usages):
+    """Print total token usage from the Interactions API's response.usage.
+
+    Accepts a single usage object or a list of them (an agent loop that makes
+    several interactions.create round trips can pass the whole list to get a
+    running total). `total_input_tokens` is confirmed against
+    docs/tokens.md; `total_output_tokens` is inferred by naming symmetry and
+    read defensively via getattr so a name change won't crash the demo.
+    """
+    if usages is None:
+        print("  (no usage metadata returned)")
+        return
+    if not isinstance(usages, (list, tuple)):
+        usages = [usages]
+    usages = [u for u in usages if u is not None]
+    if not usages:
+        print("  (no usage metadata returned)")
+        return
+    input_total = sum(getattr(u, "total_input_tokens", 0) or 0 for u in usages)
+    output_total = sum(getattr(u, "total_output_tokens", 0) or 0 for u in usages)
+    print(f"  tokens -> input: {input_total} | output: {output_total} (across {len(usages)} call(s))")

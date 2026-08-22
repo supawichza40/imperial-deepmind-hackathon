@@ -73,5 +73,27 @@ def main():
     print(f"type check: agenda.sessions[0] is Session -> {isinstance(agenda.sessions[0], Session)}")
 
 
+# --- Legacy fallback (generateContent) --------------------------------------
+# response_schema/response_mime_type predates the Interactions API and has
+# been a stable generateContent feature for a long time, but wasn't
+# independently re-checked against today's docs (marked UNVERIFIED for that
+# reason) - sanity-check against ai.google.dev/gemini-api/docs/structured-output
+# before relying on it:
+#
+# from google.genai import types
+#
+# @with_retry()
+# def extract_legacy(client, text: str) -> Agenda:
+#     response = client.models.generate_content(
+#         model=DEFAULT_MODEL,
+#         contents=f"Extract the event schedule as structured data:\n\n{text}",
+#         config=types.GenerateContentConfig(
+#             response_mime_type="application/json",
+#             response_schema=Agenda,
+#         ),
+#     )
+#     return Agenda.model_validate_json(response.text)
+
+
 if __name__ == "__main__":
     main()

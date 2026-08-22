@@ -11,7 +11,7 @@ hallucination.
 Run:
     python 03_grounded_agent.py
 """
-from utils import DEFAULT_MODEL, get_client, print_header, with_retry
+from utils import DEFAULT_MODEL, get_client, print_header, print_interaction_usage, with_retry
 
 URL_TO_CHECK = "https://deepmind.google/"
 
@@ -54,13 +54,31 @@ def main():
                         print(f"  [{ann.title}]({ann.url})")
                         print(f'    cited: "{cited}"')
 
-    # Field names per docs/tokens.md; guarded with getattr in case of drift.
-    usage = getattr(interaction, "usage", None)
-    if usage is not None:
-        print(
-            f"\n  tokens -> input: {getattr(usage, 'total_input_tokens', '?')} "
-            f"| output: {getattr(usage, 'total_output_tokens', '?')}"
-        )
+    print()
+    print_interaction_usage(getattr(interaction, "usage", None))
+
+
+# --- Legacy fallback (generateContent) --------------------------------------
+# Still fully supported. Google Search grounding works the same way; URL
+# context and the inline url_citation annotation shape shown above are
+# Interactions-API-specific, so citation parsing differs - check
+# ai.google.dev/gemini-api/docs/google-search for the classic
+# grounding_metadata field names if you need this path:
+#
+# from google.genai import types
+#
+# @with_retry()
+# def ask_grounded_legacy(client, prompt: str):
+#     return client.models.generate_content(
+#         model=DEFAULT_MODEL,
+#         contents=prompt,
+#         config=types.GenerateContentConfig(
+#             tools=[types.Tool(google_search=types.GoogleSearch())]
+#         ),
+#     )
+#
+# response = ask_grounded_legacy(client, prompt)
+# print(response.text)
 
 
 if __name__ == "__main__":

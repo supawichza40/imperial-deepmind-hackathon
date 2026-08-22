@@ -1,16 +1,87 @@
 {
   "pages": [
-    { "id": "page-1", "name": "The product" },
-    { "id": "page-2", "name": "Design system" }
+    {
+      "id": "page-1",
+      "name": "The product"
+    },
+    {
+      "id": "page-2",
+      "name": "Design system"
+    }
   ],
   "artboards": [
-    { "file": "Import.dc.html", "x": 0, "y": 0, "w": 1280, "h": 960, "title": "1 · Bring documents in", "page": "page-1" },
-    { "file": "Batch.dc.html", "x": 1400, "y": 0, "w": 1280, "h": 1180, "title": "2 · Scan a Drive folder", "page": "page-1" },
-    { "file": "Main.dc.html", "x": 2800, "y": 0, "w": 1280, "h": 1120, "title": "3 · Review and approve", "page": "page-1" },
-    { "file": "Share.dc.html", "x": 4200, "y": 0, "w": 1280, "h": 1240, "title": "4 · What leaves the machine", "page": "page-1" },
-    { "file": "Gemini.dc.html", "x": 5600, "y": 0, "w": 1280, "h": 1400, "title": "5 · Use it, or take it away", "page": "page-1" },
-    { "file": "Components.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1180, "title": "Controls", "page": "page-2" },
-    { "file": "Palette.dc.html", "x": 1200, "y": 0, "w": 980, "h": 1420, "title": "Colour and type", "page": "page-2" }
+    {
+      "file": "Import.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 960,
+      "title": "1 · Bring documents in",
+      "page": "page-1"
+    },
+    {
+      "file": "Batch.dc.html",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 1180,
+      "title": "2 · Scan a Drive folder",
+      "page": "page-1"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 1120,
+      "title": "3 · Review and approve",
+      "page": "page-1"
+    },
+    {
+      "file": "Share.dc.html",
+      "x": 4200,
+      "y": 0,
+      "w": 1280,
+      "h": 1240,
+      "title": "4 · What leaves the machine",
+      "page": "page-1"
+    },
+    {
+      "file": "Gemini.dc.html",
+      "x": 5600,
+      "y": 0,
+      "w": 1280,
+      "h": 1400,
+      "title": "5 · Use it, or take it away",
+      "page": "page-1"
+    },
+    {
+      "file": "Chat.dc.html",
+      "x": 7000,
+      "y": 0,
+      "w": 1280,
+      "h": 1240,
+      "title": "6 · Talk to the safe copy",
+      "page": "page-1"
+    },
+    {
+      "file": "Components.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1080,
+      "h": 1180,
+      "title": "Controls",
+      "page": "page-2"
+    },
+    {
+      "file": "Palette.dc.html",
+      "x": 1200,
+      "y": 0,
+      "w": 980,
+      "h": 1420,
+      "title": "Colour and type",
+      "page": "page-2"
+    }
   ],
   "annotations": [
     {
@@ -52,7 +123,18 @@
       "w": 440,
       "text": "The parts the screens are built from, as they exist in the theme files at commit 8c696e7.",
       "page": "page-2"
+    },
+    {
+      "id": "chat-note",
+      "x": 7000,
+      "y": -180,
+      "w": 500,
+      "text": "Screen 6 is the one to demo.\nAsk it about a field you hid and it says plainly that it cannot see that field. The privacy claim gets tested in front of the person watching, instead of described to them.\n\nChat is one use of many. Once a document is safe to send, anything you would normally do with a document is available.",
+      "page": "page-1"
     }
   ],
-  "launch": { "view": "canvas", "page": "page-1" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
 }

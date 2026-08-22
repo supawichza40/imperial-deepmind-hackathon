@@ -40,6 +40,8 @@ class Span:
     def from_dict(cls, raw: dict, index: int) -> "Span":
         start = int(raw["start"])
         end = int(raw["end"])
+        if end < start:
+            raise ValueError("span end must be at or after start")
         return cls(
             type=str(raw.get("type") or "unknown"),
             start=start,
@@ -99,7 +101,10 @@ def apply_export(
     images: list[dict] | None = None,
     passphrase: str | None = None,
 ) -> ExportResult:
-    parsed = [Span.from_dict(s, i) for i, s in enumerate(spans)]
+    parsed = _drop_overlapping(
+        [Span.from_dict(s, i) for i, s in enumerate(spans)],
+        len(text),
+    )
     assets = [ImageAsset.from_dict(im, i) for i, im in enumerate(images or [])]
     present = sorted({s.type for s in parsed})
     actions = default_toggles(present)
@@ -110,7 +115,7 @@ def apply_export(
     key = salt = None
     vault_items: list[dict] = []
     if needs_encrypt:
-        if not passphrase:
+        if not (passphrase or "").strip():
             raise ValueError("a passphrase is required when any toggle is set to encrypt")
         salt = new_salt()
         key = derive_key(passphrase, salt)
@@ -205,7 +210,6 @@ def _to_html(text: str, spans: list[Span], actions: dict[str, str]) -> str:
         parts.append(_esc(text[last:span.start]))
         chunk = _esc(text[span.start:span.end])
         action = actions.get(span.type, KEEP)
-        cls = action
         label = label_for(span.type)
         if action == KEEP:
             parts.append(
@@ -234,7 +238,7 @@ def _export_images(
 ) -> list[dict]:
     out = []
     for asset in assets:
-        related = [s for s in spans if s.image_id == asset.id or s.kind in ("signature", "personal_image")]
+        related = [s for s in spans if s.image_id == asset.id]
         boxes = []
         for span in related:
             action = actions.get(span.type, KEEP)
@@ -256,13 +260,11 @@ def _export_images(
         }
         hide_whole = any(
             actions.get(s.type) in (BLACKLABEL, ENCRYPT)
-            and (s.image_id == asset.id or (not s.image_id and s.kind in ("signature", "personal_image")))
             for s in related
         )
         if hide_whole:
             encrypted_wanted = any(
                 actions.get(s.type) == ENCRYPT
-                and (s.image_id == asset.id or s.kind in ("signature", "personal_image"))
                 for s in related
             )
             whole_action = ENCRYPT if encrypted_wanted else BLACKLABEL
@@ -275,6 +277,22 @@ def _export_images(
                 item["blacklabeled"] = True
         out.append(item)
     return out
+
+
+def _drop_overlapping(spans: list[Span], text_len: int) -> list[Span]:
+    """Keep earlier text spans. Skip later ones that overlap so offsets stay valid."""
+    kept: list[Span] = []
+    taken: list[tuple[int, int]] = []
+    for span in sorted(spans, key=lambda s: (s.start, s.end, s.id)):
+        is_text = 0 <= span.start < span.end <= text_len
+        if not is_text:
+            kept.append(span)
+            continue
+        if any(not (span.end <= a or span.start >= b) for a, b in taken):
+            continue
+        taken.append((span.start, span.end))
+        kept.append(span)
+    return kept
 
 
 def _esc(s: str) -> str:

@@ -6,6 +6,30 @@
   var KEY = "pg-vault-v1";
   var enc = new TextEncoder();
 
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function descendantIds(folders, id) {
+    var found = {};
+    found[id] = true;
+    var changed = true;
+    while (changed) {
+      changed = false;
+      folders.forEach(function (f) {
+        if (found[f.parent] && !found[f.id]) {
+          found[f.id] = true;
+          changed = true;
+        }
+      });
+    }
+    return found;
+  }
+
   function b64url(bytes) {
     var bin = "";
     (bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)).forEach(function (n) {
@@ -73,7 +97,7 @@
   async function hashLock(pass, salt) {
     var base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
     return new Uint8Array(await crypto.subtle.deriveBits({
-      name: "PBKDF2", salt: salt, iterations: 120000, hash: "SHA-256"
+      name: "PBKDF2", salt: salt, iterations: 210000, hash: "SHA-256"
     }, base, 256));
   }
 
@@ -166,14 +190,14 @@
 
     el.innerHTML = "";
     if (guest && guest.error) {
-      el.appendChild($("<div class=\"vault-main\"><h2>Share link</h2><p>" + guest.error + "</p></div>"));
+      el.appendChild($("<div class=\"vault-main\"><h2>Share link</h2><p>" + esc(guest.error) + "</p></div>"));
       return;
     }
     if (guest && guest.doc) {
       el.appendChild($(
         "<div class=\"vault-main\">" +
-        "<p class=\"theme-kicker\">Shared with you · " + guest.perm + "</p>" +
-        "<h1>" + guest.doc.name + "</h1>" +
+        "<p class=\"theme-kicker\">Shared with you · " + esc(guest.perm) + "</p>" +
+        "<h1>" + esc(guest.doc.name) + "</h1>" +
         "<p class=\"theme-mute\">Encrypt passphrase is not in this link. You only get the sanitised copy.</p>" +
         "<div class=\"vault-bar\">" +
         (guest.perm === "download" ? "<button type=\"button\" class=\"theme-btn\" id=\"g-dl\">Download copy</button>" : "") +
@@ -192,7 +216,7 @@
       "<div class=\"vault-shell\">" +
         "<aside class=\"vault-side\">" +
           "<p class=\"theme-kicker\">Signed in</p>" +
-          "<p>" + state.email + "</p>" +
+          "<p>" + esc(state.email) + "</p>" +
           "<p class=\"theme-kicker\" style=\"margin-top:24px\">Authenticator</p>" +
           "<p class=\"theme-mute\">Keep this secret on your phone in a real build. The live code is shown so the demo can run without an extra app.</p>" +
           "<p class=\"pg-code\" id=\"pg-live-code\">------</p>" +
@@ -219,7 +243,7 @@
         var b = document.createElement("button");
         b.type = "button";
         b.className = "vault-folder" + (current && current.id === f.id ? " is-on" : "");
-        b.innerHTML = "<span>" + f.name + "</span>" +
+        b.innerHTML = "<span>" + esc(f.name) + "</span>" +
           (f.locked ? "<span class=\"lock\">" + (f.unlocked ? "unlocked" : "locked") + "</span>" : "");
         b.addEventListener("click", function () {
           current = f;
@@ -233,12 +257,12 @@
       var box = el.querySelector("#acl-box");
       if (!current) return;
       var rows = Object.keys(current.members || {}).map(function (email) {
-        return "<li><span>" + email + "</span><span>" + current.members[email] + "</span></li>";
+        return "<li><span>" + esc(email) + "</span><span>" + esc(current.members[email]) + "</span></li>";
       }).join("");
       box.innerHTML =
-        "<p class=\"theme-kicker\">Access on " + current.name + "</p>" +
+        "<p class=\"theme-kicker\">Access on " + esc(current.name) + "</p>" +
         "<ul class=\"vault-members\">" +
-        "<li><span>" + current.owner + "</span><span>owner</span></li>" + rows +
+        "<li><span>" + esc(current.owner) + "</span><span>owner</span></li>" + rows +
         "</ul>" +
         (can(current, state.email, "acl")
           ? "<form class=\"vault-form\" id=\"grant-form\">" +
@@ -266,7 +290,7 @@
       if (!current) return;
       var lockedOut = current.locked && !current.unlocked;
       bar.innerHTML =
-        "<h1 style=\"flex:1 1 100%;margin:0 0 8px\">" + current.name + "</h1>" +
+        "<h1 style=\"flex:1 1 100%;margin:0 0 8px\">" + esc(current.name) + "</h1>" +
         "<button type=\"button\" class=\"theme-btn\" id=\"btn-dl\" " + (can(current, state.email, "download") && !lockedOut ? "" : "disabled ") + ">Download</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-share\" " + (can(current, state.email, "share") && !lockedOut ? "" : "disabled ") + ">Share link</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-lock\">" + (current.locked && !current.unlocked ? "Unlock folder" : "Lock folder") + "</button>" +
@@ -325,7 +349,7 @@
     function lockModal() {
       if (current.locked && !current.unlocked) {
         var wrap = modal(
-          "<h3>Unlock " + current.name + "</h3>" +
+          "<h3>Unlock " + esc(current.name) + "</h3>" +
           "<p>This folder is locked. Enter the folder passphrase.</p>" +
           "<label for=\"un-pass\">Passphrase</label><input id=\"un-pass\" type=\"password\">" +
           "<p class=\"pg-toast\" id=\"un-err\"></p>" +
@@ -350,7 +374,7 @@
         return;
       }
       var wrap = modal(
-        "<h3>Lock " + current.name + "</h3>" +
+        "<h3>Lock " + esc(current.name) + "</h3>" +
         "<p>Contents stay on this machine. A share link will not open while the folder is locked.</p>" +
         "<label for=\"lk-pass\">Passphrase</label><input id=\"lk-pass\" type=\"password\">" +
         "<div class=\"vault-bar\" style=\"margin-top:18px\">" +
@@ -360,7 +384,7 @@
       wrap.querySelector("#do-lk").addEventListener("click", async function () {
         if (!can(current, state.email, "lock")) return;
         var pass = wrap.querySelector("#lk-pass").value;
-        if (!pass) return;
+        if (!pass.trim()) return;
         var salt = crypto.getRandomValues(new Uint8Array(16));
         current.lockSalt = b64url(salt);
         current.lockHash = b64url(await hashLock(pass, salt));
@@ -374,9 +398,9 @@
 
     function deleteModal() {
       var wrap = modal(
-        "<h3>Delete " + current.name + "</h3>" +
+        "<h3>Delete " + esc(current.name) + "</h3>" +
         "<p>This cannot be undone. Type the folder name, then the authenticator code. Same idea as deleting a GitHub repo.</p>" +
-        "<label for=\"del-name\">Type " + current.name + " to confirm</label>" +
+        "<label for=\"del-name\">Type " + esc(current.name) + " to confirm</label>" +
         "<input id=\"del-name\" autocomplete=\"off\">" +
         "<label for=\"del-code\">Authenticator code</label>" +
         "<input id=\"del-code\" inputmode=\"numeric\" maxlength=\"6\" autocomplete=\"one-time-code\">" +
@@ -399,8 +423,9 @@
           return;
         }
         var id = current.id;
-        state.folders = state.folders.filter(function (f) { return f.id !== id && f.parent !== id; });
-        state.docs = state.docs.filter(function (d) { return d.folder !== id; });
+        var gone = descendantIds(state.folders, id);
+        state.folders = state.folders.filter(function (f) { return !gone[f.id]; });
+        state.docs = state.docs.filter(function (d) { return !gone[d.folder]; });
         current = state.folders[0] || null;
         save(state);
         wrap.remove();

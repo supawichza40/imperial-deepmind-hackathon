@@ -6,9 +6,9 @@ import hashlib
 import hmac
 import os
 import secrets
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from .acl import Acl
+from .acl import Acl, inherit
 from .share import mint, open_token
 from .totp import new_secret, verify_totp
 
@@ -56,6 +56,9 @@ class Vault:
         return self.actors[email]
 
     def add_folder(self, actor: str, name: str, parent_id: str | None = None) -> Folder:
+        name = (name or "").strip()
+        if not name:
+            raise ValueError("folder name is required")
         if parent_id:
             parent = self._folder(parent_id)
             self._need(parent, actor, "write")
@@ -83,6 +86,8 @@ class Vault:
     def lock_folder(self, actor: str, folder_id: str, passphrase: str) -> None:
         folder = self._folder(folder_id)
         self._need(folder, actor, "lock")
+        if not (passphrase or "").strip():
+            raise ValueError("lock passphrase is required")
         salt = os.urandom(16)
         folder.lock_salt = salt
         folder.lock_hash = _hash_lock(passphrase, salt)
@@ -139,8 +144,7 @@ class Vault:
         if doc.folder_id != claim["folder_id"]:
             raise PermissionError("share link does not match this file")
         folder = self._folder(doc.folder_id)
-        if folder.locked and not folder.unlocked:
-            raise PermissionError("folder is locked")
+        self._need_unlocked(folder)
         if claim["perm"] == "view":
             return "view", doc
         return "download", doc
@@ -159,7 +163,7 @@ class Vault:
         person = self.actors.get(actor)
         if person is None or not verify_totp(person.totp_secret, totp_code):
             raise PermissionError("authenticator code is wrong or expired")
-        gone = [folder_id] + [f.id for f in self.folders.values() if f.parent_id == folder_id]
+        gone = self._descendants(folder_id)
         for fid in gone:
             self.folders.pop(fid, None)
         self.docs = {i: d for i, d in self.docs.items() if d.folder_id not in gone}
@@ -176,10 +180,40 @@ class Vault:
             raise KeyError("file not found")
         return doc
 
+    def _effective(self, folder: Folder) -> Acl:
+        path: list[Folder] = []
+        cur: Folder | None = folder
+        seen: set[str] = set()
+        while cur is not None and cur.id not in seen:
+            seen.add(cur.id)
+            path.append(cur)
+            cur = self.folders.get(cur.parent_id) if cur.parent_id else None
+        path.reverse()
+        acc = path[0].acl
+        for node in path[1:]:
+            acc = inherit(acc, node.acl)
+        return acc
+
+    def _descendants(self, folder_id: str) -> set[str]:
+        found = {folder_id}
+        changed = True
+        while changed:
+            changed = False
+            for folder in self.folders.values():
+                if folder.parent_id in found and folder.id not in found:
+                    found.add(folder.id)
+                    changed = True
+        return found
+
     def _need(self, folder: Folder, actor: str, action: str) -> None:
-        if not folder.acl.can(actor, action):
+        if not self._effective(folder).can(actor, action):
             raise PermissionError(f"{action} is not allowed")
 
     def _need_unlocked(self, folder: Folder) -> None:
-        if folder.locked and not folder.unlocked:
-            raise PermissionError("folder is locked")
+        cur: Folder | None = folder
+        seen: set[str] = set()
+        while cur is not None and cur.id not in seen:
+            seen.add(cur.id)
+            if cur.locked and not cur.unlocked:
+                raise PermissionError("folder is locked")
+            cur = self.folders.get(cur.parent_id) if cur.parent_id else None

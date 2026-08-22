@@ -26,22 +26,24 @@ def mint(
     perm: str,
     actor: str,
     ttl_seconds: int = 3600,
+    now: float | None = None,
 ) -> str:
     if perm not in ("view", "download"):
         raise ValueError("share perm must be view or download")
+    clock = time.time() if now is None else now
     body = {
         "f": folder_id,
         "d": doc_id,
         "p": perm,
         "by": actor,
-        "exp": int(time.time()) + ttl_seconds,
+        "exp": int(clock) + ttl_seconds,
     }
     payload = _b64(json.dumps(body, separators=(",", ":")).encode("utf-8"))
     sig = _b64(hmac.new(secret, payload.encode("ascii"), hashlib.sha256).digest())
     return f"{payload}.{sig}"
 
 
-def open_token(secret: bytes, token: str) -> dict:
+def open_token(secret: bytes, token: str, now: float | None = None) -> dict:
     try:
         payload, sig = token.split(".", 1)
     except ValueError as e:
@@ -49,15 +51,23 @@ def open_token(secret: bytes, token: str) -> dict:
     expect = _b64(hmac.new(secret, payload.encode("ascii"), hashlib.sha256).digest())
     if not hmac.compare_digest(expect, sig):
         raise ValueError("share link was altered")
-    body = json.loads(_unb64(payload))
-    if int(body.get("exp") or 0) < time.time():
+    try:
+        body = json.loads(_unb64(payload))
+        folder_id = body["f"]
+        doc_id = body["d"]
+        perm = body["p"]
+        exp = int(body["exp"])
+    except (ValueError, TypeError, KeyError, UnicodeDecodeError) as e:
+        raise ValueError("bad share link") from e
+    clock = time.time() if now is None else now
+    if int(exp or 0) < clock:
         raise ValueError("share link expired")
-    if body.get("p") not in ("view", "download"):
+    if perm not in ("view", "download"):
         raise ValueError("share link has no permission")
     return {
-        "folder_id": body["f"],
-        "doc_id": body["d"],
-        "perm": body["p"],
+        "folder_id": folder_id,
+        "doc_id": doc_id,
+        "perm": perm,
         "actor": body.get("by") or "guest",
-        "exp": body["exp"],
+        "exp": exp,
     }

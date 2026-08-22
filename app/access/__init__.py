@@ -10,7 +10,7 @@
     vault.delete_folder("you@local", inbox.id, typed_name="Inbox", totp_code="123456")
 """
 
-from .acl import Acl, ROLES
+from .acl import Acl, ROLES, inherit
 from .share import mint, open_token
 from .store import Vault
 from .totp import new_secret, totp, verify_totp
@@ -19,6 +19,7 @@ __all__ = [
     "Acl",
     "ROLES",
     "Vault",
+    "inherit",
     "mint",
     "new_secret",
     "open_token",

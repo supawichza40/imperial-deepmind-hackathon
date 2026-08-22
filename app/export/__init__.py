@@ -37,14 +37,21 @@ def unlock_vault(vault: dict, passphrase: str) -> list[dict]:
     """Return plaintext private values from a downloaded vault.enc.json."""
     from base64 import b64decode
 
-    salt = b64decode(vault["salt_b64"])
-    key = derive_key(passphrase, salt)
-    opened = []
-    for item in vault.get("items") or []:
-        opened.append({
-            "id": item.get("id"),
-            "type": item.get("type"),
-            "kind": item.get("kind"),
-            "value": decrypt_text(key, item),
-        })
-    return opened
+    from cryptography.exceptions import InvalidTag
+
+    if not vault:
+        raise ValueError("vault is missing")
+    try:
+        salt = b64decode(vault["salt_b64"])
+        key = derive_key(passphrase, salt)
+        opened = []
+        for item in vault.get("items") or []:
+            opened.append({
+                "id": item.get("id"),
+                "type": item.get("type"),
+                "kind": item.get("kind"),
+                "value": decrypt_text(key, item),
+            })
+        return opened
+    except InvalidTag as e:
+        raise ValueError("wrong passphrase") from e

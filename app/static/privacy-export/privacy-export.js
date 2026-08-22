@@ -64,8 +64,29 @@
     return action === "encrypt" ? "[ENCRYPTED " + name + "]" : "[BLACKLABELED " + name + "]";
   }
 
+  function dropOverlap(text, spans) {
+    var taken = [];
+    var kept = [];
+    (spans || []).slice().sort(function (a, b) {
+      return (a.start || 0) - (b.start || 0);
+    }).forEach(function (span) {
+      var start = span.start | 0;
+      var end = span.end | 0;
+      var isText = start >= 0 && end > start && end <= text.length;
+      if (!isText) {
+        kept.push(span);
+        return;
+      }
+      var hit = taken.some(function (r) { return !(end <= r[0] || start >= r[1]); });
+      if (hit) return;
+      taken.push([start, end]);
+      kept.push(span);
+    });
+    return kept;
+  }
+
   function apply(text, spans, toggles) {
-    var list = (spans || []).slice().sort(function (a, b) {
+    var list = dropOverlap(text, spans).sort(function (a, b) {
       return (b.start || 0) - (a.start || 0);
     });
     var out = text;
@@ -88,7 +109,7 @@
       audit.push({ id: span.id, type: span.type, action: action, replacement: replacement });
     });
     audit.reverse();
-    return { text: out, audit: audit, html: toHtml(text, spans, toggles) };
+    return { text: out, audit: audit, html: toHtml(text, dropOverlap(text, spans), toggles) };
   }
 
   function toHtml(text, spans, toggles) {
@@ -161,7 +182,7 @@
           "%;top:" + (b.bbox[1] * 100) + "%;width:" + (b.bbox[2] * 100) +
           "%;height:" + (b.bbox[3] * 100) + '%"></i>';
       }).join("");
-      return '<div class="photo"><img src="' + img.data_url + '" alt="">' + boxes + "</div>";
+      return '<div class="photo"><img src="' + esc(img.data_url || "") + '" alt="">' + boxes + "</div>";
     }).join("");
 
     return "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>Privacy Gate export</title>" +

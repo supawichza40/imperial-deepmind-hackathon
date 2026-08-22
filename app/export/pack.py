@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+import html
 import io
 import json
 import zipfile
 from datetime import datetime, timezone
 
 from .redact import ExportResult, apply_export
+
+
+def _safe_stem(name: str) -> str:
+    cleaned = "".join(
+        ch if ch.isalnum() or ch in "-_." else "-"
+        for ch in (name or "document")
+    )
+    cleaned = cleaned.strip(".-") or "document"
+    return cleaned[:80]
 
 
 def build_zip_bytes(
@@ -27,7 +37,7 @@ def build_zip_bytes(
     )
     buf = io.BytesIO()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    root = f"privacy-gate-{document_name}-{stamp}"
+    root = f"privacy-gate-{_safe_stem(document_name)}-{stamp}"
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"{root}/sanitized.txt", result.text)
         zf.writestr(
@@ -79,24 +89,33 @@ def build_zip_bytes(
     return buf.getvalue(), result
 
 
+def _attr(value: object) -> str:
+    return html.escape(str(value), quote=True)
+
+
 def _html_page(body: str, images: list[dict], toggles: dict[str, str]) -> str:
     cards = []
     for img in images:
-        boxes = "".join(
-            f'<i class="{b["action"]}" style="'
-            f'left:{float(b["bbox"][0])*100}%;top:{float(b["bbox"][1])*100}%;'
-            f'width:{float(b["bbox"][2])*100}%;height:{float(b["bbox"][3])*100}%"'
-            f' title="{b["type"]} {b["action"]}"></i>'
-            for b in img.get("boxes") or []
-            if b.get("bbox")
-        )
+        box_bits = []
+        for b in img.get("boxes") or []:
+            bbox = b.get("bbox") or []
+            if len(bbox) < 4:
+                continue
+            action = _attr(b.get("action") or "")
+            box_bits.append(
+                f'<i class="{action}" style="'
+                f"left:{float(bbox[0])*100}%;top:{float(bbox[1])*100}%;"
+                f"width:{float(bbox[2])*100}%;height:{float(bbox[3])*100}%"
+                f'" title="{_attr(b.get("type"))} {action}"></i>'
+            )
+        boxes = "".join(box_bits)
         if img.get("blacklabeled") or img.get("whole") == "blacklabel":
             frame = '<div class="photo black">photo blacklabeled</div>'
         elif img.get("whole") == "encrypt" or img.get("encrypted"):
             frame = '<div class="photo enc">photo encrypted</div>'
         elif img.get("data_url"):
             frame = (
-                f'<div class="photo"><img src="{img["data_url"]}" alt="">'
+                f'<div class="photo"><img src="{_attr(img["data_url"])}" alt="">'
                 f"{boxes}</div>"
             )
         else:
@@ -105,7 +124,7 @@ def _html_page(body: str, images: list[dict], toggles: dict[str, str]) -> str:
             cards.append(frame)
     gallery = "\n".join(cards)
     toggle_rows = "".join(
-        f"<li><code>{k}</code> {v}</li>" for k, v in toggles.items()
+        f"<li><code>{_attr(k)}</code> {_attr(v)}</li>" for k, v in toggles.items()
     )
     return f"""<!doctype html>
 <html lang="en"><meta charset="utf-8">

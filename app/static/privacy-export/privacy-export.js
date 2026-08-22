@@ -273,6 +273,7 @@
     actions.className = "pg-actions";
     actions.innerHTML =
       "<button type=\"button\" class=\"pg-dl\" id=\"pg-html\">Download copy</button>" +
+      "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-share\">Share link</button>" +
       "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-txt\">Download text</button>" +
       "<button type=\"button\" class=\"pg-dl ghost\" id=\"pg-json\">Download audit</button>";
     box.appendChild(actions);
@@ -319,6 +320,17 @@
     });
     el.querySelector("#pg-json").addEventListener("click", function () {
       downloadBlob((opts.documentName || "privacy-gate") + "-audit.json", new Blob([JSON.stringify({ toggles: toggles, audit: el._result.audit }, null, 2)], { type: "application/json" }));
+    });
+    el.querySelector("#pg-share").addEventListener("click", function () {
+      clearFail();
+      if (window.location.pathname.indexOf("/vault/") === -1) {
+        var vaultUrl = new URL("../vault/index.html", window.location.href).href;
+        fail("Open the vault to mint a signed share link with access control. " + vaultUrl);
+        passWrap.classList.add("is-on");
+        return;
+      }
+      var shareBtn = document.getElementById("btn-share");
+      if (shareBtn) shareBtn.click();
     });
 
     paint();

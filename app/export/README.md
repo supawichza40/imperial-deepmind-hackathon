@@ -58,3 +58,5 @@ Also load the shared theme first.
 ```
 
 Theme files live in `app/static/theme/`. Open `app/static/theme/index.html` to see colour, type, pills, and switches.
+
+Folders, share links, and two-step delete live in `app/static/vault/index.html`.

@@ -1,0 +1,15 @@
+.venv
+.env
+.env.local
+env
+__pycache__
+.pytest_cache
+*.pyc
+.git
+notes/playground
+.cursor
+.pytest_cache
+*.pyc
+.git
+notes/playground
+.cursor

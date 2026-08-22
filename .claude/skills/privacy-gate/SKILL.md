@@ -11,21 +11,21 @@ because getting it wrong cost something real today.
 
 ## The local model
 
-- **Use `gemma4:31b-cloud`, not a locally-pulled `gemma4:e2b`.** Decided
-  22 Aug 2026 ~15:51: `gemma4:e2b` was never actually pulled on the build
-  machine (`ollama list` only had `gemma4:31b-cloud` and unrelated models);
-  the pull was running at ~44 min ETA, too slow for the deadline. Killed it
-  and switched to Ollama's cloud tag instead. Measured: a one-word structured
-  reply via the native route in 0.38s total_duration. Still called through
-  the exact same local Ollama client and native `/api/generate` route below
-  — Ollama proxies the `-cloud` tag to a hosted endpoint, so no code path
-  changes, only the model name. The "runs on-device" framing in this file's
-  "What the product actually is" section now describes the redaction/consent
-  architecture, not this specific model's execution location; do not claim
-  gemma4:31b-cloud never leaves the machine in write-ups or demo narration.
-- Historical note (superseded): `gemma4:e2b` was measured faster than
-  `gemma4:e4b` (7.5s vs 14.2s warm) earlier in the day. That comparison no
-  longer applies since neither is what's in use now.
+- **Use `gemma4:e2b`. It is on the machine.** Verified 22 Aug 2026 16:49:
+  `ollama list` shows `gemma4:e2b`, 7.2 GB, id `7fbdbf8f5e45`, pulled four
+  hours earlier. An entry written at ~15:51 claimed it "was never actually
+  pulled" and switched the shipped path to `gemma4:31b-cloud`. That claim
+  was wrong, and it has been removed rather than softened, because a false
+  premise in this file propagates into every session that reads it.
+- **Do not ship `gemma4:31b-cloud` on the redaction path.** Ollama proxies
+  the `-cloud` tag to a hosted endpoint, so the document leaves the machine
+  *before* the consent gate. That inverts the one claim the product rests
+  on. It is available as an env-var fallback (`LOCAL_MODEL`, no code change,
+  roughly 0.6s against e2b's 2.3s) for a path where nothing sensitive is
+  involved, and it must never be described as running on-device.
+- Measured on this machine: e2b 7.5s warm against e4b 14.2s for the same
+  structured output, and `POST /api/detect` returning 8 spans in 4.3s with
+  every character offset matching the source text.
 - **Call the native route, `POST /api/generate`, not the OpenAI-compatible
   `/v1`.** The `/v1` route silently ignores `think: false`, so the model
   spends its whole budget on hidden reasoning and returns an empty string.

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Gate</title>
+<link rel="stylesheet" href="../theme/tokens.css">
+<link rel="stylesheet" href="../theme/components.css">
+<link rel="stylesheet" href="gate.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">Privacy Gate</div>
+    <div class="netbadge checking" id="netbadge">checking</div>
+  </header>
+
+  <main class="stage">
+    <div class="frame">
+      <div class="view" id="view">
+
+        <section data-screen="S1" class="scr">
+          <p class="eyebrow">start</p>
+          <p class="big">What do you need help with?</p>
+          <p class="say">Nothing is uploaded. The file is read on this machine.</p>
+          <label class="drop" id="drop" for="filepick">
+            <div class="ic">&#9723;</div>
+            <div class="drop-title">Drop a payslip, statement or letter</div>
+            <div class="drop-sub">or browse your files</div>
+          </label>
+          <input type="file" id="filepick" hidden accept=".txt,.md,text/plain">
+          <div class="row">
+            <button class="b gh sm" type="button" data-sample="payslip">Sample payslip</button>
+            <button class="b gh sm" type="button" data-sample="statement">Sample statement</button>
+            <button class="b gh sm" type="button" data-sample="medical">Sample medical letter</button>
+          </div>
+        </section>
+
+        <section data-screen="S2" class="scr">
+          <p class="eyebrow">reading</p>
+          <p class="big" id="s2-title">Opening document</p>
+          <p class="say">Still on your machine. Nothing has been sent anywhere.</p>
+          <div class="prog"><i></i></div>
+          <div class="docwrap">
+            <div class="ln l"></div><div class="ln m"></div><div class="ln l"></div><div class="ln s"></div>
+          </div>
+        </section>
+
+        <section data-screen="S3" class="scr">
+          <p class="eyebrow">on device &middot; local model</p>
+          <p class="big">Looking for anything private</p>
+          <p class="say">This runs locally. Turn the wifi off, it keeps working.</p>
+          <div class="prog wood"><i></i></div>
+          <div class="docwrap scanline">
+            <div class="ln l"></div><div class="ln m"></div><div class="ln l"></div><div class="ln s"></div>
+          </div>
+        </section>
+
+        <section data-screen="S4" class="scr">
+          <p class="eyebrow">your decision</p>
+          <p class="big">Choose what may be shared</p>
+          <p class="say" id="s4-say">We tell you what each field would let a stranger do, then you decide.</p>
+          <div class="docwrap doc-mini" id="s4-doc"></div>
+          <div class="gate" id="s4-gate"></div>
+          <div class="row"><button class="b" type="button" id="s4-next">Review what will be sent</button></div>
+        </section>
+
+        <section data-screen="S5" class="scr">
+          <p class="eyebrow">the gate</p>
+          <p class="big">This, and nothing else, leaves</p>
+          <p class="say">Watch the private fields go. The originals stay on this machine.</p>
+          <div class="docwrap" id="s5-doc"></div>
+          <div class="row">
+            <button class="b gh" type="button" id="s5-back">Back</button>
+            <button class="b" type="button" id="s5-send" disabled>Send fields</button>
+          </div>
+        </section>
+
+        <section data-screen="S6" class="scr">
+          <p class="eyebrow">cloud &middot; reasoning model</p>
+          <p class="big">Comparing your documents</p>
+          <p class="say">Only the approved fields went up. Here they are, still on screen.</p>
+          <div class="prog"><i></i></div>
+          <div class="docwrap" id="s6-doc"></div>
+        </section>
+
+        <section data-screen="S7" class="scr">
+          <p class="eyebrow">result</p>
+          <p class="big">Here is what it found</p>
+          <div class="found" id="s7-found"></div>
+          <p class="eyebrow" style="margin-top:16px">drafted explanation</p>
+          <div class="docwrap" id="s7-draft"></div>
+          <div class="row">
+            <button class="b gh sm" type="button" id="s7-copy">Copy</button>
+            <button class="b sm" type="button" id="s7-next">See what was shared</button>
+          </div>
+        </section>
+
+        <section data-screen="S8" class="scr">
+          <p class="eyebrow">receipt</p>
+          <p class="big">Everything that happened</p>
+          <ul class="log" id="s8-log"></ul>
+          <div class="row">
+            <button class="b gh sm" type="button" id="s8-export">Export receipt</button>
+            <button class="b sm" type="button" id="s8-restart">Start over</button>
+          </div>
+        </section>
+
+        <section data-screen="E1" class="scr">
+          <p class="eyebrow">problem</p>
+          <p class="big">The local model is not running</p>
+          <div class="fail" id="e1-msg">The local model could not be reached.</div>
+          <p class="say" style="margin-top:14px">You can still continue. Pattern matching alone finds account
+            numbers, postcodes, NI numbers and emails, it just will not catch names in free text.</p>
+          <div class="row">
+            <button class="b gh" type="button" id="e1-retry">Try again</button>
+            <button class="b" type="button" id="e1-continue">Continue without the model</button>
+          </div>
+        </section>
+
+        <section data-screen="E2" class="scr">
+          <p class="eyebrow">nothing found</p>
+          <p class="big">This looks clean</p>
+          <p class="say">No names, addresses or account numbers were detected. That might be right, or the
+            detector missed something. You decide.</p>
+          <div class="docwrap muted" id="e2-doc">Select any text below to mark it private.</div>
+          <div class="row">
+            <button class="b gh" type="button" id="e2-mark">Mark something by hand</button>
+            <button class="b" type="button" id="e2-send">Send as it is</button>
+          </div>
+        </section>
+
+        <section data-screen="E3" class="scr">
+          <p class="eyebrow">problem</p>
+          <p class="big">The cloud model did not answer</p>
+          <div class="fail" id="e3-msg">The reasoning call failed.</div>
+          <p class="say" style="margin-top:14px">Your document is safe. Nothing was lost, and nothing extra
+            was sent.</p>
+          <div class="row">
+            <button class="b gh" type="button" id="e3-retry">Try again</button>
+            <button class="b" type="button" id="e3-saved">Show a saved example</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script src="gate.js"></script>
+</body>
+</html>

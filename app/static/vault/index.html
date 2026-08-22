@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../theme/tokens.css">
   <link rel="stylesheet" href="../theme/components.css">
   <link rel="stylesheet" href="../privacy-export/privacy-export.css">
+  <link rel="stylesheet" href="../privacy-export/pipeline.css">
   <link rel="stylesheet" href="vault.css">
   <style>
     body { margin: 0; background: var(--theme-mist); }
@@ -21,11 +22,27 @@
   <script src="../theme/tokens.js"></script>
   <script src="../privacy-export/privacy-export.js"></script>
   <script src="../privacy-export/demo-payload.js"></script>
+  <script src="../privacy-export/pipeline.js"></script>
   <script src="qrcodegen.js"></script>
   <script src="qr.js"></script>
   <script src="vault.js"></script>
   <script>
+    // Republish window.PRIVACY_EXPORT_DEMO with a live /api/detect result
+    // before the user opens the payslip. vault.js reads that same global
+    // when it mounts the export panel -- this makes it live without
+    // touching vault.js. Falls back to the static demo payload if the
+    // backend is unreachable (PrivacyGatePipeline.detectAndPublish already
+    // handles that).
+    if (window.PrivacyGatePipeline && window.PRIVACY_EXPORT_DEMO) {
+      PrivacyGatePipeline.detectAndPublish({
+        id: window.PRIVACY_EXPORT_DEMO.documentName || "payslip",
+        text: window.PRIVACY_EXPORT_DEMO.text,
+      });
+    }
     PrivacyVault.mount(document.getElementById("vault"), { email: "you@local" });
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js");
+    }
   </script>
 </body>
 </html>

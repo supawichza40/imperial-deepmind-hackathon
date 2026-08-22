@@ -1,0 +1,81 @@
+/* Glue styling for pipeline.js (S1-S3, S6-S8). Reuses theme tokens and the
+   existing .pg-card / .theme-btn conventions from privacy-export.css and
+   theme/components.css; does not fork either. */
+
+.pgp-picker,
+.pgp-reason {
+  margin-bottom: 24px;
+}
+
+.pgp-doc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.pgp-doc-btn.is-active {
+  background: var(--theme-ink);
+  color: var(--theme-paper);
+}
+
+.pgp-status {
+  margin: 16px 0 0;
+  color: var(--theme-mute);
+  font-size: 14px;
+}
+
+.pgp-status.is-fallback,
+.pgp-status.is-error {
+  color: var(--theme-wood-deep);
+}
+
+.pgp-copy {
+  color: var(--theme-mute);
+  max-width: 40rem;
+  margin: 8px 0 20px;
+}
+
+.pgp-finding {
+  background: var(--theme-sand);
+  border-radius: var(--theme-radius-input);
+  padding: 16px;
+  margin: 0 0 16px;
+}
+
+.pgp-finding.is-flagged {
+  background: #f7ece9;
+  color: var(--theme-danger);
+}
+
+.pgp-draft {
+  white-space: pre-wrap;
+  font-family: var(--theme-mono);
+  font-size: 13px;
+  background: var(--theme-paper);
+  border: 1px solid var(--theme-line);
+  border-radius: var(--theme-radius-input);
+  padding: 16px;
+}
+
+.pgp-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.pgp-audit-table th,
+.pgp-audit-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--theme-line);
+}
+
+.pgp-audit-table th {
+  color: var(--theme-mute);
+  text-transform: uppercase;
+  letter-spacing: var(--theme-track-heading);
+  font-size: 11px;
+  font-weight: 600;
+}

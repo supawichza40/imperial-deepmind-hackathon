@@ -17,8 +17,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "starter"))
 
 from utils import DEFAULT_MODEL, get_client, with_retry  # noqa: E402
 
-# E2B, not E4B. Measured 10.8 tok/s vs 4.7 on the build machine.
-LOCAL_MODEL = os.environ.get("LOCAL_MODEL", "gemma4:e2b")
+# Cloud tag, not a locally-pulled model. gemma4:e2b was never actually
+# pulled on the build machine and the pull was too slow for the deadline
+# (~44 min ETA); gemma4:31b-cloud runs through the same native Ollama route
+# with no code change, just the model name. See SKILL.md "The local model".
+LOCAL_MODEL = os.environ.get("LOCAL_MODEL", "gemma4:31b-cloud")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 

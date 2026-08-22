@@ -49,7 +49,20 @@ ul{margin:8px 0;padding-left:20px}li{margin:5px 0}
 <div class="wrap">
 
 <h1>Build this</h1>
-<p class="sub">Idea portfolio from 30 agents across 8 life domains and 3 models · written 13:32 BST, 22 Aug 2026 · deadline <b>17:30 sharp</b></p>
+<p class="sub">Idea portfolio from 30 agents across 8 life domains and 3 models · written 13:32 BST, superseded 13:58 · deadline <b>17:30 sharp</b></p>
+
+<div class="big" style="border-color:var(--bad)">
+<h2>Superseded — a build is already underway</h2>
+<p><b>Do not pick an idea from this page.</b> By 13:18 the team was building <b>Privacy Gate</b> on <b>Track 3</b> — <code>app/main.py</code>, <code>app/pipeline.py</code>, an Apache-2.0 licence, a README with a mermaid architecture diagram and a <code>SUBMISSION.md</code> checklist all exist on disk. With around three and a half hours left, switching ideas would cost more than any idea here is worth. <span class="tag">observed 13:57</span></p>
+<p>What this page is still good for is four upgrades to the build that already exists:</p>
+<ul>
+<li><b>Use <code>gemma4:e2b</code>, not <code>e4b</code>.</b> Measured on this machine: e4b <b>14.2s</b> warm against e2b <b>7.5s at 10.86 tok/s</b>, both returning correct 4-item structured output through <code>POST /api/generate</code> with <code>images:[base64]</code>. Note also that <code>ollama list</code> shows <code>gemma4:e4b</code> and <code>gemma4:latest</code> are the same 9.6 GB model, identical ID. <b>Pre-warm it</b> — a cold call measured 16.6 seconds here. <span class="tag">observed</span></li>
+<li><b>Lead with per-field approval, never with "we redact locally."</b> Local-redact-then-cloud-answer is a published tutorial pattern and a shipped product category. The per-field consent gate and the audit trail are the only defensible novelty, and novelty is 25% of the score.</li>
+<li><b>Steal the inference chain</b> from Overshare Check, below — the single best device the whole corpus produced. Do not show "account number redacted"; show "this field → what someone could do with it." That is Real-World Impact and UX, another 25%.</li>
+<li><b>The video does not retire live-demo risk.</b> <code>docs/00-ground-truth.md:33,37</code> records a top 3–5 being picked for live demos, and the 20% bucket is "Presentation &amp; <i>Live Demo</i>", including the ability to defend choices in Q&amp;A. Rehearse live as well as recording.</li>
+</ul>
+<p class="prov">Everything below is preserved as the record of what was considered and why, not as a live recommendation.</p>
+</div>
 
 <div class="big">
 <h2>The decision, in one paragraph</h2>

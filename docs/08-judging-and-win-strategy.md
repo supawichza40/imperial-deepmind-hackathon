@@ -1,5 +1,13 @@
 # Judging & Win Strategy: UK AI Agent Lab, Gemini Edition (22 Aug 2026)
 
+> **SUPERSEDED IN PART (12:30):** the real rubric and tracks were announced and are in
+> [`docs/10-tracks-rules-rubric.md`](10-tracks-rules-rubric.md) — that file wins on any
+> conflict. Actual weights: Technical Execution & Model Leverage 30%, Innovation 25%,
+> Real-World Impact & UX 25%, Presentation & Live Demo 20%. The strategy, idea table and
+> time budget below remain useful; the "no published criteria exist" framing does not.
+
+
+
 This event's own rubric and track list get announced at the 12:15-12:30 briefing, and no published judging criteria exist for it anywhere online (confirmed by event-recon; see the companion brief at `docs/01-event-brief.md` for full logistics, sourcing, and what's still unconfirmed). Everything below comes from published rubrics and outcomes of the closest comparable events: Google DeepMind's own Gemini 3 Hackathon (Feb 2026, $100K in prizes, the most recent and most directly comparable event, same sponsor and same year), Google Cloud's ADK Hackathon, the Gemini Live Agent Challenge, the 2024 Gemini API Developer Competition, and Kaggle's Gemma 3n Impact Challenge. Claims about a past event are sourced inline. Recommendations for today are marked **JUDGEMENT**.
 
 One thing is not inference: this morning's own keynotes were "Frontier Agents with Gemini 3.7 Flash" (Amit Vadi, GDM) and "On-Device AI with Gemma 4" (Ian Ballantyne, GDM), per the confirmed schedule in `docs/01-event-brief.md`. The two features this playbook biases toward in section 4 are the two topics GDM chose to open the day with, not a guess.

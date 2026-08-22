@@ -10,6 +10,7 @@ Everything in this repo exists to save minutes during those five hours.
 | # | File | What it's for | When |
 |---|---|---|---|
 | 00 | [docs/00-ground-truth.md](docs/00-ground-truth.md) | Organiser's own words: schedule, speakers, prizes. The authority. | Now |
+| **10** | **[docs/10-tracks-rules-rubric.md](docs/10-tracks-rules-rubric.md)** | **ANNOUNCED: 3 tracks, rubric weights, 4 required submission artefacts. Authoritative.** | **Now** |
 | 01 | [docs/01-event-brief.md](docs/01-event-brief.md) | Event/organiser recon, tracks, rules, prior editions | Now |
 | 02 | [docs/02-speakers-and-mentors.md](docs/02-speakers-and-mentors.md) | Who to talk to, what to ask, mentor-hour protocol | Before 11:05 |
 | 08 | [docs/08-judging-and-win-strategy.md](docs/08-judging-and-win-strategy.md) | Rubric, what wins, 15 sized ideas, minute-by-minute plan | **12:15–12:30** |
@@ -20,6 +21,19 @@ Everything in this repo exists to save minutes during those five hours.
 | 06 | [docs/06-agent-frameworks-adk-a2a-mcp.md](docs/06-agent-frameworks-adk-a2a-mcp.md) | ADK, A2A, MCP, Gemini CLI — pick a stack | 12:30 |
 | — | [starter/](starter/) | `git clone` → working agent in 10 min | 12:30 |
 | 09 | [docs/09-submission-and-demo.md](docs/09-submission-and-demo.md) | Submission templates, video, run-sheet, panic protocol | **15:00 onward** |
+
+## Rubric (announced) — 100 points
+
+Technical Execution & Model Leverage **30%** · Innovation & Originality **25%** ·
+Real-World Impact & UX **25%** · Presentation & Live Demo **20%**
+
+Three tracks, each with an identical prize (£400 + US$300 credits + swag): Track 1
+Gemini 3.7 Flash · Track 2 Gemma 4 local · Track 3 hybrid. Track choice is a
+competitive decision — see [docs/10](docs/10-tracks-rules-rubric.md).
+
+**Required by 17:30:** public GitHub repo (README, setup, architecture diagram,
+MIT/Apache licence) · proof of model integration · 2-min Loom/YouTube video ·
+2–3 paragraph write-up.
 
 ## The two pillars (from the keynotes)
 

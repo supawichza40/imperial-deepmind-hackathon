@@ -6,9 +6,13 @@
 
 | Area | Document | What it is |
 |---|---|---|
-| **Spec** | [specs/privacy-gate.md](specs/privacy-gate.md) | Current requirements: what the system must do, data contracts, fixtures, prompts |
+| **Requirements** | [specs/privacy-gate.md](specs/privacy-gate.md) | Functional requirements, data contracts, fixtures, prompts |
+| **Design** | [specs/design.md](specs/design.md) | Core module designs: detector, sanitiser, reasoner, audit |
+| **Architecture** | [specs/architecture.md](specs/architecture.md) | System architecture: FastAPI + PWA, process model, security |
+| **API** | [specs/api.md](specs/api.md) | REST endpoint definitions, schemas, error shapes |
+| **Testing** | [specs/testing.md](specs/testing.md) | TDD strategy, test definitions, fixtures, priorities |
 | **Spec index** | [specs/index.md](specs/index.md) | Navigation for all specs |
-| **Decisions** | [decisions/index.md](decisions/index.md) | Why we chose what we chose |
+| **Decisions** | [decisions/index.md](decisions/index.md) | Why we chose what we chose (10 ADRs) |
 | **Dev log** | [dev-log/index.md](dev-log/index.md) | Implementation history and work items |
 
 ## War-room reference (event research, 22 Aug 2026)

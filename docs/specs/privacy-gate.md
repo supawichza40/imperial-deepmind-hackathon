@@ -18,7 +18,7 @@ The boundary is the product. Originals never leave the machine.
 
 **Framing rule:** "assisted redaction with human approval" — never "guaranteed anonymisation".
 
-**UI framework:** Streamlit. No debate, no alternatives — it's the fastest path for a demo UI with checkboxes and text display.
+**UI framework:** Web app (FastAPI backend + static HTML/CSS/JS frontend, PWA-installable). See [architecture spec](architecture.md). Supersedes ADR-003 (Streamlit).
 
 **Env var:** `GEMINI_API_KEY` (read by `starter/utils.py:get_client()`, already built).
 
@@ -44,7 +44,7 @@ MUST = ship it. SHOULD = nice if time allows. COULD = cut first.
 - **FR-11 (MUST):** Parse Gemma's JSON output defensively — strip markdown wrappers (` ```json ... ``` `), handle trailing commas, handle malformed JSON gracefully. If parsing fails, treat as no Gemma results (regex-only).
 
 ### 2.3 Consent
-- **FR-12 (MUST):** Show the document with detected spans highlighted (colour-coded by type in Streamlit).
+- **FR-12 (MUST):** Show the document with detected spans highlighted (colour-coded by type in the web UI).
 - **FR-13 (MUST):** User approves per **field type** (e.g. "share income, hide name"), not per span. One checkbox per detected type.
 - **FR-14 (MUST):** Nothing crosses the gate until the user clicks "Send approved to Gemini."
 - **FR-15 (MUST):** Produce the **sanitised payload**: document text with blocked spans replaced by `[REDACTED]`. Replacement is applied in **reverse offset order** (rightmost first) to preserve earlier offsets. Overlapping spans are merged before replacement (see §3.6).

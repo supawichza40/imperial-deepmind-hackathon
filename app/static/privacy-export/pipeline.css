@@ -4,7 +4,26 @@
 
 .pgp-picker,
 .pgp-reason {
-  margin-bottom: 24px;
+  margin-bottom: 0;
+}
+
+.pgp-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pgp-step-title {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 3vw, 32px);
+}
+
+.pgp-paste-more {
+  margin-top: 20px;
+}
+
+.pgp-paste-more .pgp-paste-label {
+  margin-top: 12px;
 }
 
 .pgp-drop {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Privacy Gate download</title>
+  <title>Privacy Gate</title>
   <link rel="stylesheet" href="../theme/tokens.css">
   <link rel="stylesheet" href="../theme/components.css">
   <link rel="stylesheet" href="privacy-export.css">
@@ -11,12 +11,19 @@
 </head>
 <body>
   <div class="pg-page" id="pgp-root">
-    <p class="theme-kicker">Privacy Gate · Track 3</p>
-    <nav class="pg-nav" aria-label="Privacy Gate">
-      <a class="pg-nav-link" href="/vault/">Vault</a>
-      <a class="pg-nav-link is-on" href="/privacy-export/">Privacy</a>
-    </nav>
-    <div id="slot"></div>
+    <header class="pg-top">
+      <div>
+        <p class="theme-kicker">Track 3</p>
+        <p class="theme-title pg-brand">Privacy Gate</p>
+      </div>
+      <nav class="pg-nav" aria-label="Privacy Gate">
+        <a class="pg-nav-link" href="/vault/">Vault</a>
+        <a class="pg-nav-link is-on" href="/privacy-export/">Privacy</a>
+      </nav>
+    </header>
+    <div class="pgp-flow">
+      <div id="slot"></div>
+    </div>
   </div>
   <script src="../theme/tokens.js"></script>
   <script src="privacy-export.js"></script>

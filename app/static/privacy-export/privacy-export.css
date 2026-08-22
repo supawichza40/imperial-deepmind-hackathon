@@ -9,11 +9,12 @@
 
 .pg-export * { box-sizing: border-box; }
 
-.pg-export h1 {
+.pg-export h1,
+.pg-export .pgp-step-title {
   font-size: clamp(22px, 4vw, 32px);
-  font-weight: 600;
-  letter-spacing: var(--theme-track-heading);
-  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
   margin: 0 0 12px;
 }
 

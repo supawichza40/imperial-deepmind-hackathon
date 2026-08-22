@@ -19,7 +19,7 @@ def test_page_has_viewport_and_shared_nav(path):
     html = response.text
     assert 'name="viewport"' in html
     assert 'content="width=device-width, initial-scale=1"' in html
-    assert 'class="pg-page"' in html
+    assert 'class="pg-top"' in html
     assert 'class="pg-nav"' in html
     assert 'href="/vault/"' in html
     assert 'href="/privacy-export/"' in html
@@ -41,6 +41,7 @@ def test_export_page_starts_pipeline():
     assert "PrivacyGatePipeline.init" in html
     assert 'id="slot"' in html
     assert 'id="pgp-root"' in html
+    assert 'class="pgp-flow"' in html
 
 
 def test_pipeline_js_wires_send_and_fr26():

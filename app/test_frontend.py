@@ -23,6 +23,8 @@ class PageMarkupTests(unittest.TestCase):
         html = (STATIC / "vault" / "index.html").read_text(encoding="utf-8")
         self.assertIn('name="viewport"', html)
         self.assertIn('id="pgp-root"', html)
+        self.assertIn("pg-brand", html)
+        self.assertIn("pg-top", html)
         self.assertIn("PrivacyGatePipeline.init", html)
         self.assertIn('href="/privacy-export/"', html)
         self.assertNotIn("PrivacyVault.mount(", html)
@@ -32,11 +34,14 @@ class PageMarkupTests(unittest.TestCase):
         self.assertIn('id="slot"', html)
         self.assertIn("PrivacyGatePipeline.init", html)
         self.assertIn('href="/vault/"', html)
+        self.assertIn("pgp-flow", html)
+        self.assertIn("pg-top", html)
 
     def test_theme_html_shares_page_shell(self):
         html = (STATIC / "theme" / "index.html").read_text(encoding="utf-8")
         self.assertIn('class="pg-page"', html)
         self.assertIn('class="pg-nav"', html)
+        self.assertIn("pg-top", html)
 
 
 class PipelineContractTests(unittest.TestCase):
@@ -65,7 +70,8 @@ class AddFileTests(unittest.TestCase):
         self.assertIn("function docFromPaste", src)
         self.assertIn("function isTextFile", src)
         self.assertIn("addLocalDoc", src)
-        self.assertIn("pgp-leaving", src)
+        self.assertIn("pgp-paste-more", src)
+        self.assertIn("pgp-picker-host", src)
 
     def test_paste_rejects_empty_and_keeps_text(self):
         src = (STATIC / "privacy-export" / "pipeline.js").read_text(encoding="utf-8")
@@ -78,6 +84,9 @@ class AddFileTests(unittest.TestCase):
         self.assertIn("btn-add-file", src)
         self.assertIn("doc-list", src)
         self.assertIn("pg-open-doc", src)
+        self.assertIn("pgp-picker-host", src)
+        self.assertIn("pgp-reason-host", src)
+        self.assertIn("vault-toolbar", src)
 
 
 class ButtonIdTests(unittest.TestCase):
@@ -102,7 +111,7 @@ class MobileCssTests(unittest.TestCase):
         self.assertIn("@media (max-width: 760px)", components)
         self.assertIn("@media (max-width: 760px)", export_css)
         self.assertIn("safe-area-inset-top", components)
-        self.assertIn("privacy-gate-v4", (STATIC / "service-worker.js").read_text(encoding="utf-8"))
+        self.assertIn("privacy-gate-v5", (STATIC / "service-worker.js").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

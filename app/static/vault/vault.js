@@ -434,22 +434,26 @@
         "<aside class=\"vault-side\">" +
           "<p class=\"theme-kicker\">Signed in</p>" +
           "<p>" + esc(state.email) + "</p>" +
-          "<p class=\"theme-kicker\" style=\"margin-top:24px\">Authenticator</p>" +
-          "<p class=\"theme-mute\">Keep this secret on your phone in a real build. The live code is shown so the demo can run without an extra app.</p>" +
-          "<p class=\"pg-code\" id=\"pg-live-code\">------</p>" +
-          "<p class=\"theme-mute\" style=\"margin-top:8px\">Secret " + state.totp.slice(0, 4) + "…" + state.totp.slice(-4) + "</p>" +
-          "<h2 style=\"margin-top:32px\">Folders</h2>" +
+          "<h2>Folders</h2>" +
           "<div id=\"folder-list\"></div>" +
           "<form class=\"vault-form\" id=\"new-folder\">" +
             "<input name=\"name\" required placeholder=\"New folder name\" aria-label=\"New folder name\">" +
             "<button class=\"theme-btn ghost\" type=\"submit\">Add folder</button>" +
           "</form>" +
+          "<details class=\"vault-more\">" +
+            "<summary>Authenticator</summary>" +
+            "<p class=\"theme-mute\">Live code for the delete step. Keep the secret on your phone in a real build.</p>" +
+            "<p class=\"pg-code\" id=\"pg-live-code\">------</p>" +
+            "<p class=\"theme-mute\">Secret " + state.totp.slice(0, 4) + "…" + state.totp.slice(-4) + "</p>" +
+          "</details>" +
         "</aside>" +
         "<section class=\"vault-main\">" +
-          "<div class=\"vault-bar\" id=\"folder-actions\"></div>" +
-          "<div id=\"acl-box\"></div>" +
+          "<div class=\"vault-toolbar\" id=\"folder-actions\"></div>" +
+          "<div id=\"pgp-picker-host\"></div>" +
           "<div id=\"doc-list\"></div>" +
           "<div id=\"export-slot\"></div>" +
+          "<div id=\"pgp-reason-host\"></div>" +
+          "<div id=\"acl-box\"></div>" +
         "</section>" +
       "</div>"
     ));
@@ -478,7 +482,8 @@
         return "<li><span>" + esc(email) + "</span><span>" + esc(current.members[email]) + "</span></li>";
       }).join("");
       box.innerHTML =
-        "<p class=\"theme-kicker\">Access on " + esc(current.name) + "</p>" +
+        "<details class=\"vault-more\">" +
+        "<summary>Access on " + esc(current.name) + "</summary>" +
         "<ul class=\"vault-members\">" +
         "<li><span>" + esc(current.owner) + "</span><span>owner</span></li>" + rows +
         "</ul>" +
@@ -492,7 +497,8 @@
             "<option value=\"admin\">admin</option>" +
             "</select>" +
             "<button class=\"theme-btn ghost\" type=\"submit\">Grant access</button></form>"
-          : "<p class=\"theme-mute\">You can view this folder. You cannot change access.</p>");
+          : "<p class=\"theme-mute\">You can view this folder. You cannot change access.</p>") +
+        "</details>";
       var grant = box.querySelector("#grant-form");
       if (grant) grant.addEventListener("submit", function (ev) {
         ev.preventDefault();
@@ -508,12 +514,17 @@
       if (!current) return;
       var lockedOut = current.locked && !current.unlocked;
       bar.innerHTML =
-        "<h1 style=\"flex:1 1 100%;margin:0 0 8px\">" + esc(current.name) + "</h1>" +
+        "<div class=\"vault-toolbar-copy\">" +
+        "<p class=\"theme-kicker\">Folder</p>" +
+        "<p class=\"theme-title vault-folder-title\">" + esc(current.name) + "</p>" +
+        "</div>" +
+        "<div class=\"vault-bar\">" +
         "<button type=\"button\" class=\"theme-btn\" id=\"btn-dl\" " + (can(current, state.email, "download") && !lockedOut ? "" : "disabled ") + ">Download</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-share\" " + (can(current, state.email, "share") && !lockedOut ? "" : "disabled ") + ">Share file</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-add-file\" " + (lockedOut ? "disabled " : "") + ">Add file</button>" +
         "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-lock\">" + (current.locked && !current.unlocked ? "Unlock folder" : "Lock folder") + "</button>" +
-        "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-del\" " + (can(current, state.email, "delete") ? "" : "disabled ") + ">Delete folder</button>";
+        "<button type=\"button\" class=\"theme-btn ghost\" id=\"btn-del\" " + (can(current, state.email, "delete") ? "" : "disabled ") + ">Delete folder</button>" +
+        "</div>";
       bar.querySelector("#btn-dl").addEventListener("click", function () {
         var htmlBtn = document.getElementById("pg-html");
         if (htmlBtn) htmlBtn.click();
@@ -791,6 +802,7 @@
         slot.innerHTML = "<p class=\"theme-mute\">Unlock this folder to see files.</p>";
         return;
       }
+      if (slot.querySelector(".pg-export")) return;
       if (root.PrivacyExport && root.PRIVACY_EXPORT_DEMO) {
         slot.innerHTML = "";
         root.PrivacyExport.mount(slot, root.PRIVACY_EXPORT_DEMO);

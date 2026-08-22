@@ -242,7 +242,8 @@
 
     el.classList.add("pg-export");
     el.innerHTML =
-      "<h1>Privacy settings</h1>" +
+      "<p class=\"theme-kicker\">Your decision</p>" +
+      "<p class=\"theme-title pgp-step-title\">Choose what may leave</p>" +
       "<p class=\"sub\">Turn a type on to hide it. Blacklabel paints it out. Encrypt locks the original behind a passphrase that is not stored in the file.</p>" +
       "<div class=\"pg-grid\">" +
       "  <div class=\"pg-card\" id=\"pg-toggles\"></div>" +

@@ -180,7 +180,8 @@
     var box = document.createElement("div");
     box.className = "pg-card pgp-picker";
     box.innerHTML =
-      '<p class="theme-kicker">Step 1 · Add a document</p>' +
+      '<p class="theme-kicker">Start</p>' +
+      '<p class="theme-title pgp-step-title">What do you need help with?</p>' +
       '<p class="pgp-copy">Nothing is uploaded. The file is read on this machine, then you approve each field.</p>' +
       '<div class="pgp-drop" id="pgp-drop">' +
       '<p class="pgp-drop-title">Drop a payslip, statement or letter</p>' +
@@ -188,9 +189,12 @@
       '<input id="pgp-file" class="pgp-file" type="file" accept=".txt,.md,.csv,.json,.html,.htm,.log,text/plain">' +
       '<button type="button" class="theme-btn" id="pgp-browse">Add file</button>' +
       "</div>" +
-      '<label class="pgp-paste-label" for="pgp-paste">Or paste the text</label>' +
+      '<details class="pgp-paste-more">' +
+      "<summary>Paste the text instead</summary>" +
+      '<label class="pgp-paste-label" for="pgp-paste">Document text</label>' +
       '<textarea id="pgp-paste" class="theme-input pgp-paste" rows="6" placeholder="Paste a payslip, statement, or letter here."></textarea>' +
       '<button type="button" class="theme-btn ghost" id="pgp-paste-go">Use pasted text</button>' +
+      "</details>" +
       '<p class="theme-kicker pgp-samples-kicker">Samples</p>' +
       '<div class="pgp-doc-row" id="pgp-samples"></div>' +
       '<p class="pgp-status" id="pgp-status" aria-live="polite"></p>';
@@ -284,7 +288,8 @@
     var box = document.createElement("div");
     box.className = "pg-card pgp-reason";
     box.innerHTML =
-      '<p class="theme-kicker">Step 3 · Send the approved fields</p>' +
+      '<p class="theme-kicker">Cloud</p>' +
+      '<p class="theme-title pgp-step-title">Send the approved fields</p>' +
       '<p class="pgp-copy">Only the text you approved above leaves this machine. ' +
       "Gemini 3.7 Flash never sees the original document.</p>" +
       '<p class="theme-kicker">What will leave</p>' +
@@ -386,7 +391,7 @@
         "</td><td>" + esc(e.approved_by) + "</td><td>" + esc(e.details || "") + "</td></tr>";
     }).join("");
     el.innerHTML =
-      '<p class="theme-kicker">Step 4 · The receipt</p>' +
+      '<p class="theme-kicker">The receipt</p>' +
       '<p class="pgp-copy">Assisted redaction with your approval. Not guaranteed anonymisation.</p>' +
       '<div class="pgp-audit-wrap"><table class="pgp-audit-table"><thead><tr><th>Field</th><th>Decision</th><th>Approved by</th>' +
       "<th>Details</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
@@ -414,14 +419,15 @@
   function initExport(rootEl) {
     var slot = rootEl.querySelector("#slot");
     if (!slot) return;
+    var flow = slot.parentNode;
 
     var pickerHost = document.createElement("div");
     pickerHost.id = "pgp-picker-host";
-    rootEl.insertBefore(pickerHost, slot);
+    flow.insertBefore(pickerHost, slot);
 
     var reasonHost = document.createElement("div");
     reasonHost.id = "pgp-reason-host";
-    rootEl.appendChild(reasonHost);
+    flow.appendChild(reasonHost);
 
     function mountFor(doc) {
       var status = pickerHost.querySelector("#pgp-status");
@@ -442,47 +448,26 @@
     var vaultEl = rootEl.querySelector("#vault");
     if (!vaultEl || !root.PrivacyVault) return;
 
-    var pickerHost = rootEl.querySelector("#pgp-picker-host");
-    if (!pickerHost) {
-      pickerHost = document.createElement("div");
-      pickerHost.id = "pgp-picker-host";
-      rootEl.insertBefore(pickerHost, vaultEl);
-    }
-    var reasonHost = rootEl.querySelector("#pgp-reason-host");
-    if (!reasonHost) {
-      reasonHost = document.createElement("div");
-      reasonHost.id = "pgp-reason-host";
-      rootEl.appendChild(reasonHost);
-    }
+    Promise.resolve(root.PrivacyVault.mount(vaultEl, { email: "you@local" })).then(function () {
+      var pickerHost = vaultEl.querySelector("#pgp-picker-host");
+      var reasonHost = vaultEl.querySelector("#pgp-reason-host");
+      if (!pickerHost) return;
 
-    var vaultMounted = false;
-
-    function afterLive() {
-      var ready;
-      if (!vaultMounted) {
-        ready = Promise.resolve(root.PrivacyVault.mount(vaultEl, { email: "you@local" }));
-        vaultMounted = true;
-      } else {
-        var slot = vaultEl.querySelector("#export-slot");
-        if (slot && root.PrivacyExport && root.PRIVACY_EXPORT_DEMO) {
+      function mountFor(doc) {
+        var status = pickerHost.querySelector("#pgp-status");
+        detectAndPublish(doc, function (state, message) {
+          setStatus(status, state, message);
+        }).then(function (live) {
+          var slot = vaultEl.querySelector("#export-slot");
+          if (!slot || !root.PrivacyExport) return;
           slot.innerHTML = "";
-          root.PrivacyExport.mount(slot, root.PRIVACY_EXPORT_DEMO);
-        }
-        ready = Promise.resolve();
+          var panel = root.PrivacyExport.mount(slot, live || root.PRIVACY_EXPORT_DEMO);
+          if (reasonHost) renderReasonStep(reasonHost, panel);
+        });
       }
-      return ready.then(function () {
-        renderReasonStep(reasonHost, panelApi(vaultEl.querySelector("#export-slot")));
-      });
-    }
 
-    function mountFor(doc) {
-      var status = pickerHost.querySelector("#pgp-status");
-      detectAndPublish(doc, function (state, message) {
-        setStatus(status, state, message);
-      }).then(afterLive);
-    }
-
-    attachPicker(pickerHost, mountFor);
+      attachPicker(pickerHost, mountFor);
+    });
   }
 
   function init(rootEl) {
